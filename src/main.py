@@ -3,7 +3,9 @@ import sys
 import threading
 import time
 import logging
-from .config import HOTKEY, LOG_FILE
+import json
+import os
+from .config import HOTKEY, LOG_FILE, SETTINGS_FILE, DEFAULT_ENGINE
 
 # Configure Logging
 logging.basicConfig(
@@ -31,18 +33,127 @@ from .injection import TextInjector
 class VoxInputApp:
     def __init__(self):
         self.audio = AudioCapture()
-        self.recognizer = SpeechRecognizer()
+        
+        # Load Settings Early for persistence
+        settings = self.load_settings()
+        saved_engine = settings.get('recognition_engine', DEFAULT_ENGINE)
+        saved_index = settings.get('input_device_index')
+        
+        # Initialize Recognizer with saved engine
+        self.recognizer = SpeechRecognizer(engine_type=saved_engine)
         self.injector = TextInjector()
         
         self.is_listening = False
         self.should_quit = False
         self.processing_thread = None
         
+        # Audio Device Persistence
+        if saved_index is not None:
+             logger.info(f"Loaded persisted audio device index: {saved_index}")
+             self.audio.set_device_index(saved_index)
+        
+        # Get Input Devices
+        devices = self._get_input_devices()
+
         # Initialize UI
         self.ui = SystemTrayApp(
             toggle_callback=self.toggle_listening,
-            quit_callback=self.quit_app
+            quit_callback=self.quit_app,
+            input_devices=devices,
+            on_device_changed=self.change_input_device,
+            current_device_index=saved_index,
+            on_engine_changed=self.change_recognition_engine,
+            current_engine=saved_engine
         )
+
+    def _get_input_devices(self):
+        """Returns list of (index, name) tuples."""
+        try:
+            p = self.audio.pa
+            info = p.get_host_api_info_by_index(0)
+            numdevices = info.get('deviceCount')
+            devices = []
+            
+            # Keywords to exclude (Raw hardware/output paths that aren't mics)
+            excluded_keywords = [
+                'surround', 'rear', 'center', 'lfe', 'side', 'iec958', 'hdmi', 'dmix', 
+                'dsnoop', 'loopback', 'monitor'
+            ]
+            
+            for i in range(0, numdevices):
+                dev_info = p.get_device_info_by_host_api_device_index(0, i)
+                if dev_info.get('maxInputChannels') > 0:
+                    name = dev_info.get('name')
+                    lower_name = name.lower()
+                    
+                    # Filter out excluded stuff
+                    if any(k in lower_name for k in excluded_keywords):
+                        continue
+
+                    # Rename likely system defaults to be friendlier
+                    if name == 'pulse':
+                        name = "System Default (Follows OS Settings)"
+                    elif name == 'default':
+                        name = "ALSA Default"
+                    
+                    devices.append((i, name))
+            
+            # Sort devices: Put 'System Default' first
+            devices.sort(key=lambda x: 0 if "Follows OS Settings" in x[1] else 1)
+            return devices
+        except Exception as e:
+            logger.error(f"Error listing devices: {e}")
+            return []
+
+    def load_settings(self):
+        try:
+            if os.path.exists(SETTINGS_FILE):
+                with open(SETTINGS_FILE, 'r') as f:
+                    return json.load(f)
+        except Exception as e:
+            logger.error(f"Failed to load settings: {e}")
+        return {}
+
+    def save_settings(self, data):
+        try:
+            settings = self.load_settings()
+            settings.update(data)
+            with open(SETTINGS_FILE, 'w') as f:
+                json.dump(settings, f)
+        except Exception as e:
+             logger.error(f"Failed to save settings: {e}")
+
+    def change_input_device(self, index):
+        logger.info(f"Changing input device to Index: {index}")
+        
+        # Save persistence
+        self.save_settings({'input_device_index': index})
+
+        was_listening = self.is_listening
+        
+        if was_listening:
+            self.stop_listening()
+            
+        self.audio.set_device_index(index)
+        
+        if was_listening:
+            self.start_listening()
+
+    def change_recognition_engine(self, engine_id):
+        logger.info(f"Changing recognition engine to: {engine_id}")
+        
+        # Save persistence
+        self.save_settings({'recognition_engine': engine_id})
+        
+        # Switch Engine (Hot swap possible? Yes, but cleaner to pause)
+        was_listening = self.is_listening
+        if was_listening:
+            self.stop_listening()
+            
+        self.recognizer.set_engine(engine_id)
+        
+        if was_listening:
+            self.start_listening()
 
     def toggle_listening(self):
         if self.is_listening:
@@ -80,6 +191,7 @@ class VoxInputApp:
         while self.is_listening and not self.should_quit:
             data = self.audio.get_data()
             if data:
+                # logger.debug(f"Process loop: Got {len(data)} bytes") # Commented out to reduce noise, enable if needed
                 try:
                     text = self.recognizer.process_audio(data)
                     if text:
@@ -102,6 +214,7 @@ class VoxInputApp:
     def run(self):
         # Setup signal handlers
         signal.signal(signal.SIGINT, lambda s, f: self.quit_app())
+        signal.signal(signal.SIGUSR1, lambda s, f: self.toggle_listening())
         
         # Start global hotkey listener
         # Note: Global hotkeys with pynput on Linux can be tricky and might block.

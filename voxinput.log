@@ -10,3 +10,747 @@ NameError: name 'AudioCapture' is not defined
 2025-12-15 10:46:56,782 - src.recognizer - INFO - Loading model from /home/bdavidriggins/.gemini/antigravity/scratch/VoxInput/src/../model
 2025-12-15 10:46:57,626 - src.recognizer - INFO - Model loaded successfully
 2025-12-15 10:46:57,694 - __main__ - INFO - VoxInput Application Started
+2025-12-15 11:02:20,112 - src.recognizer - INFO - Loading model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 11:02:20,916 - src.recognizer - INFO - Model loaded successfully
+2025-12-15 11:02:20,993 - __main__ - INFO - VoxInput Application Started
+2025-12-15 11:10:32,934 - __main__ - CRITICAL - Could not import UI modules: No module named 'gi'
+2025-12-15 11:12:36,617 - src.recognizer - INFO - Loading model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 11:12:37,143 - src.recognizer - INFO - Model loaded successfully
+2025-12-15 11:12:37,201 - __main__ - INFO - VoxInput Application Started
+2025-12-15 11:18:11,545 - src.recognizer - INFO - Loading model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 11:18:12,039 - src.recognizer - INFO - Model loaded successfully
+2025-12-15 11:18:12,107 - __main__ - INFO - VoxInput Application Started
+2025-12-15 11:18:39,332 - __main__ - INFO - Starting listening...
+2025-12-15 11:18:39,416 - src.audio - INFO - Audio stream started.
+2025-12-15 11:18:45,113 - __main__ - INFO - Stopping listening...
+2025-12-15 11:21:47,304 - src.recognizer - INFO - Loading model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 11:21:47,803 - src.recognizer - INFO - Model loaded successfully
+2025-12-15 11:21:47,860 - __main__ - INFO - VoxInput Application Started
+2025-12-15 11:22:01,924 - __main__ - INFO - Starting listening...
+2025-12-15 11:22:02,002 - src.audio - INFO - Audio stream started.
+2025-12-15 11:22:06,944 - __main__ - INFO - Stopping listening...
+2025-12-15 11:27:09,702 - src.recognizer - INFO - Loading model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 11:27:10,252 - src.recognizer - INFO - Model loaded successfully
+2025-12-15 11:27:10,311 - __main__ - INFO - VoxInput Application Started
+2025-12-15 11:30:16,302 - src.recognizer - INFO - Loading model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 11:30:16,789 - src.recognizer - INFO - Model loaded successfully
+2025-12-15 11:30:16,845 - __main__ - INFO - VoxInput Application Started
+2025-12-15 11:33:47,473 - src.recognizer - INFO - Loading model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 11:33:47,968 - src.recognizer - INFO - Model loaded successfully
+2025-12-15 11:33:48,024 - __main__ - INFO - VoxInput Application Started
+2025-12-15 11:33:54,894 - __main__ - INFO - Changing input device to Index: None
+2025-12-15 11:34:30,176 - __main__ - INFO - Starting listening...
+2025-12-15 11:34:30,258 - src.audio - INFO - Using System Default Audio Device
+2025-12-15 11:34:30,258 - src.audio - INFO - Audio stream started.
+2025-12-15 11:34:33,106 - __main__ - INFO - Stopping listening...
+2025-12-15 11:34:50,390 - src.recognizer - INFO - Loading model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 11:34:50,877 - src.recognizer - INFO - Model loaded successfully
+2025-12-15 11:34:50,940 - __main__ - INFO - VoxInput Application Started
+2025-12-15 11:34:55,997 - __main__ - INFO - Starting listening...
+2025-12-15 11:34:56,079 - src.audio - INFO - Using System Default Audio Device
+2025-12-15 11:34:56,079 - src.audio - INFO - Audio stream started.
+2025-12-15 11:35:01,693 - __main__ - INFO - Stopping listening...
+2025-12-15 11:35:46,100 - __main__ - INFO - Changing input device to Index: None
+2025-12-15 11:35:48,426 - __main__ - INFO - Starting listening...
+2025-12-15 11:35:48,523 - src.audio - INFO - Using System Default Audio Device
+2025-12-15 11:35:48,523 - src.audio - INFO - Audio stream started.
+2025-12-15 11:35:49,586 - __main__ - INFO - Recognized: testing one or two three four five six seven eight nine
+2025-12-15 11:35:49,586 - src.injection - INFO - Injecting text: 'testing one or two three four five six seven eight nine'
+2025-12-15 11:35:51,732 - __main__ - INFO - Stopping listening...
+2025-12-15 11:36:04,283 - __main__ - INFO - Changing input device to Index: 14
+2025-12-15 11:36:06,975 - __main__ - INFO - Starting listening...
+2025-12-15 11:36:07,079 - src.audio - INFO - Using Audio Device Index: 14
+2025-12-15 11:36:07,080 - src.audio - INFO - Audio stream started.
+2025-12-15 11:36:08,122 - __main__ - INFO - Recognized: two three four five
+2025-12-15 11:36:08,122 - src.injection - INFO - Injecting text: 'two three four five'
+2025-12-15 11:36:11,387 - __main__ - INFO - Stopping listening...
+2025-12-15 11:40:01,573 - src.recognizer - INFO - Loading model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 11:40:02,084 - src.recognizer - INFO - Model loaded successfully
+2025-12-15 11:40:02,154 - __main__ - INFO - VoxInput Application Started
+2025-12-15 11:40:05,578 - __main__ - INFO - Starting listening...
+2025-12-15 11:40:05,676 - src.audio - INFO - Using System Default Audio Device
+2025-12-15 11:40:05,676 - src.audio - INFO - Audio stream started.
+2025-12-15 11:40:10,495 - __main__ - INFO - Stopping listening...
+2025-12-15 11:40:20,565 - __main__ - INFO - Changing input device to Index: 14
+2025-12-15 11:40:24,157 - __main__ - INFO - Starting listening...
+2025-12-15 11:40:24,261 - src.audio - INFO - Using Audio Device Index: 14
+2025-12-15 11:40:24,261 - src.audio - INFO - Audio stream started.
+2025-12-15 11:40:24,800 - __main__ - INFO - Recognized: two three four five six seven eight out
+2025-12-15 11:40:24,800 - src.injection - INFO - Injecting text: 'two three four five six seven eight out'
+2025-12-15 11:40:29,308 - __main__ - INFO - Recognized: two three four five six seventy nine ten
+2025-12-15 11:40:29,308 - src.injection - INFO - Injecting text: 'two three four five six seventy nine ten'
+2025-12-15 11:40:29,707 - __main__ - INFO - Stopping listening...
+2025-12-15 11:52:25,665 - src.recognizer - INFO - Loading model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 11:52:26,130 - src.recognizer - INFO - Model loaded successfully
+2025-12-15 11:52:26,134 - __main__ - INFO - Loaded persisted audio device index: 14
+2025-12-15 11:52:26,136 - __main__ - CRITICAL - Unhandled exception in main: name 'APP_ID' is not defined
+Traceback (most recent call last):
+  File "/home/bdavidriggins/Documents/VoxInput/src/main.py", line 210, in <module>
+    app = VoxInputApp()
+          ^^^^^^^^^^^^^
+  File "/home/bdavidriggins/Documents/VoxInput/src/main.py", line 54, in __init__
+    self.ui = SystemTrayApp(
+              ^^^^^^^^^^^^^^
+  File "/home/bdavidriggins/Documents/VoxInput/src/ui.py", line 29, in __init__
+    APP_ID,
+    ^^^^^^
+NameError: name 'APP_ID' is not defined
+2025-12-15 15:49:36,407 - src.recognizer - INFO - Loading model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 15:49:37,068 - src.recognizer - INFO - Model loaded successfully
+2025-12-15 15:49:37,075 - __main__ - INFO - Loaded persisted audio device index: 14
+2025-12-15 15:49:37,078 - __main__ - CRITICAL - Unhandled exception in main: name 'APP_ID' is not defined
+Traceback (most recent call last):
+  File "/home/bdavidriggins/Documents/VoxInput/src/main.py", line 210, in <module>
+    app = VoxInputApp()
+          ^^^^^^^^^^^^^
+  File "/home/bdavidriggins/Documents/VoxInput/src/main.py", line 54, in __init__
+    self.ui = SystemTrayApp(
+              ^^^^^^^^^^^^^^
+  File "/home/bdavidriggins/Documents/VoxInput/src/ui.py", line 29, in __init__
+    APP_ID,
+    ^^^^^^
+NameError: name 'APP_ID' is not defined
+2025-12-15 15:49:50,343 - src.recognizer - INFO - Loading model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 15:49:50,871 - src.recognizer - INFO - Model loaded successfully
+2025-12-15 15:49:50,875 - __main__ - INFO - Loaded persisted audio device index: 14
+2025-12-15 15:49:50,877 - __main__ - CRITICAL - Unhandled exception in main: name 'APP_ID' is not defined
+Traceback (most recent call last):
+  File "/home/bdavidriggins/Documents/VoxInput/src/main.py", line 210, in <module>
+    app = VoxInputApp()
+          ^^^^^^^^^^^^^
+  File "/home/bdavidriggins/Documents/VoxInput/src/main.py", line 54, in __init__
+    self.ui = SystemTrayApp(
+              ^^^^^^^^^^^^^^
+  File "/home/bdavidriggins/Documents/VoxInput/src/ui.py", line 29, in __init__
+    APP_ID,
+    ^^^^^^
+NameError: name 'APP_ID' is not defined
+2025-12-15 15:51:00,748 - src.recognizer - INFO - Loading model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 15:51:01,476 - src.recognizer - INFO - Model loaded successfully
+2025-12-15 15:51:01,481 - __main__ - INFO - Loaded persisted audio device index: 14
+2025-12-15 15:51:01,574 - __main__ - INFO - VoxInput Application Started
+2025-12-15 15:52:25,756 - __main__ - INFO - Starting listening...
+2025-12-15 15:52:25,851 - src.audio - INFO - Using Audio Device Index: 14
+2025-12-15 15:52:25,852 - src.audio - INFO - Audio stream started.
+2025-12-15 15:52:28,397 - __main__ - INFO - Recognized: hello
+2025-12-15 15:52:28,397 - src.injection - INFO - Injecting text: 'hello'
+2025-12-15 15:52:30,495 - __main__ - INFO - Recognized: has today
+2025-12-15 15:52:30,495 - src.injection - INFO - Injecting text: 'has today'
+2025-12-15 15:52:32,604 - __main__ - INFO - Stopping listening...
+2025-12-15 15:52:59,334 - __main__ - INFO - Changing input device to Index: 14
+2025-12-15 15:53:04,004 - __main__ - INFO - Starting listening...
+2025-12-15 15:53:04,095 - src.audio - INFO - Using Audio Device Index: 14
+2025-12-15 15:53:04,095 - src.audio - INFO - Audio stream started.
+2025-12-15 15:53:11,119 - __main__ - INFO - Recognized: one two three four five testing testing testing
+2025-12-15 15:53:11,119 - src.injection - INFO - Injecting text: 'one two three four five testing testing testing'
+2025-12-15 15:53:16,276 - __main__ - INFO - Stopping listening...
+2025-12-15 15:56:33,872 - src.recognizer - INFO - Loading model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 15:56:34,421 - src.recognizer - INFO - Model loaded successfully
+2025-12-15 15:56:34,426 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 15:56:34,426 - __main__ - INFO - Loaded persisted audio device index: 14
+2025-12-15 15:56:34,493 - __main__ - INFO - VoxInput Application Started
+2025-12-15 15:56:42,960 - __main__ - INFO - Changing input device to Index: 14
+2025-12-15 15:56:50,247 - __main__ - INFO - Starting listening...
+2025-12-15 15:56:50,346 - src.audio - INFO - Using Audio Device Index: 14
+2025-12-15 15:56:50,347 - src.audio - INFO - Audio stream started.
+2025-12-15 15:56:57,412 - __main__ - INFO - Recognized: just to israeli four five six seven eight
+2025-12-15 15:56:57,413 - src.injection - INFO - Injecting text: 'just to israeli four five six seven eight'
+2025-12-15 15:57:06,447 - __main__ - INFO - Recognized: my is
+2025-12-15 15:57:06,447 - src.injection - INFO - Injecting text: 'my is'
+2025-12-15 15:57:10,883 - __main__ - INFO - Recognized: is
+2025-12-15 15:57:10,883 - src.injection - INFO - Injecting text: 'is'
+2025-12-15 15:57:18,386 - __main__ - INFO - Recognized: two three four
+2025-12-15 15:57:18,386 - src.injection - INFO - Injecting text: 'two three four'
+2025-12-15 15:57:29,767 - __main__ - INFO - Stopping listening...
+2025-12-15 16:03:09,300 - src.recognizer - INFO - Loading model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 16:03:10,090 - src.recognizer - INFO - Model loaded successfully
+2025-12-15 16:03:10,097 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 16:03:10,097 - __main__ - INFO - Loaded persisted audio device index: 14
+2025-12-15 16:03:10,196 - __main__ - INFO - VoxInput Application Started
+2025-12-15 16:03:17,845 - __main__ - INFO - Starting listening...
+2025-12-15 16:03:17,940 - src.audio - INFO - Using Audio Device Index: 14
+2025-12-15 16:03:17,941 - src.audio - INFO - Audio stream started.
+2025-12-15 16:03:20,980 - __main__ - INFO - Recognized: testing
+2025-12-15 16:03:20,981 - src.injection - INFO - Injecting text: 'testing'
+2025-12-15 16:03:27,972 - __main__ - INFO - Recognized: one two three four time
+2025-12-15 16:03:27,972 - src.injection - INFO - Injecting text: 'one two three four time'
+2025-12-15 16:03:38,539 - __main__ - INFO - Recognized: hello
+2025-12-15 16:03:38,539 - src.injection - INFO - Injecting text: 'hello'
+2025-12-15 16:03:40,469 - __main__ - INFO - Recognized: using
+2025-12-15 16:03:40,469 - src.injection - INFO - Injecting text: 'using'
+2025-12-15 16:04:15,279 - __main__ - INFO - Changing input device to Index: 13
+2025-12-15 16:04:15,279 - __main__ - INFO - Stopping listening...
+2025-12-15 16:04:15,442 - __main__ - INFO - Starting listening...
+2025-12-15 16:04:15,459 - src.audio - INFO - Using Audio Device Index: 13
+2025-12-15 16:04:15,459 - src.audio - INFO - Audio stream started.
+2025-12-15 16:04:21,510 - __main__ - INFO - Recognized: testing one two three
+2025-12-15 16:04:21,510 - src.injection - INFO - Injecting text: 'testing one two three'
+2025-12-15 16:04:23,104 - __main__ - INFO - Stopping listening...
+2025-12-15 16:04:24,231 - __main__ - INFO - Starting listening...
+2025-12-15 16:04:24,256 - src.audio - INFO - Using Audio Device Index: 13
+2025-12-15 16:04:24,256 - src.audio - INFO - Audio stream started.
+2025-12-15 16:04:28,822 - __main__ - INFO - Recognized: testing baltimore three four five
+2025-12-15 16:04:28,822 - src.injection - INFO - Injecting text: 'testing baltimore three four five'
+2025-12-15 16:04:28,874 - __main__ - INFO - Stopping listening...
+2025-12-15 16:04:47,857 - __main__ - INFO - Starting listening...
+2025-12-15 16:04:47,957 - src.audio - INFO - Using Audio Device Index: 13
+2025-12-15 16:04:47,957 - src.audio - INFO - Audio stream started.
+2025-12-15 16:04:53,577 - __main__ - INFO - Recognized: testing one two three four five
+2025-12-15 16:04:53,577 - src.injection - INFO - Injecting text: 'testing one two three four five'
+2025-12-15 16:05:01,101 - __main__ - INFO - Recognized: the white sox to restore the
+2025-12-15 16:05:01,101 - src.injection - INFO - Injecting text: 'the white sox to restore the'
+2025-12-15 16:05:16,395 - __main__ - INFO - Changing input device to Index: 14
+2025-12-15 16:05:16,395 - __main__ - INFO - Stopping listening...
+2025-12-15 16:05:16,547 - __main__ - INFO - Starting listening...
+2025-12-15 16:05:16,579 - src.audio - INFO - Using Audio Device Index: 14
+2025-12-15 16:05:16,579 - src.audio - INFO - Audio stream started.
+2025-12-15 16:08:13,706 - __main__ - INFO - Stopping listening...
+2025-12-15 16:08:22,385 - src.recognizer - INFO - Loading model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 16:08:23,110 - src.recognizer - INFO - Model loaded successfully
+2025-12-15 16:08:23,115 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 16:08:23,116 - __main__ - INFO - Loaded persisted audio device index: 14
+2025-12-15 16:08:23,207 - __main__ - INFO - VoxInput Application Started
+2025-12-15 16:08:32,990 - __main__ - INFO - Changing input device to Index: 19
+2025-12-15 16:08:35,956 - __main__ - INFO - Starting listening...
+2025-12-15 16:08:36,044 - src.audio - INFO - Using Audio Device Index: 19
+2025-12-15 16:08:36,045 - src.audio - INFO - Audio stream started.
+2025-12-15 16:08:41,126 - __main__ - INFO - Recognized: test
+2025-12-15 16:08:41,126 - src.injection - INFO - Injecting text: 'test'
+2025-12-15 16:08:47,607 - __main__ - INFO - Recognized: two three four five six seven eight nine ten
+2025-12-15 16:08:47,607 - src.injection - INFO - Injecting text: 'two three four five six seven eight nine ten'
+2025-12-15 16:08:58,160 - __main__ - INFO - Recognized: sort of also ask dot org mode on address already in use
+2025-12-15 16:08:58,160 - src.injection - INFO - Injecting text: 'sort of also ask dot org mode on address already in use'
+2025-12-15 16:09:04,188 - __main__ - INFO - Recognized: a spy program
+2025-12-15 16:09:04,188 - src.injection - INFO - Injecting text: 'a spy program'
+2025-12-15 16:19:00,768 - __main__ - INFO - Recognized: huh
+2025-12-15 16:19:00,768 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:21:14,344 - __main__ - INFO - Recognized: by
+2025-12-15 16:21:14,344 - src.injection - INFO - Injecting text: 'by'
+2025-12-15 16:22:00,459 - __main__ - INFO - Recognized: but
+2025-12-15 16:22:00,460 - src.injection - INFO - Injecting text: 'but'
+2025-12-15 16:22:26,102 - __main__ - INFO - Recognized: but
+2025-12-15 16:22:26,102 - src.injection - INFO - Injecting text: 'but'
+2025-12-15 16:22:45,122 - __main__ - INFO - Recognized: but
+2025-12-15 16:22:45,122 - src.injection - INFO - Injecting text: 'but'
+2025-12-15 16:23:11,196 - __main__ - INFO - Recognized: by
+2025-12-15 16:23:11,197 - src.injection - INFO - Injecting text: 'by'
+2025-12-15 16:23:31,750 - __main__ - INFO - Recognized: but
+2025-12-15 16:23:31,750 - src.injection - INFO - Injecting text: 'but'
+2025-12-15 16:24:16,881 - __main__ - INFO - Recognized: but
+2025-12-15 16:24:16,881 - src.injection - INFO - Injecting text: 'but'
+2025-12-15 16:24:21,885 - __main__ - INFO - Recognized: when
+2025-12-15 16:24:21,885 - src.injection - INFO - Injecting text: 'when'
+2025-12-15 16:24:49,024 - __main__ - INFO - Recognized: but
+2025-12-15 16:24:49,024 - src.injection - INFO - Injecting text: 'but'
+2025-12-15 16:27:20,893 - __main__ - INFO - Recognized: but
+2025-12-15 16:27:20,893 - src.injection - INFO - Injecting text: 'but'
+2025-12-15 16:29:01,686 - __main__ - INFO - Recognized: huh
+2025-12-15 16:29:01,686 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:29:21,719 - __main__ - INFO - Recognized: huh
+2025-12-15 16:29:21,719 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:29:42,261 - __main__ - INFO - Recognized: huh
+2025-12-15 16:29:42,261 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:30:02,853 - __main__ - INFO - Recognized: huh
+2025-12-15 16:30:02,853 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:30:22,905 - __main__ - INFO - Recognized: huh
+2025-12-15 16:30:22,905 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:30:42,955 - __main__ - INFO - Recognized: huh
+2025-12-15 16:30:42,955 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:31:02,988 - __main__ - INFO - Recognized: huh
+2025-12-15 16:31:02,988 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:31:23,544 - __main__ - INFO - Recognized: huh
+2025-12-15 16:31:23,544 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:32:35,733 - __main__ - INFO - Recognized: huh
+2025-12-15 16:32:35,733 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:33:02,318 - __main__ - INFO - Recognized: huh
+2025-12-15 16:33:02,318 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:33:22,354 - __main__ - INFO - Recognized: huh
+2025-12-15 16:33:22,354 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:33:42,412 - __main__ - INFO - Recognized: huh
+2025-12-15 16:33:42,412 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:34:02,972 - __main__ - INFO - Recognized: huh
+2025-12-15 16:34:02,972 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:34:23,518 - __main__ - INFO - Recognized: huh
+2025-12-15 16:34:23,519 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:34:44,073 - __main__ - INFO - Recognized: huh
+2025-12-15 16:34:44,073 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:35:04,130 - __main__ - INFO - Recognized: huh
+2025-12-15 16:35:04,130 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:35:24,689 - __main__ - INFO - Recognized: huh
+2025-12-15 16:35:24,689 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:35:45,246 - __main__ - INFO - Recognized: huh
+2025-12-15 16:35:45,247 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:36:05,788 - __main__ - INFO - Recognized: huh
+2025-12-15 16:36:05,788 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:36:25,878 - __main__ - INFO - Recognized: hi
+2025-12-15 16:36:25,878 - src.injection - INFO - Injecting text: 'hi'
+2025-12-15 16:36:45,391 - __main__ - INFO - Recognized: huh
+2025-12-15 16:36:45,391 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:37:04,955 - __main__ - INFO - Recognized: huh
+2025-12-15 16:37:04,955 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:39:08,770 - __main__ - INFO - Recognized: by
+2025-12-15 16:39:08,770 - src.injection - INFO - Injecting text: 'by'
+2025-12-15 16:39:28,863 - __main__ - INFO - Recognized: by
+2025-12-15 16:39:28,863 - src.injection - INFO - Injecting text: 'by'
+2025-12-15 16:39:49,384 - __main__ - INFO - Recognized: by
+2025-12-15 16:39:49,385 - src.injection - INFO - Injecting text: 'by'
+2025-12-15 16:40:09,435 - __main__ - INFO - Recognized: but
+2025-12-15 16:40:09,435 - src.injection - INFO - Injecting text: 'but'
+2025-12-15 16:40:29,511 - __main__ - INFO - Recognized: by
+2025-12-15 16:40:29,511 - src.injection - INFO - Injecting text: 'by'
+2025-12-15 16:40:50,042 - __main__ - INFO - Recognized: but
+2025-12-15 16:40:50,043 - src.injection - INFO - Injecting text: 'but'
+2025-12-15 16:41:10,636 - __main__ - INFO - Recognized: but
+2025-12-15 16:41:10,636 - src.injection - INFO - Injecting text: 'but'
+2025-12-15 16:41:31,185 - __main__ - INFO - Recognized: but
+2025-12-15 16:41:31,185 - src.injection - INFO - Injecting text: 'but'
+2025-12-15 16:41:51,712 - __main__ - INFO - Recognized: but
+2025-12-15 16:41:51,712 - src.injection - INFO - Injecting text: 'but'
+2025-12-15 16:42:11,763 - __main__ - INFO - Recognized: but
+2025-12-15 16:42:11,763 - src.injection - INFO - Injecting text: 'but'
+2025-12-15 16:42:32,328 - __main__ - INFO - Recognized: but
+2025-12-15 16:42:32,328 - src.injection - INFO - Injecting text: 'but'
+2025-12-15 16:42:52,898 - __main__ - INFO - Recognized: by
+2025-12-15 16:42:52,898 - src.injection - INFO - Injecting text: 'by'
+2025-12-15 16:42:57,930 - __main__ - INFO - Recognized: but
+2025-12-15 16:42:57,930 - src.injection - INFO - Injecting text: 'but'
+2025-12-15 16:43:11,443 - __main__ - INFO - Recognized: but
+2025-12-15 16:43:11,443 - src.injection - INFO - Injecting text: 'but'
+2025-12-15 16:43:31,975 - __main__ - INFO - Recognized: by
+2025-12-15 16:43:31,975 - src.injection - INFO - Injecting text: 'by'
+2025-12-15 16:43:52,551 - __main__ - INFO - Recognized: by
+2025-12-15 16:43:52,551 - src.injection - INFO - Injecting text: 'by'
+2025-12-15 16:44:18,100 - __main__ - INFO - Recognized: by
+2025-12-15 16:44:18,100 - src.injection - INFO - Injecting text: 'by'
+2025-12-15 16:44:36,679 - __main__ - INFO - Recognized: but
+2025-12-15 16:44:36,679 - src.injection - INFO - Injecting text: 'but'
+2025-12-15 16:44:57,209 - __main__ - INFO - Recognized: huh
+2025-12-15 16:44:57,209 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:45:17,262 - __main__ - INFO - Recognized: huh
+2025-12-15 16:45:17,262 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:45:37,812 - __main__ - INFO - Recognized: huh
+2025-12-15 16:45:37,812 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:45:58,350 - __main__ - INFO - Recognized: huh
+2025-12-15 16:45:58,350 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:46:17,936 - __main__ - INFO - Recognized: huh
+2025-12-15 16:46:17,936 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:46:38,462 - __main__ - INFO - Recognized: huh
+2025-12-15 16:46:38,462 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:46:58,527 - __main__ - INFO - Recognized: huh
+2025-12-15 16:46:58,527 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:47:19,092 - __main__ - INFO - Recognized: huh
+2025-12-15 16:47:19,092 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:47:39,665 - __main__ - INFO - Recognized: huh
+2025-12-15 16:47:39,665 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:47:59,669 - __main__ - INFO - Recognized: huh
+2025-12-15 16:47:59,669 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:48:20,238 - __main__ - INFO - Recognized: huh
+2025-12-15 16:48:20,238 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:48:40,810 - __main__ - INFO - Recognized: huh
+2025-12-15 16:48:40,810 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:49:01,342 - __main__ - INFO - Recognized: huh
+2025-12-15 16:49:01,342 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:49:21,385 - __main__ - INFO - Recognized: huh
+2025-12-15 16:49:21,385 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:49:26,408 - __main__ - INFO - Recognized: huh
+2025-12-15 16:49:26,408 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:50:38,097 - __main__ - INFO - Recognized: huh
+2025-12-15 16:50:38,097 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:50:58,681 - __main__ - INFO - Recognized: huh
+2025-12-15 16:50:58,681 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:51:18,703 - __main__ - INFO - Recognized: huh
+2025-12-15 16:51:18,704 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:51:39,258 - __main__ - INFO - Recognized: huh
+2025-12-15 16:51:39,258 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:51:59,311 - __main__ - INFO - Recognized: huh
+2025-12-15 16:51:59,311 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:52:19,898 - __main__ - INFO - Recognized: huh
+2025-12-15 16:52:19,898 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:52:39,941 - __main__ - INFO - Recognized: huh
+2025-12-15 16:52:39,941 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:52:59,985 - __main__ - INFO - Recognized: huh
+2025-12-15 16:52:59,985 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:53:20,542 - __main__ - INFO - Recognized: huh
+2025-12-15 16:53:20,543 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:53:41,088 - __main__ - INFO - Recognized: huh
+2025-12-15 16:53:41,088 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:54:01,664 - __main__ - INFO - Recognized: huh
+2025-12-15 16:54:01,665 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:54:22,204 - __main__ - INFO - Recognized: huh
+2025-12-15 16:54:22,204 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:54:42,244 - __main__ - INFO - Recognized: huh
+2025-12-15 16:54:42,244 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:55:02,798 - __main__ - INFO - Recognized: huh
+2025-12-15 16:55:02,798 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:55:10,844 - __main__ - INFO - Recognized: huh
+2025-12-15 16:55:10,845 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:56:22,003 - __main__ - INFO - Recognized: huh
+2025-12-15 16:56:22,004 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:56:42,071 - __main__ - INFO - Recognized: huh
+2025-12-15 16:56:42,071 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:57:02,646 - __main__ - INFO - Recognized: huh
+2025-12-15 16:57:02,646 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:57:23,199 - __main__ - INFO - Recognized: huh
+2025-12-15 16:57:23,200 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:57:43,732 - __main__ - INFO - Recognized: huh
+2025-12-15 16:57:43,732 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:58:04,282 - __main__ - INFO - Recognized: huh
+2025-12-15 16:58:04,282 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:58:24,326 - __main__ - INFO - Recognized: huh
+2025-12-15 16:58:24,326 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:58:44,392 - __main__ - INFO - Recognized: huh
+2025-12-15 16:58:44,392 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:59:04,955 - __main__ - INFO - Recognized: huh
+2025-12-15 16:59:04,955 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:59:25,509 - __main__ - INFO - Recognized: huh
+2025-12-15 16:59:25,509 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 16:59:45,554 - __main__ - INFO - Recognized: huh
+2025-12-15 16:59:45,554 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 17:00:06,103 - __main__ - INFO - Recognized: huh
+2025-12-15 17:00:06,103 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 17:00:26,682 - __main__ - INFO - Recognized: huh
+2025-12-15 17:00:26,682 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 17:00:36,726 - __main__ - INFO - Recognized: huh
+2025-12-15 17:00:36,726 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 17:09:00,036 - __main__ - INFO - Recognized: huh
+2025-12-15 17:09:00,036 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 17:09:20,573 - __main__ - INFO - Recognized: huh
+2025-12-15 17:09:20,574 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 17:09:41,140 - __main__ - INFO - Recognized: huh
+2025-12-15 17:09:41,140 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 17:10:01,178 - __main__ - INFO - Recognized: huh
+2025-12-15 17:10:01,179 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 17:10:21,738 - __main__ - INFO - Recognized: huh
+2025-12-15 17:10:21,739 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 17:10:42,280 - __main__ - INFO - Recognized: huh
+2025-12-15 17:10:42,280 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 17:11:02,332 - __main__ - INFO - Recognized: huh
+2025-12-15 17:11:02,332 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 17:11:22,387 - __main__ - INFO - Recognized: huh
+2025-12-15 17:11:22,387 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 17:11:42,461 - __main__ - INFO - Recognized: huh
+2025-12-15 17:11:42,462 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 17:12:02,989 - __main__ - INFO - Recognized: huh
+2025-12-15 17:12:02,990 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 17:12:23,558 - __main__ - INFO - Recognized: huh
+2025-12-15 17:12:23,558 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 17:12:33,601 - __main__ - INFO - Recognized: huh
+2025-12-15 17:12:33,601 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 17:13:45,337 - __main__ - INFO - Recognized: why
+2025-12-15 17:13:45,337 - src.injection - INFO - Injecting text: 'why'
+2025-12-15 17:13:53,810 - __main__ - INFO - Recognized: what
+2025-12-15 17:13:53,810 - src.injection - INFO - Injecting text: 'what'
+2025-12-15 17:14:05,329 - __main__ - INFO - Recognized: what
+2025-12-15 17:14:05,330 - src.injection - INFO - Injecting text: 'what'
+2025-12-15 17:14:16,364 - __main__ - INFO - Recognized: huh
+2025-12-15 17:14:16,364 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 17:14:20,894 - __main__ - INFO - Recognized: ah
+2025-12-15 17:14:20,894 - src.injection - INFO - Injecting text: 'ah'
+2025-12-15 17:14:25,921 - __main__ - INFO - Recognized: ah
+2025-12-15 17:14:25,921 - src.injection - INFO - Injecting text: 'ah'
+2025-12-15 17:14:30,921 - __main__ - INFO - Recognized: huh
+2025-12-15 17:14:30,922 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 17:14:56,976 - __main__ - INFO - Recognized: good
+2025-12-15 17:14:56,976 - src.injection - INFO - Injecting text: 'good'
+2025-12-15 17:15:12,693 - __main__ - INFO - Recognized: it
+2025-12-15 17:15:12,693 - src.injection - INFO - Injecting text: 'it'
+2025-12-15 17:15:23,092 - __main__ - INFO - Recognized: that
+2025-12-15 17:15:23,092 - src.injection - INFO - Injecting text: 'that'
+2025-12-15 17:15:33,079 - __main__ - INFO - Recognized: each
+2025-12-15 17:15:33,080 - src.injection - INFO - Injecting text: 'each'
+2025-12-15 17:16:27,780 - __main__ - INFO - Recognized: huh
+2025-12-15 17:16:27,780 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 17:16:32,763 - __main__ - INFO - Recognized: yes
+2025-12-15 17:16:32,763 - src.injection - INFO - Injecting text: 'yes'
+2025-12-15 17:16:42,876 - __main__ - INFO - Recognized: edit
+2025-12-15 17:16:42,877 - src.injection - INFO - Injecting text: 'edit'
+2025-12-15 17:17:04,421 - __main__ - INFO - Recognized: yeah
+2025-12-15 17:17:04,421 - src.injection - INFO - Injecting text: 'yeah'
+2025-12-15 17:17:06,515 - __main__ - INFO - Recognized: today
+2025-12-15 17:17:06,515 - src.injection - INFO - Injecting text: 'today'
+2025-12-15 17:17:11,477 - __main__ - INFO - Recognized: enough
+2025-12-15 17:17:11,477 - src.injection - INFO - Injecting text: 'enough'
+2025-12-15 17:17:17,954 - __main__ - INFO - Recognized: you
+2025-12-15 17:17:17,954 - src.injection - INFO - Injecting text: 'you'
+2025-12-15 17:17:46,527 - __main__ - INFO - Recognized: who
+2025-12-15 17:17:46,527 - src.injection - INFO - Injecting text: 'who'
+2025-12-15 17:17:58,599 - __main__ - INFO - Recognized: him
+2025-12-15 17:17:58,599 - src.injection - INFO - Injecting text: 'him'
+2025-12-15 17:18:42,209 - __main__ - INFO - Recognized: hello
+2025-12-15 17:18:42,209 - src.injection - INFO - Injecting text: 'hello'
+2025-12-15 17:19:09,755 - __main__ - INFO - Recognized: testing testing testing testing testing testing testing
+2025-12-15 17:19:09,755 - src.injection - INFO - Injecting text: 'testing testing testing testing testing testing testing'
+2025-12-15 17:19:16,281 - __main__ - INFO - Recognized: testing one two three four five six seven eight nine ten
+2025-12-15 17:19:16,281 - src.injection - INFO - Injecting text: 'testing one two three four five six seven eight nine ten'
+2025-12-15 17:19:32,019 - __main__ - INFO - Stopping listening...
+2025-12-15 17:19:51,476 - src.recognizer - INFO - Switching engine to: vosk
+2025-12-15 17:19:51,477 - src.recognizer - INFO - Loading Vosk model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 17:19:51,947 - src.recognizer - INFO - Vosk Model loaded
+2025-12-15 17:19:51,951 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 17:19:51,951 - __main__ - INFO - Loaded persisted audio device index: 19
+2025-12-15 17:19:52,007 - __main__ - CRITICAL - Unhandled exception in main: Must be sequence, not RadioMenuItem
+Traceback (most recent call last):
+  File "/home/bdavidriggins/Documents/VoxInput/src/main.py", line 247, in <module>
+    app = VoxInputApp()
+          ^^^^^^^^^^^^^
+  File "/home/bdavidriggins/Documents/VoxInput/src/main.py", line 59, in __init__
+    self.ui = SystemTrayApp(
+              ^^^^^^^^^^^^^^
+  File "/home/bdavidriggins/Documents/VoxInput/src/ui.py", line 42, in __init__
+    self._build_menu()
+  File "/home/bdavidriggins/Documents/VoxInput/src/ui.py", line 78, in _build_menu
+    item.set_group(engine_group[0])
+TypeError: Must be sequence, not RadioMenuItem
+2025-12-15 17:20:19,176 - src.recognizer - INFO - Switching engine to: vosk
+2025-12-15 17:20:19,177 - src.recognizer - INFO - Loading Vosk model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 17:20:19,654 - src.recognizer - INFO - Vosk Model loaded
+2025-12-15 17:20:19,658 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 17:20:19,658 - __main__ - INFO - Loaded persisted audio device index: 19
+2025-12-15 17:20:19,726 - __main__ - CRITICAL - Unhandled exception in main: Must be sequence, not RadioMenuItem
+Traceback (most recent call last):
+  File "/home/bdavidriggins/Documents/VoxInput/src/main.py", line 247, in <module>
+    app = VoxInputApp()
+          ^^^^^^^^^^^^^
+  File "/home/bdavidriggins/Documents/VoxInput/src/main.py", line 59, in __init__
+    self.ui = SystemTrayApp(
+              ^^^^^^^^^^^^^^
+  File "/home/bdavidriggins/Documents/VoxInput/src/ui.py", line 42, in __init__
+    self._build_menu()
+  File "/home/bdavidriggins/Documents/VoxInput/src/ui.py", line 78, in _build_menu
+    item.set_group(engine_group[0])
+TypeError: Must be sequence, not RadioMenuItem
+2025-12-15 17:23:25,021 - src.recognizer - INFO - Switching engine to: vosk
+2025-12-15 17:23:25,021 - src.recognizer - INFO - Loading Vosk model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 17:23:25,487 - src.recognizer - INFO - Vosk Model loaded
+2025-12-15 17:23:25,491 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 17:23:25,491 - __main__ - INFO - Loaded persisted audio device index: 19
+2025-12-15 17:23:25,560 - __main__ - INFO - VoxInput Application Started
+2025-12-15 17:24:39,582 - src.recognizer - INFO - Switching engine to: vosk
+2025-12-15 17:24:39,582 - src.recognizer - INFO - Loading Vosk model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 17:24:40,079 - src.recognizer - INFO - Vosk Model loaded
+2025-12-15 17:24:40,084 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 17:24:40,084 - __main__ - INFO - Loaded persisted audio device index: 19
+2025-12-15 17:24:40,145 - __main__ - INFO - VoxInput Application Started
+2025-12-15 17:29:11,547 - src.recognizer - INFO - Switching engine to: vosk
+2025-12-15 17:29:11,548 - src.recognizer - INFO - Loading Vosk model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 17:29:12,050 - src.recognizer - INFO - Vosk Model loaded
+2025-12-15 17:29:12,055 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 17:29:12,055 - __main__ - INFO - Loaded persisted audio device index: 19
+2025-12-15 17:29:12,110 - __main__ - INFO - VoxInput Application Started
+2025-12-15 17:29:27,620 - __main__ - INFO - Changing input device to Index: 5
+2025-12-15 17:29:33,644 - __main__ - INFO - Changing recognition engine to: whisper
+2025-12-15 17:29:33,644 - src.recognizer - INFO - Switching engine to: whisper
+2025-12-15 17:29:33,644 - src.recognizer - INFO - Loading Faster-Whisper model (base)...
+2025-12-15 17:29:34,801 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2025-12-15 17:29:34,918 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/Systran/faster-whisper-base/resolve/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/config.json "HTTP/1.1 307 Temporary Redirect"
+2025-12-15 17:29:34,981 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-base/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/config.json "HTTP/1.1 200 OK"
+2025-12-15 17:29:35,038 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/Systran/faster-whisper-base/resolve/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/vocabulary.txt "HTTP/1.1 307 Temporary Redirect"
+2025-12-15 17:29:35,044 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/Systran/faster-whisper-base/resolve/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/tokenizer.json "HTTP/1.1 307 Temporary Redirect"
+2025-12-15 17:29:35,046 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/Systran/faster-whisper-base/resolve/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/model.bin "HTTP/1.1 302 Found"
+2025-12-15 17:29:35,049 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-base/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/config.json "HTTP/1.1 200 OK"
+2025-12-15 17:29:35,103 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-base/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/vocabulary.txt "HTTP/1.1 200 OK"
+2025-12-15 17:29:35,106 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-base/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/tokenizer.json "HTTP/1.1 200 OK"
+2025-12-15 17:29:35,168 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-base/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/tokenizer.json "HTTP/1.1 200 OK"
+2025-12-15 17:29:35,173 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-base/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/vocabulary.txt "HTTP/1.1 200 OK"
+2025-12-15 17:29:35,178 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/xet-read-token/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66 "HTTP/1.1 200 OK"
+2025-12-15 17:29:40,372 - src.recognizer - INFO - Whisper Model loaded
+2025-12-15 17:29:54,500 - __main__ - INFO - Starting listening...
+2025-12-15 17:29:54,520 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 17:29:54,520 - src.audio - INFO - Audio stream started.
+2025-12-15 17:30:01,032 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:30:01,033 - faster_whisper - INFO - Processing audio with duration 00:06.500
+2025-12-15 17:30:02,092 - src.recognizer - INFO - [Whisper] Result: What we need to do.
+2025-12-15 17:30:02,092 - __main__ - INFO - Recognized: What we need to do.
+2025-12-15 17:30:02,092 - src.injection - INFO - Injecting text: 'What we need to do.'
+2025-12-15 17:30:14,524 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:30:14,524 - faster_whisper - INFO - Processing audio with duration 00:13.500
+2025-12-15 17:30:15,347 - src.recognizer - INFO - [Whisper] Result: is change the application so it's no longer a right-click menu for settings.
+2025-12-15 17:30:15,347 - __main__ - INFO - Recognized: is change the application so it's no longer a right-click menu for settings.
+2025-12-15 17:30:15,347 - src.injection - INFO - Injecting text: 'is change the application so it's no longer a right-click menu for settings.'
+2025-12-15 17:30:36,524 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:30:36,525 - faster_whisper - INFO - Processing audio with duration 00:21.000
+2025-12-15 17:30:38,740 - src.recognizer - INFO - [Whisper] Result: We need it for settings for the application if we double-click on the icon in the task tray. And then you show me a window with a couple of tabs. The first tab.
+2025-12-15 17:30:38,741 - __main__ - INFO - Recognized: We need it for settings for the application if we double-click on the icon in the task tray. And then you show me a window with a couple of tabs. The first tab.
+2025-12-15 17:30:38,741 - src.injection - INFO - Injecting text: 'We need it for settings for the application if we double-click on the icon in the task tray. And then you show me a window with a couple of tabs. The first tab.'
+2025-12-15 17:30:59,031 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:30:59,031 - faster_whisper - INFO - Processing audio with duration 00:22.500
+2025-12-15 17:31:00,352 - src.recognizer - INFO - [Whisper] Result: is a start-stop button for listening. The next tab is what recognition we're going to do, and then the next tab is the list of microphones that we're selecting. And just get rid of the menuing system altogether.
+2025-12-15 17:31:00,353 - __main__ - INFO - Recognized: is a start-stop button for listening. The next tab is what recognition we're going to do, and then the next tab is the list of microphones that we're selecting. And just get rid of the menuing system altogether.
+2025-12-15 17:31:00,353 - src.injection - INFO - Injecting text: 'is a start-stop button for listening. The next tab is what recognition we're going to do, and then the next tab is the list of microphones that we're selecting. And just get rid of the menuing system altogether.'
+2025-12-15 17:31:08,530 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:31:08,530 - faster_whisper - INFO - Processing audio with duration 00:09.500
+2025-12-15 17:32:19,524 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:32:19,525 - faster_whisper - INFO - Processing audio with duration 01:11.000
+2025-12-15 17:32:41,533 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:32:41,534 - faster_whisper - INFO - Processing audio with duration 00:22.000
+2025-12-15 17:32:42,300 - src.recognizer - INFO - [Whisper] Result: Microphone. Select it.
+2025-12-15 17:32:42,300 - __main__ - INFO - Recognized: Microphone. Select it.
+2025-12-15 17:32:42,300 - src.injection - INFO - Injecting text: 'Microphone. Select it.'
+2025-12-15 17:33:02,525 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:33:02,527 - faster_whisper - INFO - Processing audio with duration 00:21.000
+2025-12-15 17:33:03,940 - src.recognizer - INFO - [Whisper] Result: Right-click.
+2025-12-15 17:33:03,941 - __main__ - INFO - Recognized: Right-click.
+2025-12-15 17:33:03,941 - src.injection - INFO - Injecting text: 'Right-click.'
+2025-12-15 17:33:26,525 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:33:26,526 - faster_whisper - INFO - Processing audio with duration 00:24.000
+2025-12-15 17:33:28,214 - src.recognizer - INFO - [Whisper] Result: Add a Save button at the bottom, clicking the Save button closes the window and saves in persist all of our settings that will be reloaded when we reopen the settings menu.
+2025-12-15 17:33:28,214 - __main__ - INFO - Recognized: Add a Save button at the bottom, clicking the Save button closes the window and saves in persist all of our settings that will be reloaded when we reopen the settings menu.
+2025-12-15 17:33:28,214 - src.injection - INFO - Injecting text: 'Add a Save button at the bottom, clicking the Save button closes the window and saves in persist all of our settings that will be reloaded when we reopen the settings menu.'
+2025-12-15 17:33:38,532 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:33:38,532 - faster_whisper - INFO - Processing audio with duration 00:12.000
+2025-12-15 17:33:39,719 - __main__ - INFO - Stopping listening...
+2025-12-15 17:39:06,210 - src.recognizer - INFO - Switching engine to: whisper
+2025-12-15 17:39:06,210 - src.recognizer - INFO - Loading Faster-Whisper model (base)...
+2025-12-15 17:39:06,821 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2025-12-15 17:39:07,226 - src.recognizer - INFO - Whisper Model loaded
+2025-12-15 17:39:07,230 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 17:39:07,231 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 17:39:07,283 - __main__ - INFO - VoxInput Application Started
+2025-12-15 17:39:22,576 - __main__ - INFO - Starting listening...
+2025-12-15 17:39:22,595 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 17:39:22,595 - src.audio - INFO - Audio stream started.
+2025-12-15 17:39:25,602 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:39:25,603 - faster_whisper - INFO - Processing audio with duration 00:03.000
+2025-12-15 17:39:31,599 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:39:31,600 - faster_whisper - INFO - Processing audio with duration 00:06.000
+2025-12-15 17:39:32,387 - src.recognizer - INFO - [Whisper] Result: The brown fox jumped over.
+2025-12-15 17:39:32,387 - __main__ - INFO - Recognized: The brown fox jumped over.
+2025-12-15 17:39:32,387 - src.injection - INFO - Injecting text: 'The brown fox jumped over.'
+2025-12-15 17:39:40,600 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:39:40,601 - faster_whisper - INFO - Processing audio with duration 00:09.000
+2025-12-15 17:39:41,395 - src.recognizer - INFO - [Whisper] Result: Testing, testing, one, two, three.
+2025-12-15 17:39:41,396 - __main__ - INFO - Recognized: Testing, testing, one, two, three.
+2025-12-15 17:39:41,396 - src.injection - INFO - Injecting text: 'Testing, testing, one, two, three.'
+2025-12-15 17:39:52,932 - __main__ - INFO - Changing recognition engine to: vosk
+2025-12-15 17:39:52,933 - __main__ - INFO - Stopping listening...
+2025-12-15 17:39:53,103 - src.recognizer - INFO - Switching engine to: vosk
+2025-12-15 17:39:53,103 - src.recognizer - INFO - Loading Vosk model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 17:39:53,750 - src.recognizer - INFO - Vosk Model loaded
+2025-12-15 17:39:53,776 - __main__ - INFO - Starting listening...
+2025-12-15 17:39:53,795 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 17:39:53,795 - src.audio - INFO - Audio stream started.
+2025-12-15 17:39:53,796 - __main__ - INFO - Changing input device to Index: 5
+2025-12-15 17:39:53,796 - __main__ - INFO - Stopping listening...
+2025-12-15 17:39:54,302 - __main__ - INFO - Starting listening...
+2025-12-15 17:39:54,320 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 17:39:54,320 - src.audio - INFO - Audio stream started.
+2025-12-15 17:40:05,861 - src.recognizer - INFO - [Vosk] Recognized: huh
+2025-12-15 17:40:05,862 - __main__ - INFO - Recognized: huh
+2025-12-15 17:40:05,862 - src.injection - INFO - Injecting text: 'huh'
+2025-12-15 17:40:12,869 - src.recognizer - INFO - [Vosk] Recognized: hello my name is my name is
+2025-12-15 17:40:12,869 - __main__ - INFO - Recognized: hello my name is my name is
+2025-12-15 17:40:12,869 - src.injection - INFO - Injecting text: 'hello my name is my name is'
+2025-12-15 17:40:15,342 - src.recognizer - INFO - [Vosk] Recognized: slim shady
+2025-12-15 17:40:15,342 - __main__ - INFO - Recognized: slim shady
+2025-12-15 17:40:15,343 - src.injection - INFO - Injecting text: 'slim shady'
+2025-12-15 17:40:27,339 - src.recognizer - INFO - [Vosk] Recognized: this is a development server gonna use it in production deployment use of production dsg i server instead
+2025-12-15 17:40:27,339 - __main__ - INFO - Recognized: this is a development server gonna use it in production deployment use of production dsg i server instead
+2025-12-15 17:40:27,339 - src.injection - INFO - Injecting text: 'this is a development server gonna use it in production deployment use of production dsg i server instead'
+2025-12-15 17:40:45,204 - __main__ - INFO - Changing recognition engine to: whisper
+2025-12-15 17:40:45,205 - __main__ - INFO - Stopping listening...
+2025-12-15 17:40:45,325 - src.recognizer - INFO - Switching engine to: whisper
+2025-12-15 17:40:45,325 - src.recognizer - INFO - Loading Faster-Whisper model (base)...
+2025-12-15 17:40:45,708 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2025-12-15 17:40:46,046 - src.recognizer - INFO - Whisper Model loaded
+2025-12-15 17:40:46,112 - __main__ - INFO - Starting listening...
+2025-12-15 17:40:46,132 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 17:40:46,132 - src.audio - INFO - Audio stream started.
+2025-12-15 17:40:46,132 - __main__ - INFO - Changing input device to Index: 5
+2025-12-15 17:40:46,132 - __main__ - INFO - Stopping listening...
+2025-12-15 17:40:46,639 - __main__ - INFO - Starting listening...
+2025-12-15 17:40:46,659 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 17:40:46,659 - src.audio - INFO - Audio stream started.
+2025-12-15 17:41:06,667 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:41:06,671 - faster_whisper - INFO - Processing audio with duration 00:20.000
+2025-12-15 17:41:08,471 - src.recognizer - INFO - [Whisper] Result: Warning, this is a development server, do not use it in a production deployment, use a production WSGI server instead.
+2025-12-15 17:41:08,471 - __main__ - INFO - Recognized: Warning, this is a development server, do not use it in a production deployment, use a production WSGI server instead.
+2025-12-15 17:41:08,471 - src.injection - INFO - Injecting text: 'Warning, this is a development server, do not use it in a production deployment, use a production WSGI server instead.'
+2025-12-15 17:41:19,474 - __main__ - INFO - Changing recognition engine to: vosk
+2025-12-15 17:41:19,476 - __main__ - INFO - Stopping listening...
+2025-12-15 17:41:19,663 - src.recognizer - INFO - Switching engine to: vosk
+2025-12-15 17:41:19,664 - src.recognizer - INFO - Loading Vosk model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 17:41:20,147 - src.recognizer - INFO - Vosk Model loaded
+2025-12-15 17:41:20,164 - __main__ - INFO - Starting listening...
+2025-12-15 17:41:20,183 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 17:41:20,183 - src.audio - INFO - Audio stream started.
+2025-12-15 17:41:20,183 - __main__ - INFO - Changing input device to Index: 5
+2025-12-15 17:41:20,183 - __main__ - INFO - Stopping listening...
+2025-12-15 17:41:20,691 - __main__ - INFO - Starting listening...
+2025-12-15 17:41:20,709 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 17:41:20,710 - src.audio - INFO - Audio stream started.
+2025-12-15 17:41:32,731 - src.recognizer - INFO - [Vosk] Recognized: warning this is development server do not use it in a production deployment use a production the bsg i server instead
+2025-12-15 17:41:32,731 - __main__ - INFO - Recognized: warning this is development server do not use it in a production deployment use a production the bsg i server instead
+2025-12-15 17:41:32,731 - src.injection - INFO - Injecting text: 'warning this is development server do not use it in a production deployment use a production the bsg i server instead'
+2025-12-15 17:41:46,833 - __main__ - INFO - Changing recognition engine to: whisper
+2025-12-15 17:41:46,834 - __main__ - INFO - Stopping listening...
+2025-12-15 17:41:47,217 - src.recognizer - INFO - Switching engine to: whisper
+2025-12-15 17:41:47,217 - src.recognizer - INFO - Loading Faster-Whisper model (base)...
+2025-12-15 17:41:47,677 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2025-12-15 17:41:48,011 - src.recognizer - INFO - Whisper Model loaded
+2025-12-15 17:41:48,073 - __main__ - INFO - Starting listening...
+2025-12-15 17:41:48,091 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 17:41:48,092 - src.audio - INFO - Audio stream started.
+2025-12-15 17:41:48,092 - __main__ - INFO - Changing input device to Index: 5
+2025-12-15 17:41:48,092 - __main__ - INFO - Stopping listening...
+2025-12-15 17:41:48,600 - __main__ - INFO - Starting listening...
+2025-12-15 17:41:48,619 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 17:41:48,619 - src.audio - INFO - Audio stream started.
+2025-12-15 17:41:52,128 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:41:52,129 - faster_whisper - INFO - Processing audio with duration 00:03.500
+2025-12-15 17:42:30,123 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:42:30,126 - faster_whisper - INFO - Processing audio with duration 00:38.000
+2025-12-15 17:43:32,126 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:43:32,129 - faster_whisper - INFO - Processing audio with duration 01:02.000
+2025-12-15 17:43:46,621 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:43:46,622 - faster_whisper - INFO - Processing audio with duration 00:14.500
+2025-12-15 17:43:48,184 - src.recognizer - INFO - [Whisper] Result: I'm going to put it on the side of the head and I'm going to put it on the side of the head. I'm going to put it on the side of the head.
+2025-12-15 17:43:48,185 - __main__ - INFO - Recognized: I'm going to put it on the side of the head and I'm going to put it on the side of the head. I'm going to put it on the side of the head.
+2025-12-15 17:43:48,185 - src.injection - INFO - Injecting text: 'I'm going to put it on the side of the head and I'm going to put it on the side of the head. I'm going to put it on the side of the head.'
+2025-12-15 17:44:28,127 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:44:28,128 - faster_whisper - INFO - Processing audio with duration 00:41.500
+2025-12-15 17:44:37,043 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:44:37,044 - faster_whisper - INFO - Processing audio with duration 00:05.500
+2025-12-15 17:44:45,660 - __main__ - INFO - Stopping listening...
+2025-12-15 17:44:58,461 - src.recognizer - INFO - Switching engine to: whisper
+2025-12-15 17:44:58,461 - src.recognizer - INFO - Loading Faster-Whisper model (base)...
+2025-12-15 17:44:59,082 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2025-12-15 17:44:59,552 - src.recognizer - INFO - Whisper Model loaded
+2025-12-15 17:44:59,558 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 17:44:59,558 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 17:44:59,651 - __main__ - INFO - VoxInput Application Started
+2025-12-15 17:46:20,749 - src.audio - ERROR - Mic Test Failed: [Errno -9997] Invalid sample rate
+2025-12-15 17:46:27,974 - src.audio - ERROR - Mic Test Failed: [Errno -9997] Invalid sample rate
+2025-12-15 17:46:32,483 - __main__ - INFO - Changing recognition engine to: whisper
+2025-12-15 17:46:32,483 - src.recognizer - INFO - Switching engine to: whisper
+2025-12-15 17:46:32,483 - src.recognizer - INFO - Loading Faster-Whisper model (base)...
+2025-12-15 17:46:32,787 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2025-12-15 17:46:33,155 - src.recognizer - INFO - Whisper Model loaded
+2025-12-15 17:46:33,174 - __main__ - INFO - Changing input device to Index: 5
+2025-12-15 17:47:30,036 - __main__ - INFO - Starting listening...
+2025-12-15 17:47:30,053 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 17:47:30,054 - src.audio - INFO - Audio stream started.
+2025-12-15 17:47:33,058 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:47:33,059 - faster_whisper - INFO - Processing audio with duration 00:03.000
+2025-12-15 17:47:44,056 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:47:44,056 - faster_whisper - INFO - Processing audio with duration 00:11.000
+2025-12-15 17:47:45,161 - src.recognizer - INFO - [Whisper] Result: Add to the readme what the hotkeys are.
+2025-12-15 17:47:45,162 - __main__ - INFO - Recognized: Add to the readme what the hotkeys are.
+2025-12-15 17:47:45,163 - src.injection - INFO - Injecting text: 'Add to the readme what the hotkeys are.'
+2025-12-15 17:47:57,558 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:47:57,559 - faster_whisper - INFO - Processing audio with duration 00:13.500
+2025-12-15 17:47:58,747 - src.recognizer - INFO - [Whisper] Result: If I...
+2025-12-15 17:47:58,748 - __main__ - INFO - Recognized: If I...
+2025-12-15 17:47:58,748 - src.injection - INFO - Injecting text: 'If I...'
+2025-12-15 17:48:32,558 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:48:32,559 - faster_whisper - INFO - Processing audio with duration 00:35.000
+2025-12-15 17:48:34,714 - src.recognizer - INFO - [Whisper] Result: We need to sort out what clicking on the icon in the task tray means. I think we need to right-click and choose a menu that says Open Settings. And then I think if we double-click the icon it starts listening and turns red. And then I think we need to double-click it again and it turns red with a line through it.
+2025-12-15 17:48:34,714 - __main__ - INFO - Recognized: We need to sort out what clicking on the icon in the task tray means. I think we need to right-click and choose a menu that says Open Settings. And then I think if we double-click the icon it starts listening and turns red. And then I think we need to double-click it again and it turns red with a line through it.
+2025-12-15 17:48:34,714 - src.injection - INFO - Injecting text: 'We need to sort out what clicking on the icon in the task tray means. I think we need to right-click and choose a menu that says Open Settings. And then I think if we double-click the icon it starts listening and turns red. And then I think we need to double-click it again and it turns red with a line through it.'
+2025-12-15 17:48:46,555 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:48:46,556 - faster_whisper - INFO - Processing audio with duration 00:14.000
+2025-12-15 17:48:53,277 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:48:53,278 - faster_whisper - INFO - Processing audio with duration 00:05.000
+2025-12-15 17:48:55,473 - src.recognizer - INFO - [Whisper] Result: Thank you very much for your time, thank you very much for your time, thank you very much.
+2025-12-15 17:48:55,473 - __main__ - INFO - Recognized: Thank you very much for your time, thank you very much for your time, thank you very much.
+2025-12-15 17:48:55,473 - src.injection - INFO - Injecting text: 'Thank you very much for your time, thank you very much for your time, thank you very much.'
+2025-12-15 17:49:26,517 - __main__ - INFO - Stopping listening...
