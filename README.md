@@ -36,9 +36,9 @@ sudo apt install python3-pip python3-venv python3-gi python3-gi-cairo gir1.2-gtk
    - Extract it to `model/` directory in the project root.
 
 ## Usage
-Run the application:
+Run the application as a module to handle relative imports correctly:
 ```bash
-python src/main.py
+python -m src.main
 ```
 - A microphone icon will appear in the system tray.
 - Press **Super+M** or click "Start Listening" to begin dictation.
