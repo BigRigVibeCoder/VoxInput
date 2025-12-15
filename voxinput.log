@@ -1,0 +1,12 @@
+2025-12-15 10:46:32,882 - __main__ - CRITICAL - Unhandled exception in main: name 'AudioCapture' is not defined
+Traceback (most recent call last):
+  File "/home/bdavidriggins/.gemini/antigravity/scratch/VoxInput/src/main.py", line 130, in <module>
+    app = VoxInputApp()
+          ^^^^^^^^^^^^^
+  File "/home/bdavidriggins/.gemini/antigravity/scratch/VoxInput/src/main.py", line 29, in __init__
+    self.audio = AudioCapture()
+                 ^^^^^^^^^^^^
+NameError: name 'AudioCapture' is not defined
+2025-12-15 10:46:56,782 - src.recognizer - INFO - Loading model from /home/bdavidriggins/.gemini/antigravity/scratch/VoxInput/src/../model
+2025-12-15 10:46:57,626 - src.recognizer - INFO - Model loaded successfully
+2025-12-15 10:46:57,694 - __main__ - INFO - VoxInput Application Started
