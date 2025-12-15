@@ -1,11 +1,13 @@
 import gi
 gi.require_version('Gtk', '3.0')
-gi.require_version('AppIndicator3', '0.1')
-from gi.repository import Gtk, AppIndicator3, GLib, GObject
+from gi.repository import Gtk, GLib, GObject
 import os
 import signal
 import threading
+import logging
 from .audio import MicTester
+
+logger = logging.getLogger(__name__)
 
 # Constants
 APP_ID = "com.voxinput.app"
@@ -213,15 +215,26 @@ class SystemTrayApp:
         
         self.window = None
 
-        # Create Indicator
-        self.indicator = AppIndicator3.Indicator.new(
-            APP_ID,
-            ICON_IDLE_FALLBACK,
-            AppIndicator3.IndicatorCategory.APPLICATION_STATUS
-        )
-        self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
+        # Preload Icons as Pixbufs
+        self.icon_pixbufs = {}
+        try:
+             from gi.repository import GdkPixbuf
+             self.icon_pixbufs[ICON_GREEN] = GdkPixbuf.Pixbuf.new_from_file(ICON_GREEN)
+             self.icon_pixbufs[ICON_RED] = GdkPixbuf.Pixbuf.new_from_file(ICON_RED)
+             self.icon_pixbufs[ICON_WHITE] = GdkPixbuf.Pixbuf.new_from_file(ICON_WHITE)
+        except Exception as e:
+             logging.error(f"Failed to load icon pixbufs: {e}")
+
+        # Create Status Icon
+        self.icon = Gtk.StatusIcon()
+        self.icon.set_title("VoxInput")
+        self.icon.set_tooltip_text("VoxInput: Idle")
         
-        # Set Initial Icon (Green = Ready/Idle)
+        # Connect Signals
+        self.icon.connect('activate', self._on_activate)
+        self.icon.connect('popup-menu', self._on_popup_menu)
+        
+        # Set Initial Icon
         self._set_icon(ICON_GREEN, ICON_IDLE_FALLBACK)
         
         # Tray Menu
@@ -233,40 +246,37 @@ class SystemTrayApp:
         self.flash_target_state = False
 
     def _build_tray_menu(self):
-        menu = Gtk.Menu()
+        self.menu = Gtk.Menu()
         
-        # 1. Open Settings
-        item_settings = Gtk.MenuItem(label="Open Settings")
-        item_settings.connect('activate', lambda _: self.open_settings_window())
-        menu.append(item_settings)
-        
-        menu.append(Gtk.SeparatorMenuItem())
-        
-        # 2. Start/Stop Listening
+        # 1. Start/Stop Listening (Top Item for Quick Access/Default)
         self.item_toggle = Gtk.MenuItem(label="Start Listening (Ctrl+Alt+M)")
         self.item_toggle.connect('activate', lambda _: self.toggle_callback())
-        menu.append(self.item_toggle)
+        self.menu.append(self.item_toggle)
         
-        menu.append(Gtk.SeparatorMenuItem())
+        self.menu.append(Gtk.SeparatorMenuItem())
+
+        # 2. Open Settings
+        item_settings = Gtk.MenuItem(label="Open Settings")
+        item_settings.connect('activate', lambda _: self.open_settings_window())
+        self.menu.append(item_settings)
+        
+        self.menu.append(Gtk.SeparatorMenuItem())
         
         # 3. Quit
         item_quit = Gtk.MenuItem(label="Quit")
         item_quit.connect('activate', lambda _: self.quit_callback())
-        menu.append(item_quit)
+        self.menu.append(item_quit)
         
-        menu.show_all()
-        self.indicator.set_menu(menu)
-        
-        # Activate Action (Left Click) -> Toggle Listening
-        # Note: Some DEs treat Activate as Open Menu. 
-        # But we set the secondary action if possible or rely on standard activate.
-        # We try to bind 'activate' signal of the indicator if possible in GI, 
-        # but usually AppIndicator3 uses the menu as the primary interaction.
-        # However, setting a "Secondary Activate Target" is supported by some indicators.
-        try:
-             self.indicator.set_secondary_activate_target(self.item_toggle)
-        except:
-             pass
+        self.menu.show_all()
+
+    def _on_activate(self, widget):
+        # Left Click -> Toggle Listening
+        self.toggle_callback()
+
+    def _on_popup_menu(self, icon, button, time):
+        # Right Click -> Show Menu
+        self.menu.show_all()
+        self.menu.popup(None, None, Gtk.StatusIcon.position_menu, icon, button, time)
 
     def open_settings_window(self):
         if self.window:
@@ -306,7 +316,7 @@ class SystemTrayApp:
         if self.window:
             GLib.idle_add(self.window.update_listening_state, is_listening)
         
-        # Tray Icon Animation
+        # Cancel any existing timer just in case
         if self.flash_timer:
             try:
                 GLib.source_remove(self.flash_timer)
@@ -314,43 +324,27 @@ class SystemTrayApp:
                 pass
             self.flash_timer = None
             
-        self.flash_count = 0
-        self.flash_target_state = is_listening
         
-        # Update Menu Label
-        if self.is_listening:
-             self.item_toggle.set_label("Stop Listening (Ctrl+Alt+M)")
-        else:
-             self.item_toggle.set_label("Start Listening (Ctrl+Alt+M)")
-             
-        self._flash_step()
+        def _update_ui():
+            # Update Menu Label & Tooltip & Icon Directly
+            if self.is_listening:
+                 self.item_toggle.set_label("Stop Listening (Ctrl+Alt+M)")
+                 self.icon.set_tooltip_text("VoxInput: Listening")
+                 self._set_icon(ICON_RED, ICON_ACTIVE_FALLBACK)
+            else:
+                 self.item_toggle.set_label("Start Listening (Ctrl+Alt+M)")
+                 self.icon.set_tooltip_text("VoxInput: Idle")
+                 self._set_icon(ICON_GREEN, ICON_IDLE_FALLBACK)
+        
+        GLib.idle_add(_update_ui)
 
-    def _flash_step(self):
-        # NEW LOGIC:
-        # Green = Idle/Ready
-        # Red = Active/Listening
-        
-        state_idx = self.flash_count
-        if self.flash_target_state: # To Listening (Green -> Red)
-            if state_idx == 0: self._set_icon(ICON_GREEN, ICON_IDLE_FALLBACK)
-            elif state_idx == 1: self._set_icon(ICON_WHITE, ICON_IDLE_FALLBACK)
-            elif state_idx == 2: self._set_icon(ICON_RED, ICON_ACTIVE_FALLBACK)
-            else:
-                self._set_icon(ICON_RED, ICON_ACTIVE_FALLBACK)
-                return False
-        else: # To Idle (Red -> Green)
-            if state_idx == 0: self._set_icon(ICON_RED, ICON_ACTIVE_FALLBACK)
-            elif state_idx == 1: self._set_icon(ICON_WHITE, ICON_IDLE_FALLBACK)
-            elif state_idx == 2: self._set_icon(ICON_GREEN, ICON_IDLE_FALLBACK)
-            else:
-                self._set_icon(ICON_GREEN, ICON_IDLE_FALLBACK)
-                return False
-        self.flash_count += 1
-        self.flash_timer = GLib.timeout_add(250, self._flash_step)
-        return True
+    # _flash_step removed as it is no longer used
 
     def _set_icon(self, path, fallback):
-        if os.path.exists(path):
-            self.indicator.set_icon_full(path, "VoxInput")
+        # logging.info(f"Setting icon to: {path}") # Debug
+        if path in self.icon_pixbufs:
+             self.icon.set_from_pixbuf(self.icon_pixbufs[path])
+        elif os.path.exists(path):
+            self.icon.set_from_file(path)
         else:
-            self.indicator.set_icon_full(fallback, "VoxInput")
+            self.icon.set_from_icon_name(fallback)

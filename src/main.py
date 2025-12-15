@@ -46,6 +46,7 @@ class VoxInputApp:
         self.is_listening = False
         self.should_quit = False
         self.processing_thread = None
+        self.current_partial_len = 0 # Track length of partial text for backspacing
         
         # Audio Device Persistence
         if saved_index is not None:
@@ -168,6 +169,7 @@ class VoxInputApp:
             
         logger.info("Starting listening...")
         self.is_listening = True
+        self.current_partial_len = 0 # Reset
         self.ui.set_listening_state(True)
         self.audio.start()
         
@@ -191,14 +193,26 @@ class VoxInputApp:
         while self.is_listening and not self.should_quit:
             data = self.audio.get_data()
             if data:
-                # logger.debug(f"Process loop: Got {len(data)} bytes") # Commented out to reduce noise, enable if needed
                 try:
-                    text = self.recognizer.process_audio(data)
+                    text, is_final = self.recognizer.process_audio(data)
                     if text:
-                        logger.info(f"Recognized: {text}")
-                        # Inject text to main thread or via UI idle add if needed?
-                        # pynput is thread safe mostly, but let's be careful.
+                        # Handle backspacing for partials
+                        # We only backspace if we are updating a previous partial.
+                        # If current_partial_len > 0, it means we typed something tentative last time.
+                        if self.current_partial_len > 0:
+                            self.injector.delete_chars(self.current_partial_len)
+                        
                         self.injector.type_text(text)
+                        
+                        if is_final:
+                            # Final result submitted. We are done with this sentence.
+                            # We do NOT want to backspace this text on the next loop.
+                            self.current_partial_len = 0
+                        else:
+                            # Partial result. We typed it, but might need to replace it next time.
+                            # Track its length (text + 1 space)
+                            self.current_partial_len = len(text) + 1 
+                            
                 except Exception as e:
                     logger.error(f"Error processing audio: {e}", exc_info=True)
             else:

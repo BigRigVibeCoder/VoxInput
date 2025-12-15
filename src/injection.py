@@ -44,3 +44,20 @@ class TextInjector:
     def backspace(self):
         self.keyboard.press(Key.backspace)
         self.keyboard.release(Key.backspace)
+
+    def delete_chars(self, count):
+        if count <= 0:
+            return
+        
+        # Method 1: xdotool key repeat
+        if self.has_xdotool:
+            try:
+                # 'BackSpace' is the key name for xdotool
+                subprocess.run(['xdotool', 'key', '--clearmodifiers', '--repeat', str(count), 'BackSpace'], check=False)
+                return
+            except Exception as e:
+                logger.error(f"xdotool backspace failed: {e}")
+
+        # Method 2: pynput loop
+        for _ in range(count):
+            self.backspace()

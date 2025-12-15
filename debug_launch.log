@@ -1,0 +1,62 @@
+ALSA lib pcm.c:2721:(snd_pcm_open_noupdate) Unknown PCM cards.pcm.rear
+ALSA lib pcm.c:2721:(snd_pcm_open_noupdate) Unknown PCM cards.pcm.center_lfe
+ALSA lib pcm.c:2721:(snd_pcm_open_noupdate) Unknown PCM cards.pcm.side
+ALSA lib pcm_route.c:878:(find_matching_chmap) Found no matching channel map
+ALSA lib pcm_route.c:878:(find_matching_chmap) Found no matching channel map
+ALSA lib pcm_route.c:878:(find_matching_chmap) Found no matching channel map
+ALSA lib pcm_route.c:878:(find_matching_chmap) Found no matching channel map
+Cannot connect to server socket err = No such file or directory
+Cannot connect to server request channel
+jack server is not running or cannot be started
+JackShmReadWritePtr::~JackShmReadWritePtr - Init not done for -1, skipping unlock
+JackShmReadWritePtr::~JackShmReadWritePtr - Init not done for -1, skipping unlock
+Cannot connect to server socket err = No such file or directory
+Cannot connect to server request channel
+jack server is not running or cannot be started
+JackShmReadWritePtr::~JackShmReadWritePtr - Init not done for -1, skipping unlock
+JackShmReadWritePtr::~JackShmReadWritePtr - Init not done for -1, skipping unlock
+ALSA lib pcm_oss.c:397:(_snd_pcm_oss_open) Cannot open device /dev/dsp
+ALSA lib pcm_oss.c:397:(_snd_pcm_oss_open) Cannot open device /dev/dsp
+ALSA lib pcm_a52.c:1001:(_snd_pcm_a52_open) a52 is only for playback
+ALSA lib confmisc.c:160:(snd_config_get_card) Invalid field card
+ALSA lib pcm_usb_stream.c:482:(_snd_pcm_usb_stream_open) Invalid card 'card'
+ALSA lib confmisc.c:160:(snd_config_get_card) Invalid field card
+ALSA lib pcm_usb_stream.c:482:(_snd_pcm_usb_stream_open) Invalid card 'card'
+Cannot connect to server socket err = No such file or directory
+Cannot connect to server request channel
+jack server is not running or cannot be started
+JackShmReadWritePtr::~JackShmReadWritePtr - Init not done for -1, skipping unlock
+JackShmReadWritePtr::~JackShmReadWritePtr - Init not done for -1, skipping unlock
+2025-12-15 18:07:25,098 - src.recognizer - INFO - Switching engine to: whisper
+2025-12-15 18:07:25,098 - src.recognizer - INFO - Loading Faster-Whisper model (base)...
+2025-12-15 18:07:25,805 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2025-12-15 18:07:26,284 - src.recognizer - INFO - Whisper Model loaded
+2025-12-15 18:07:26,290 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 18:07:26,291 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 18:07:26,428 - __main__ - INFO - VoxInput Application Started
+2025-12-15 18:11:19,088 - __main__ - INFO - Starting listening...
+Expression 'ret' failed in 'src/hostapi/alsa/pa_linux_alsa.c', line: 1736
+Expression 'AlsaOpen( &alsaApi->baseHostApiRep, params, streamDir, &self->pcm )' failed in 'src/hostapi/alsa/pa_linux_alsa.c', line: 1904
+Expression 'PaAlsaStreamComponent_Initialize( &self->capture, alsaApi, inParams, StreamDirection_In, NULL != callback )' failed in 'src/hostapi/alsa/pa_linux_alsa.c', line: 2171
+Expression 'PaAlsaStream_Initialize( stream, alsaHostApi, inputParameters, outputParameters, sampleRate, framesPerBuffer, callback, streamFlags, userData )' failed in 'src/hostapi/alsa/pa_linux_alsa.c', line: 2839
+2025-12-15 18:11:20,134 - src.audio - ERROR - Failed to start audio stream: [Errno -9985] Device unavailable
+Traceback (most recent call last):
+  File "/home/bdavidriggins/Documents/VoxInput/src/ui.py", line 264, in _on_activate
+    self.toggle_callback()
+  File "/home/bdavidriggins/Documents/VoxInput/src/main.py", line 162, in toggle_listening
+    self.start_listening()
+  File "/home/bdavidriggins/Documents/VoxInput/src/main.py", line 172, in start_listening
+    self.audio.start()
+  File "/home/bdavidriggins/Documents/VoxInput/src/audio.py", line 28, in start
+    self.stream = self.pa.open(
+                  ^^^^^^^^^^^^^
+  File "/home/bdavidriggins/Documents/VoxInput/venv/lib/python3.12/site-packages/pyaudio/__init__.py", line 639, in open
+    stream = PyAudio.Stream(self, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bdavidriggins/Documents/VoxInput/venv/lib/python3.12/site-packages/pyaudio/__init__.py", line 441, in __init__
+    self._stream = pa.open(**arguments)
+                   ^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno -9985] Device unavailable
+2025-12-15 18:11:23,626 - __main__ - INFO - Stopping listening...
+/home/bdavidriggins/Documents/VoxInput/src/ui.py:312: Warning: Source ID 23 was not found when attempting to remove it
+  GLib.source_remove(self.flash_timer)

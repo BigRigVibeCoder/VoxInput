@@ -754,3 +754,362 @@ TypeError: Must be sequence, not RadioMenuItem
 2025-12-15 17:48:55,473 - __main__ - INFO - Recognized: Thank you very much for your time, thank you very much for your time, thank you very much.
 2025-12-15 17:48:55,473 - src.injection - INFO - Injecting text: 'Thank you very much for your time, thank you very much for your time, thank you very much.'
 2025-12-15 17:49:26,517 - __main__ - INFO - Stopping listening...
+2025-12-15 17:54:01,166 - src.recognizer - INFO - Switching engine to: whisper
+2025-12-15 17:54:01,166 - src.recognizer - INFO - Loading Faster-Whisper model (base)...
+2025-12-15 17:54:02,004 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2025-12-15 17:54:02,614 - src.recognizer - INFO - Whisper Model loaded
+2025-12-15 17:54:02,619 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 17:54:02,620 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 17:54:02,693 - __main__ - INFO - VoxInput Application Started
+2025-12-15 17:54:54,912 - src.recognizer - INFO - Switching engine to: whisper
+2025-12-15 17:54:54,913 - src.recognizer - INFO - Loading Faster-Whisper model (base)...
+2025-12-15 17:54:55,535 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2025-12-15 17:54:55,914 - src.recognizer - INFO - Whisper Model loaded
+2025-12-15 17:54:55,919 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 17:54:55,919 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 17:54:55,998 - __main__ - INFO - VoxInput Application Started
+2025-12-15 17:55:02,167 - __main__ - INFO - Starting listening...
+2025-12-15 17:55:02,183 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 17:55:02,184 - src.audio - INFO - Audio stream started.
+2025-12-15 17:55:07,689 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:55:07,691 - faster_whisper - INFO - Processing audio with duration 00:05.500
+2025-12-15 17:55:08,642 - src.recognizer - INFO - [Whisper] Result: Testing 1, 2, 3
+2025-12-15 17:55:08,643 - __main__ - INFO - Recognized: Testing 1, 2, 3
+2025-12-15 17:55:08,643 - src.injection - INFO - Injecting text: 'Testing 1, 2, 3'
+2025-12-15 17:55:40,694 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:55:40,695 - faster_whisper - INFO - Processing audio with duration 00:33.000
+2025-12-15 17:55:47,207 - src.recognizer - INFO - [Whisper] Result: Hmm.
+2025-12-15 17:55:47,207 - __main__ - INFO - Recognized: Hmm.
+2025-12-15 17:55:47,207 - src.injection - INFO - Injecting text: 'Hmm.'
+2025-12-15 17:56:02,191 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:56:02,192 - faster_whisper - INFO - Processing audio with duration 00:21.500
+2025-12-15 17:56:09,685 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:56:09,686 - faster_whisper - INFO - Processing audio with duration 00:07.500
+2025-12-15 17:56:17,720 - src.recognizer - INFO - [Whisper] Result: First, push the brake pedal to the side and then push the brake pedal to the side. Then push the brake pedal to the side.
+2025-12-15 17:56:17,720 - __main__ - INFO - Recognized: First, push the brake pedal to the side and then push the brake pedal to the side. Then push the brake pedal to the side.
+2025-12-15 17:56:17,720 - src.injection - INFO - Injecting text: 'First, push the brake pedal to the side and then push the brake pedal to the side. Then push the brake pedal to the side.'
+2025-12-15 17:57:01,692 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:57:01,694 - faster_whisper - INFO - Processing audio with duration 00:52.000
+2025-12-15 17:57:30,187 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:57:30,189 - faster_whisper - INFO - Processing audio with duration 00:28.500
+2025-12-15 17:57:57,693 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:57:57,696 - faster_whisper - INFO - Processing audio with duration 00:27.500
+2025-12-15 17:58:07,893 - src.recognizer - INFO - Switching engine to: whisper
+2025-12-15 17:58:07,893 - src.recognizer - INFO - Loading Faster-Whisper model (base)...
+2025-12-15 17:58:08,578 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2025-12-15 17:58:09,057 - src.recognizer - INFO - Whisper Model loaded
+2025-12-15 17:58:09,064 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 17:58:09,064 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 17:58:09,128 - __main__ - INFO - VoxInput Application Started
+2025-12-15 17:58:21,198 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:58:21,203 - faster_whisper - INFO - Processing audio with duration 00:23.500
+2025-12-15 17:58:46,686 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:58:46,687 - faster_whisper - INFO - Processing audio with duration 00:25.500
+2025-12-15 17:58:57,186 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:58:57,187 - faster_whisper - INFO - Processing audio with duration 00:10.500
+2025-12-15 17:59:06,633 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:59:06,633 - faster_whisper - INFO - Processing audio with duration 00:08.000
+2025-12-15 17:59:13,689 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:59:13,690 - faster_whisper - INFO - Processing audio with duration 00:08.500
+2025-12-15 17:59:41,191 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:59:41,192 - faster_whisper - INFO - Processing audio with duration 00:27.500
+2025-12-15 17:59:59,191 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 17:59:59,194 - faster_whisper - INFO - Processing audio with duration 00:18.000
+2025-12-15 18:00:48,190 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:00:48,191 - faster_whisper - INFO - Processing audio with duration 00:49.000
+2025-12-15 18:00:54,515 - src.recognizer - INFO - [Whisper] Result: I'm going to put it on the side. I'm going to put it on the side. I'm going to put it on the side.
+2025-12-15 18:00:54,515 - __main__ - INFO - Recognized: I'm going to put it on the side. I'm going to put it on the side. I'm going to put it on the side.
+2025-12-15 18:00:54,515 - src.injection - INFO - Injecting text: 'I'm going to put it on the side. I'm going to put it on the side. I'm going to put it on the side.'
+2025-12-15 18:02:32,332 - src.recognizer - INFO - Switching engine to: whisper
+2025-12-15 18:02:32,332 - src.recognizer - INFO - Loading Faster-Whisper model (base)...
+2025-12-15 18:02:33,295 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2025-12-15 18:02:33,686 - src.recognizer - INFO - Whisper Model loaded
+2025-12-15 18:02:33,690 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 18:02:33,691 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 18:02:33,742 - __main__ - INFO - VoxInput Application Started
+2025-12-15 18:02:39,936 - __main__ - INFO - Starting listening...
+2025-12-15 18:02:39,955 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 18:02:39,955 - src.audio - INFO - Audio stream started.
+2025-12-15 18:02:42,957 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:02:42,959 - faster_whisper - INFO - Processing audio with duration 00:03.000
+2025-12-15 18:02:54,965 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:02:54,965 - faster_whisper - INFO - Processing audio with duration 00:12.000
+2025-12-15 18:02:55,724 - src.recognizer - INFO - [Whisper] Result: When I click the left button and click the icon in the task tray, it needs to start lifting.
+2025-12-15 18:02:55,724 - __main__ - INFO - Recognized: When I click the left button and click the icon in the task tray, it needs to start lifting.
+2025-12-15 18:02:55,724 - src.injection - INFO - Injecting text: 'When I click the left button and click the icon in the task tray, it needs to start lifting.'
+2025-12-15 18:03:17,463 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:03:17,464 - faster_whisper - INFO - Processing audio with duration 00:22.500
+2025-12-15 18:03:18,231 - src.recognizer - INFO - [Whisper] Result: When I click the left button again on the Task Tray icon, it needs to stop listening.
+2025-12-15 18:03:18,233 - __main__ - INFO - Recognized: When I click the left button again on the Task Tray icon, it needs to stop listening.
+2025-12-15 18:03:18,233 - src.injection - INFO - Injecting text: 'When I click the left button again on the Task Tray icon, it needs to stop listening.'
+2025-12-15 18:03:23,959 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:03:23,960 - faster_whisper - INFO - Processing audio with duration 00:06.500
+2025-12-15 18:03:41,457 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:03:41,458 - faster_whisper - INFO - Processing audio with duration 00:17.500
+2025-12-15 18:03:49,460 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:03:49,461 - faster_whisper - INFO - Processing audio with duration 00:08.000
+2025-12-15 18:03:50,156 - src.recognizer - INFO - [Whisper] Result: Motherfucker! Huh?
+2025-12-15 18:03:50,157 - __main__ - INFO - Recognized: Motherfucker! Huh?
+2025-12-15 18:03:50,157 - src.injection - INFO - Injecting text: 'Motherfucker! Huh?'
+2025-12-15 18:04:01,956 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:04:01,957 - faster_whisper - INFO - Processing audio with duration 00:12.500
+2025-12-15 18:04:21,464 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:04:21,466 - faster_whisper - INFO - Processing audio with duration 00:19.500
+2025-12-15 18:04:22,258 - src.recognizer - INFO - [Whisper] Result: Don't let me down, don't let me down
+2025-12-15 18:04:22,258 - __main__ - INFO - Recognized: Don't let me down, don't let me down
+2025-12-15 18:04:22,258 - src.injection - INFO - Injecting text: 'Don't let me down, don't let me down'
+2025-12-15 18:04:28,459 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:04:28,460 - faster_whisper - INFO - Processing audio with duration 00:07.000
+2025-12-15 18:04:30,948 - src.recognizer - INFO - [Whisper] Result: How are they?
+2025-12-15 18:04:30,948 - __main__ - INFO - Recognized: How are they?
+2025-12-15 18:04:30,949 - src.injection - INFO - Injecting text: 'How are they?'
+2025-12-15 18:05:03,963 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:05:03,964 - faster_whisper - INFO - Processing audio with duration 00:35.500
+2025-12-15 18:05:42,456 - src.recognizer - INFO - Switching engine to: whisper
+2025-12-15 18:05:42,457 - src.recognizer - INFO - Loading Faster-Whisper model (base)...
+2025-12-15 18:05:43,280 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2025-12-15 18:05:43,815 - src.recognizer - INFO - Whisper Model loaded
+2025-12-15 18:05:43,820 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 18:05:43,820 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 18:05:43,820 - __main__ - CRITICAL - Unhandled exception in main: 'gi.repository.Gtk' object has no attribute 'StatusIcon'
+Traceback (most recent call last):
+  File "/home/bdavidriggins/Documents/VoxInput/src/main.py", line 247, in <module>
+    app = VoxInputApp()
+          ^^^^^^^^^^^^^
+  File "/home/bdavidriggins/Documents/VoxInput/src/main.py", line 59, in __init__
+    self.ui = SystemTrayApp(
+              ^^^^^^^^^^^^^^
+  File "/home/bdavidriggins/Documents/VoxInput/src/ui.py", line 217, in __init__
+    self.icon = Gtk.StatusIcon()
+                ^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/gi/overrides/__init__.py", line 31, in __getattr__
+    return getattr(self._introspection_module, name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/gi/module.py", line 130, in __getattr__
+    raise AttributeError("%r object has no attribute %r" % (
+AttributeError: 'gi.repository.Gtk' object has no attribute 'StatusIcon'
+2025-12-15 18:07:25,098 - src.recognizer - INFO - Switching engine to: whisper
+2025-12-15 18:07:25,098 - src.recognizer - INFO - Loading Faster-Whisper model (base)...
+2025-12-15 18:07:25,805 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2025-12-15 18:07:26,284 - src.recognizer - INFO - Whisper Model loaded
+2025-12-15 18:07:26,290 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 18:07:26,291 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 18:07:26,428 - __main__ - INFO - VoxInput Application Started
+2025-12-15 18:10:43,370 - src.recognizer - INFO - Switching engine to: whisper
+2025-12-15 18:10:43,370 - src.recognizer - INFO - Loading Faster-Whisper model (base)...
+2025-12-15 18:10:43,960 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2025-12-15 18:10:44,318 - src.recognizer - INFO - Whisper Model loaded
+2025-12-15 18:10:44,322 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 18:10:44,322 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 18:10:44,417 - __main__ - INFO - VoxInput Application Started
+2025-12-15 18:10:49,837 - __main__ - INFO - Starting listening...
+2025-12-15 18:10:49,884 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 18:10:49,884 - src.audio - INFO - Audio stream started.
+2025-12-15 18:10:52,887 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:10:52,888 - faster_whisper - INFO - Processing audio with duration 00:03.000
+2025-12-15 18:11:04,890 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:11:04,891 - faster_whisper - INFO - Processing audio with duration 00:12.000
+2025-12-15 18:11:05,620 - src.recognizer - INFO - [Whisper] Result: When I click on the icon with the left mouse button,
+2025-12-15 18:11:05,620 - __main__ - INFO - Recognized: When I click on the icon with the left mouse button,
+2025-12-15 18:11:05,620 - src.injection - INFO - Injecting text: 'When I click on the icon with the left mouse button,'
+2025-12-15 18:11:15,393 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:11:15,393 - faster_whisper - INFO - Processing audio with duration 00:10.500
+2025-12-15 18:11:16,173 - src.recognizer - INFO - [Whisper] Result: It does not change color or notify me that it's listening.
+2025-12-15 18:11:16,173 - __main__ - INFO - Recognized: It does not change color or notify me that it's listening.
+2025-12-15 18:11:16,173 - src.injection - INFO - Injecting text: 'It does not change color or notify me that it's listening.'
+2025-12-15 18:11:19,088 - __main__ - INFO - Starting listening...
+2025-12-15 18:11:20,134 - src.audio - ERROR - Failed to start audio stream: [Errno -9985] Device unavailable
+2025-12-15 18:11:23,626 - __main__ - INFO - Stopping listening...
+2025-12-15 18:11:31,535 - __main__ - INFO - Stopping listening...
+2025-12-15 18:11:35,451 - __main__ - INFO - Starting listening...
+2025-12-15 18:11:35,502 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 18:11:35,502 - src.audio - INFO - Audio stream started.
+2025-12-15 18:11:36,489 - __main__ - INFO - Stopping listening...
+2025-12-15 18:11:37,784 - __main__ - INFO - Starting listening...
+2025-12-15 18:11:37,812 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 18:11:37,813 - src.audio - INFO - Audio stream started.
+2025-12-15 18:11:38,423 - __main__ - INFO - Stopping listening...
+2025-12-15 18:11:39,806 - __main__ - INFO - Starting listening...
+2025-12-15 18:11:39,841 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 18:11:39,841 - src.audio - INFO - Audio stream started.
+2025-12-15 18:11:40,451 - __main__ - INFO - Stopping listening...
+2025-12-15 18:11:41,263 - __main__ - INFO - Starting listening...
+2025-12-15 18:11:41,295 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 18:11:41,295 - src.audio - INFO - Audio stream started.
+2025-12-15 18:11:41,750 - __main__ - INFO - Stopping listening...
+2025-12-15 18:11:42,354 - __main__ - INFO - Starting listening...
+2025-12-15 18:11:42,381 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 18:11:42,382 - src.audio - INFO - Audio stream started.
+2025-12-15 18:11:42,905 - __main__ - INFO - Stopping listening...
+2025-12-15 18:11:43,450 - __main__ - INFO - Starting listening...
+2025-12-15 18:11:43,478 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 18:11:43,478 - src.audio - INFO - Audio stream started.
+2025-12-15 18:11:43,951 - __main__ - INFO - Stopping listening...
+2025-12-15 18:12:15,122 - __main__ - INFO - Starting listening...
+2025-12-15 18:12:15,161 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 18:12:15,161 - src.audio - INFO - Audio stream started.
+2025-12-15 18:12:24,168 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:12:24,171 - faster_whisper - INFO - Processing audio with duration 00:27.000
+2025-12-15 18:12:24,972 - src.recognizer - INFO - [Whisper] Result: Review them to see if there's anything weird going on with the switching colon.
+2025-12-15 18:12:24,973 - __main__ - INFO - Recognized: Review them to see if there's anything weird going on with the switching colon.
+2025-12-15 18:12:24,973 - src.injection - INFO - Injecting text: 'Review them to see if there's anything weird going on with the switching colon.'
+2025-12-15 18:12:38,663 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:12:38,663 - faster_whisper - INFO - Processing audio with duration 00:14.500
+2025-12-15 18:13:17,414 - src.recognizer - INFO - Switching engine to: whisper
+2025-12-15 18:13:17,414 - src.recognizer - INFO - Loading Faster-Whisper model (base)...
+2025-12-15 18:13:18,927 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2025-12-15 18:13:19,354 - src.recognizer - INFO - Whisper Model loaded
+2025-12-15 18:13:19,358 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 18:13:19,358 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 18:13:19,439 - __main__ - INFO - VoxInput Application Started
+2025-12-15 18:14:41,088 - src.recognizer - INFO - Switching engine to: whisper
+2025-12-15 18:14:41,088 - src.recognizer - INFO - Loading Faster-Whisper model (base)...
+2025-12-15 18:14:41,676 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2025-12-15 18:14:42,095 - src.recognizer - INFO - Whisper Model loaded
+2025-12-15 18:14:42,099 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 18:14:42,099 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 18:14:42,206 - __main__ - INFO - VoxInput Application Started
+2025-12-15 18:15:01,091 - src.recognizer - INFO - Switching engine to: whisper
+2025-12-15 18:15:01,091 - src.recognizer - INFO - Loading Faster-Whisper model (base)...
+2025-12-15 18:15:01,779 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2025-12-15 18:15:02,172 - src.recognizer - INFO - Whisper Model loaded
+2025-12-15 18:15:02,176 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 18:15:02,177 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 18:15:02,269 - __main__ - INFO - VoxInput Application Started
+2025-12-15 18:15:07,620 - __main__ - INFO - Starting listening...
+2025-12-15 18:15:07,653 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 18:15:07,653 - src.audio - INFO - Audio stream started.
+2025-12-15 18:15:10,657 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:15:10,659 - faster_whisper - INFO - Processing audio with duration 00:03.000
+2025-12-15 18:15:21,656 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:15:21,657 - faster_whisper - INFO - Processing audio with duration 00:11.000
+2025-12-15 18:15:22,847 - src.recognizer - INFO - [Whisper] Result: It is not switching to read when I start listening.
+2025-12-15 18:15:22,847 - __main__ - INFO - Recognized: It is not switching to read when I start listening.
+2025-12-15 18:15:22,847 - src.injection - INFO - Injecting text: 'It is not switching to read when I start listening.'
+2025-12-15 18:15:31,844 - __main__ - INFO - Stopping listening...
+2025-12-15 18:15:33,638 - __main__ - INFO - Starting listening...
+2025-12-15 18:15:33,675 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 18:15:33,675 - src.audio - INFO - Audio stream started.
+2025-12-15 18:15:49,678 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:15:49,687 - faster_whisper - INFO - Processing audio with duration 00:26.000
+2025-12-15 18:15:50,547 - src.recognizer - INFO - [Whisper] Result: Even if I right click and use the stop start menu option, it doesn't change to red.
+2025-12-15 18:15:50,547 - __main__ - INFO - Recognized: Even if I right click and use the stop start menu option, it doesn't change to red.
+2025-12-15 18:15:50,547 - src.injection - INFO - Injecting text: 'Even if I right click and use the stop start menu option, it doesn't change to red.'
+2025-12-15 18:15:55,177 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:15:55,177 - faster_whisper - INFO - Processing audio with duration 00:05.500
+2025-12-15 18:16:17,179 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:16:17,181 - faster_whisper - INFO - Processing audio with duration 00:22.000
+2025-12-15 18:16:31,684 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:16:31,685 - faster_whisper - INFO - Processing audio with duration 00:14.500
+2025-12-15 18:16:38,766 - src.recognizer - INFO - Switching engine to: whisper
+2025-12-15 18:16:38,766 - src.recognizer - INFO - Loading Faster-Whisper model (base)...
+2025-12-15 18:16:39,423 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2025-12-15 18:16:39,847 - src.recognizer - INFO - Whisper Model loaded
+2025-12-15 18:16:39,851 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 18:16:39,851 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 18:16:39,954 - __main__ - INFO - VoxInput Application Started
+2025-12-15 18:17:52,277 - src.recognizer - INFO - Switching engine to: whisper
+2025-12-15 18:17:52,277 - src.recognizer - INFO - Loading Faster-Whisper model (base)...
+2025-12-15 18:17:53,480 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2025-12-15 18:17:54,028 - src.recognizer - INFO - Whisper Model loaded
+2025-12-15 18:17:54,035 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 18:17:54,035 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 18:17:54,176 - __main__ - INFO - VoxInput Application Started
+2025-12-15 18:17:56,547 - __main__ - INFO - Starting listening...
+2025-12-15 18:17:56,566 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 18:17:56,566 - src.audio - INFO - Audio stream started.
+2025-12-15 18:17:57,883 - __main__ - INFO - Stopping listening...
+2025-12-15 18:17:59,032 - __main__ - INFO - Starting listening...
+2025-12-15 18:17:59,060 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 18:17:59,061 - src.audio - INFO - Audio stream started.
+2025-12-15 18:18:00,388 - __main__ - INFO - Stopping listening...
+2025-12-15 18:20:16,005 - src.recognizer - INFO - Switching engine to: whisper
+2025-12-15 18:20:16,005 - src.recognizer - INFO - Loading Faster-Whisper model (base)...
+2025-12-15 18:20:16,716 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2025-12-15 18:20:17,075 - src.recognizer - INFO - Whisper Model loaded
+2025-12-15 18:20:17,082 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 18:20:17,082 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 18:20:17,199 - __main__ - INFO - VoxInput Application Started
+2025-12-15 18:20:26,833 - __main__ - INFO - Starting listening...
+2025-12-15 18:20:26,851 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 18:20:26,851 - src.audio - INFO - Audio stream started.
+2025-12-15 18:20:40,362 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:20:40,363 - faster_whisper - INFO - Processing audio with duration 00:13.500
+2025-12-15 18:20:41,427 - src.recognizer - INFO - [Whisper] Result: Here is another HTML page that we have refactored giving your guidance.
+2025-12-15 18:20:41,427 - __main__ - INFO - Recognized: Here is another HTML page that we have refactored giving your guidance.
+2025-12-15 18:20:41,427 - src.injection - INFO - Injecting text: 'Here is another HTML page that we have refactored giving your guidance.'
+2025-12-15 18:21:21,358 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:21:21,359 - faster_whisper - INFO - Processing audio with duration 00:41.000
+2025-12-15 18:21:23,362 - src.recognizer - INFO - [Whisper] Result: The page is rendering the windowing tabbing document system in the bottom left-hand corner instead of the full right-hand page. It's messed up the location of the paging.
+2025-12-15 18:21:23,364 - __main__ - INFO - Recognized: The page is rendering the windowing tabbing document system in the bottom left-hand corner instead of the full right-hand page. It's messed up the location of the paging.
+2025-12-15 18:21:23,364 - src.injection - INFO - Injecting text: 'The page is rendering the windowing tabbing document system in the bottom left-hand corner instead of the full right-hand page. It's messed up the location of the paging.'
+2025-12-15 18:21:34,358 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:21:34,359 - faster_whisper - INFO - Processing audio with duration 00:13.000
+2025-12-15 18:21:35,643 - src.recognizer - INFO - [Whisper] Result: I'm going to put it on the side of the head, and I'm going to put it on the side of the head. I'm going to put it on the side of the head.
+2025-12-15 18:21:35,644 - __main__ - INFO - Recognized: I'm going to put it on the side of the head, and I'm going to put it on the side of the head. I'm going to put it on the side of the head.
+2025-12-15 18:21:35,644 - src.injection - INFO - Injecting text: 'I'm going to put it on the side of the head, and I'm going to put it on the side of the head. I'm going to put it on the side of the head.'
+2025-12-15 18:21:47,352 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:21:47,353 - faster_whisper - INFO - Processing audio with duration 00:13.000
+2025-12-15 18:22:21,109 - __main__ - INFO - Stopping listening...
+2025-12-15 18:24:44,573 - src.recognizer - INFO - Switching engine to: whisper
+2025-12-15 18:24:44,573 - src.recognizer - INFO - Loading Faster-Whisper model (base)...
+2025-12-15 18:24:45,930 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2025-12-15 18:24:46,341 - src.recognizer - INFO - Whisper Model loaded
+2025-12-15 18:24:46,346 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 18:24:46,346 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 18:24:46,461 - __main__ - INFO - VoxInput Application Started
+2025-12-15 18:24:53,381 - __main__ - INFO - Starting listening...
+2025-12-15 18:24:53,399 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 18:24:53,399 - src.audio - INFO - Audio stream started.
+2025-12-15 18:25:12,410 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:25:12,413 - faster_whisper - INFO - Processing audio with duration 00:19.000
+2025-12-15 18:25:13,895 - src.recognizer - INFO - [Whisper] Result: This application needs to output the text in real time. It's like it's listening for me to stop talking, then it writes out everything at once. Is there a way to get a more real time output?
+2025-12-15 18:25:13,895 - __main__ - INFO - Recognized: This application needs to output the text in real time. It's like it's listening for me to stop talking, then it writes out everything at once. Is there a way to get a more real time output?
+2025-12-15 18:25:13,895 - src.injection - INFO - Injecting text: 'This application needs to output the text in real time. It's like it's listening for me to stop talking, then it writes out everything at once. Is there a way to get a more real time output?'
+2025-12-15 18:25:35,901 - src.recognizer - INFO - [Whisper] Silence detected, transcribing buffer...
+2025-12-15 18:25:35,902 - faster_whisper - INFO - Processing audio with duration 00:23.500
+2025-12-15 18:26:36,622 - src.recognizer - INFO - Switching engine to: whisper
+2025-12-15 18:26:36,623 - src.recognizer - INFO - Loading Faster-Whisper model (base)...
+2025-12-15 18:26:37,290 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2025-12-15 18:26:37,795 - src.recognizer - INFO - Whisper Model loaded
+2025-12-15 18:26:37,800 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 18:26:37,800 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 18:26:37,976 - __main__ - INFO - VoxInput Application Started
+2025-12-15 18:31:49,137 - src.recognizer - INFO - Switching engine to: whisper
+2025-12-15 18:31:49,137 - src.recognizer - INFO - Loading Faster-Whisper model (base)...
+2025-12-15 18:31:49,750 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2025-12-15 18:31:50,209 - src.recognizer - INFO - Whisper Model loaded
+2025-12-15 18:31:50,214 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 18:31:50,214 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 18:31:50,344 - __main__ - INFO - VoxInput Application Started
+2025-12-15 18:32:19,633 - __main__ - INFO - Changing recognition engine to: vosk
+2025-12-15 18:32:19,633 - src.recognizer - INFO - Switching engine to: vosk
+2025-12-15 18:32:19,634 - src.recognizer - INFO - Loading Vosk model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 18:32:20,148 - src.recognizer - INFO - Vosk Model loaded
+2025-12-15 18:32:20,164 - __main__ - INFO - Changing input device to Index: 5
+2025-12-15 18:32:28,899 - __main__ - INFO - Starting listening...
+2025-12-15 18:32:28,916 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 18:32:28,917 - src.audio - INFO - Audio stream started.
+2025-12-15 18:32:35,009 - src.injection - INFO - Injecting text: 'i'm thirty'
+2025-12-15 18:32:35,652 - src.injection - INFO - Injecting text: 'i'm thirty two'
+2025-12-15 18:32:36,247 - src.injection - INFO - Injecting text: 'i'm thirty two and it was'
+2025-12-15 18:32:36,879 - src.injection - INFO - Injecting text: 'i'm thirty two and it was my first'
+2025-12-15 18:32:37,649 - src.injection - INFO - Injecting text: 'i'm thirty two and it was my first day'
+2025-12-15 18:32:38,509 - src.injection - INFO - Injecting text: 'i'm thirty two and it was my first day with a twenty'
+2025-12-15 18:32:39,670 - src.injection - INFO - Injecting text: 'i'm thirty two and it was my first day with a twenty seven'
+2025-12-15 18:32:40,953 - src.injection - INFO - Injecting text: 'i'm thirty two and it was my first day with a twenty seven year old woman'
+2025-12-15 18:32:41,534 - src.recognizer - INFO - [Vosk] Final: i'm thirty two and it was my first day with a twenty seven year old woman
+2025-12-15 18:32:42,501 - src.injection - INFO - Injecting text: 'i'm thirty two and it was my first day with a twenty seven year old woman'
+2025-12-15 18:32:43,086 - src.injection - INFO - Injecting text: 'it was'
+2025-12-15 18:32:43,282 - src.injection - INFO - Injecting text: 'it was dinner at'
+2025-12-15 18:32:43,735 - src.injection - INFO - Injecting text: 'it was dinner at the patio'
+2025-12-15 18:32:44,348 - src.injection - INFO - Injecting text: 'it was dinner at the patio restaurant'
+2025-12-15 18:32:44,626 - src.recognizer - INFO - [Vosk] Final: it was dinner at the patio restaurant
+2025-12-15 18:32:45,123 - src.injection - INFO - Injecting text: 'it was dinner at the patio restaurant'
+2025-12-15 18:32:49,900 - __main__ - INFO - Stopping listening...
+2025-12-15 18:33:52,684 - src.recognizer - INFO - Switching engine to: vosk
+2025-12-15 18:33:52,684 - src.recognizer - INFO - Loading Vosk model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 18:33:53,378 - src.recognizer - INFO - Vosk Model loaded
+2025-12-15 18:33:53,383 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 18:33:53,384 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 18:33:53,532 - __main__ - INFO - VoxInput Application Started

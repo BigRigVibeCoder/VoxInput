@@ -15,8 +15,12 @@ logger = logging.getLogger(__name__)
 
 class SpeechEngine(ABC):
     @abstractmethod
-    def process_audio(self, data: bytes) -> str:
-        """Process chunk of audio, return string if recognition occurs, else None/Empty"""
+    def process_audio(self, data: bytes):
+        """Process chunk of audio, return (text, is_final) tuple. 
+           text: The recognized string (partial or final).
+           is_final: True if the segment is complete, False if it's a partial update.
+           Returns (None, False) if nothing to report.
+        """
         pass
 
     @abstractmethod
@@ -32,15 +36,27 @@ class VoskEngine(SpeechEngine):
         self.model = Model(MODEL_PATH)
         self.recognizer = KaldiRecognizer(self.model, SAMPLE_RATE)
         logger.info("Vosk Model loaded")
+        self.last_partial = ""
 
-    def process_audio(self, data: bytes) -> str:
+    def process_audio(self, data: bytes):
         if self.recognizer.AcceptWaveform(data):
+            # Final result
             result = json.loads(self.recognizer.Result())
             text = result.get('text', '')
+            self.last_partial = "" # Reset
             if text:
-                logger.info(f"[Vosk] Recognized: {text}")
-            return text
-        return None
+                logger.info(f"[Vosk] Final: {text}")
+                return text, True
+        else:
+            # Partial result
+            partial = json.loads(self.recognizer.PartialResult())
+            partial_text = partial.get('partial', '')
+            if partial_text and partial_text != self.last_partial:
+                self.last_partial = partial_text
+                # logger.debug(f"[Vosk] Partial: {partial_text}")
+                return partial_text, False
+                
+        return None, False
 
     def terminate(self):
         pass
@@ -57,14 +73,11 @@ class WhisperEngine(SpeechEngine):
         self.has_speech = False
         
         # VAD Constants
-        self.SILENCE_THRESHOLD = 500 # Adjust based on noise, maybe dynamic?
-        self.SILENCE_DURATION = int(SAMPLE_RATE / 4096 * 0.8) # ~0.8 seconds of silence to trigger
-        # (Chunk size is usually 4096 in audio.py? Need to be careful. audio.py might be 1024 or 4096)
-        # config.py CHUNK_SIZE = 4096 (checked before)
-        # 16000 Hz / 4096 ~= 4 chunks per second. 
-        # So wait for ~3-4 silent chunks.
+        self.SILENCE_THRESHOLD = 500 
+        # Reduce silence duration to ~0.5s (2 chunks of 4096 @ 16k) for snappier response
+        self.SILENCE_DURATION = 2 
 
-    def process_audio(self, data: bytes) -> str:
+    def process_audio(self, data: bytes):
         # 1. Calculate energy
         rms = audioop.rms(data, 2) # width=2 for int16
         
@@ -80,7 +93,7 @@ class WhisperEngine(SpeechEngine):
         
         # 3. Trigger Transcription
         # If we had speech, and now we have enough silence, TRANSCRIPTION TIME!
-        if self.has_speech and self.silence_frames > 4: # ~1 second silence
+        if self.has_speech and self.silence_frames > self.SILENCE_DURATION:
             logger.info("[Whisper] Silence detected, transcribing buffer...")
             text = self._transcribe()
             
@@ -88,16 +101,13 @@ class WhisperEngine(SpeechEngine):
             self.buffer = io.BytesIO()
             self.silence_frames = 0
             self.has_speech = False
-            return text
+            return text, True # Whisper only does final for now
             
-        return None
+        return None, False
 
     def _transcribe(self) -> str:
         # Convert buffer to numpy array float32
         self.buffer.seek(0)
-        # Use numpy to read buffer. 
-        # faster-whisper wants np.ndarray[np.float32]
-        # Data is Int16.
         val = np.frombuffer(self.buffer.read(), dtype=np.int16)
         val = val.flatten().astype(np.float32) / 32768.0
         
