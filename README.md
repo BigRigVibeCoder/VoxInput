@@ -38,7 +38,7 @@ sudo apt install python3-pip python3-venv python3-gi python3-gi-cairo gir1.2-gtk
 ## Usage
 Run the application:
 ```bash
-python src/main.py
+python3 run.py
 ```
 - A microphone icon will appear in the system tray.
 - Press **Super+M** or click "Start Listening" to begin dictation.
