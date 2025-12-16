@@ -33,3 +33,7 @@ model/
 # IDEs
 .vscode/
 .idea/
+
+# Logs
+*.log
+voxinput.log
