@@ -1113,3 +1113,169 @@ AttributeError: 'gi.repository.Gtk' object has no attribute 'StatusIcon'
 2025-12-15 18:33:53,383 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
 2025-12-15 18:33:53,384 - __main__ - INFO - Loaded persisted audio device index: 5
 2025-12-15 18:33:53,532 - __main__ - INFO - VoxInput Application Started
+2025-12-15 18:35:20,570 - src.recognizer - INFO - Switching engine to: vosk
+2025-12-15 18:35:20,570 - src.recognizer - INFO - Loading Vosk model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 18:35:21,111 - src.recognizer - INFO - Vosk Model loaded
+2025-12-15 18:35:21,115 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 18:35:21,115 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 18:35:21,225 - __main__ - INFO - VoxInput Application Started
+2025-12-15 18:35:36,902 - __main__ - INFO - Starting listening...
+2025-12-15 18:35:36,919 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 18:35:36,920 - src.audio - INFO - Audio stream started.
+2025-12-15 18:35:38,539 - src.injection - INFO - Injecting text: 'i'm sorry'
+2025-12-15 18:35:39,165 - src.injection - INFO - Injecting text: 'i'm thirty two'
+2025-12-15 18:35:39,726 - src.injection - INFO - Injecting text: 'i'm thirty two and it was'
+2025-12-15 18:35:40,413 - src.injection - INFO - Injecting text: 'i'm thirty two and it was my first'
+2025-12-15 18:35:41,193 - src.injection - INFO - Injecting text: 'i'm thirty two and it was my first date with a'
+2025-12-15 18:35:42,311 - src.injection - INFO - Injecting text: 'i'm thirty two and it was my first date with a twenty seven year'
+2025-12-15 18:35:43,685 - src.injection - INFO - Injecting text: 'i'm thirty two and it was my first date with a twenty seven year old woman'
+2025-12-15 18:35:44,254 - src.recognizer - INFO - [Vosk] Final: i'm thirty two and it was my first date with a twenty seven year old woman
+2025-12-15 18:35:45,242 - src.injection - INFO - Injecting text: 'i'm thirty two and it was my first date with a twenty seven year old woman'
+2025-12-15 18:36:29,072 - __main__ - INFO - Stopping listening...
+2025-12-15 18:38:31,458 - src.recognizer - INFO - Switching engine to: vosk
+2025-12-15 18:38:31,458 - src.recognizer - INFO - Loading Vosk model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 18:38:32,025 - src.recognizer - INFO - Vosk Model loaded
+2025-12-15 18:38:32,030 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 18:38:32,031 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 18:38:32,163 - __main__ - INFO - VoxInput Application Started
+2025-12-15 18:39:10,388 - __main__ - INFO - Starting listening...
+2025-12-15 18:39:10,406 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 18:39:10,406 - src.audio - INFO - Audio stream started.
+2025-12-15 18:39:13,478 - src.injection - INFO - Injecting text: 'the more'
+2025-12-15 18:39:14,177 - src.injection - INFO - Injecting text: 'the more tech savvy'
+2025-12-15 18:39:14,783 - src.injection - INFO - Injecting text: 'the more tech savvy you are'
+2025-12-15 18:39:15,510 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if'
+2025-12-15 18:39:16,292 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a'
+2025-12-15 18:39:17,247 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a millennium'
+2025-12-15 18:39:18,457 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a millennial'
+2025-12-15 18:39:19,651 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a millennial or'
+2025-12-15 18:39:20,884 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a millennial or are'
+2025-12-15 18:39:22,246 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a millennial or are more'
+2025-12-15 18:39:23,666 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a millennial or are more educated than'
+2025-12-15 18:39:25,368 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a millennial or are more educated the more'
+2025-12-15 18:39:27,206 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a millennial or are more educated the more digital'
+2025-12-15 18:39:29,190 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a millennial or are more educated the more digital concerns you have'
+2025-12-15 18:39:31,513 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a millennial or are more educated the more digital concerns you have over privacy'
+2025-12-15 18:39:34,172 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a millennial or are more educated the more digital concerns you have over privacy misinformation'
+2025-12-15 18:39:37,054 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a millennial or are more educated the more digital concerns you have over privacy misinformation and'
+2025-12-15 18:39:40,041 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a millennial or are more educated the more digital concerns you have over privacy misinformation and work life balance'
+2025-12-15 18:39:43,312 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a millennial or are more educated the more digital concerns you have over privacy misinformation and work life balance and the'
+2025-12-15 18:39:46,792 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a millennial or are more educated the more digital concerns you have over privacy misinformation and work life balance in the digital age'
+2025-12-15 18:39:50,570 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a millennial or are more educated the more digital concerns you have over privacy misinformation and work life balance in the digital age finds a new'
+2025-12-15 18:39:54,488 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a millennial or are more educated the more digital concerns you have over privacy misinformation and work life balance in the digital age finds a new study'
+2025-12-15 18:39:58,540 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a millennial or are more educated the more digital concerns you have over privacy misinformation and work life balance in the digital age finds a new study of nearly'
+2025-12-15 18:40:02,832 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a millennial or are more educated the more digital concerns you have over privacy misinformation and work life balance in the digital age finds a new study of nearly fifty'
+2025-12-15 18:40:07,230 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a millennial or are more educated the more digital concerns you have over privacy misinformation and work life balance in the digital age finds a new study of nearly fifty thousand'
+2025-12-15 18:40:11,763 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a millennial or are more educated the more digital concerns you have over privacy misinformation and work life balance in the digital age finds a new study of nearly fifty thousand people in'
+2025-12-15 18:40:16,452 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a millennial or are more educated the more digital concerns you have over privacy misinformation and work life balance in the digital age finds a new study of nearly fifty thousand people and thirty'
+2025-12-15 18:40:21,300 - src.injection - INFO - Injecting text: 'the more tech savvy you are and if you are a millennial or are more educated the more digital concerns you have over privacy misinformation and work life balance in the digital age finds a new study of nearly fifty thousand people in thirty countries'
+2025-12-15 18:40:23,048 - src.recognizer - INFO - [Vosk] Final: the more tech savvy you are and if you are a millennial or are more educated the more digital concerns you have over privacy misinformation and work life balance in the digital age finds a new study of nearly fifty thousand people in thirty countries
+2025-12-15 18:40:53,014 - __main__ - INFO - Stopping listening...
+2025-12-15 18:43:25,468 - src.recognizer - INFO - Switching engine to: vosk
+2025-12-15 18:43:25,469 - src.recognizer - INFO - Loading Vosk model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 18:43:26,277 - src.recognizer - INFO - Vosk Model loaded
+2025-12-15 18:43:26,283 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 18:43:26,283 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 18:43:26,432 - __main__ - INFO - VoxInput Application Started
+2025-12-15 18:43:37,675 - __main__ - INFO - Starting listening...
+2025-12-15 18:43:37,692 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 18:43:37,692 - src.audio - INFO - Audio stream started.
+2025-12-15 18:43:41,915 - src.injection - INFO - Injecting text: 'the more'
+2025-12-15 18:43:42,381 - src.injection - INFO - Injecting text: 'tech savvy'
+2025-12-15 18:43:42,795 - src.injection - INFO - Injecting text: 'you are'
+2025-12-15 18:43:43,714 - src.recognizer - INFO - [Vosk] Final: the more tech savvy you are
+2025-12-15 18:43:51,727 - src.injection - INFO - Injecting text: 'the'
+2025-12-15 18:43:52,289 - src.injection - INFO - Injecting text: 'more'
+2025-12-15 18:43:52,742 - src.injection - INFO - Injecting text: 'tech savvy'
+2025-12-15 18:43:53,277 - src.injection - INFO - Injecting text: 'you are'
+2025-12-15 18:43:53,731 - src.recognizer - INFO - [Vosk] Final: the more tech savvy you are
+2025-12-15 18:43:57,816 - src.injection - INFO - Injecting text: 'and if'
+2025-12-15 18:43:58,259 - src.injection - INFO - Injecting text: 'you are a'
+2025-12-15 18:43:58,776 - src.injection - INFO - Injecting text: 'millennial'
+2025-12-15 18:43:59,313 - src.injection - INFO - Injecting text: 'or a'
+2025-12-15 18:43:59,791 - src.injection - INFO - Injecting text: 'more educated'
+2025-12-15 18:44:01,215 - src.recognizer - INFO - [Vosk] Final: and if you are a millennial or a more educated
+2025-12-15 18:44:01,726 - src.injection - INFO - Injecting text: 'the more'
+2025-12-15 18:44:02,278 - src.injection - INFO - Injecting text: 'digital'
+2025-12-15 18:44:03,264 - src.injection - INFO - Injecting text: 'concerns you'
+2025-12-15 18:44:03,815 - src.injection - INFO - Injecting text: 'have'
+2025-12-15 18:44:04,267 - src.injection - INFO - Injecting text: 'over privacy'
+2025-12-15 18:44:04,784 - src.injection - INFO - Injecting text: 'misinformation'
+2025-12-15 18:44:05,281 - src.injection - INFO - Injecting text: 'and'
+2025-12-15 18:44:05,888 - src.injection - INFO - Injecting text: 'work life balance'
+2025-12-15 18:44:07,212 - src.recognizer - INFO - [Vosk] Final: the more digital concerns you have over privacy misinformation and work life balance
+2025-12-15 18:44:16,245 - src.injection - INFO - Injecting text: 'in the'
+2025-12-15 18:44:16,753 - src.injection - INFO - Injecting text: 'digital age'
+2025-12-15 18:44:17,252 - src.injection - INFO - Injecting text: 'five'
+2025-12-15 18:44:17,854 - src.injection - INFO - Injecting text: 'nds a new study'
+2025-12-15 18:44:18,265 - src.injection - INFO - Injecting text: 'of fifty'
+2025-12-15 18:44:18,780 - src.injection - INFO - Injecting text: 'thousand people'
+2025-12-15 18:44:19,287 - src.injection - INFO - Injecting text: 'and'
+2025-12-15 18:44:19,804 - src.injection - INFO - Injecting text: 'in thirty countries'
+2025-12-15 18:44:21,232 - src.recognizer - INFO - [Vosk] Final: in the digital age finds a new study of fifty thousand people in thirty countries
+2025-12-15 18:45:02,201 - __main__ - INFO - Stopping listening...
+2025-12-15 18:48:00,428 - src.recognizer - INFO - Switching engine to: vosk
+2025-12-15 18:48:00,428 - src.recognizer - INFO - Loading Vosk model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 18:48:00,898 - src.recognizer - INFO - Vosk Model loaded
+2025-12-15 18:48:00,902 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 18:48:00,903 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 18:48:01,007 - __main__ - INFO - VoxInput Application Started
+2025-12-15 18:48:03,836 - __main__ - INFO - Starting listening...
+2025-12-15 18:48:03,854 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 18:48:03,854 - src.audio - INFO - Audio stream started.
+2025-12-15 18:48:23,874 - src.recognizer - INFO - [Vosk] Final: text to speech technology aims to convert written language into natural sounding spoken audio a good test paragraph should include a variety of linguistic elements to elevate it's performance
+2025-12-15 18:48:48,378 - src.recognizer - INFO - [Vosk] Final: text to speech technology aims to convert written language and natural sounding spoken audio a good test paragraph should include a variety of linguistic elements to evaluate it's performance
+2025-12-15 18:48:52,420 - src.recognizer - INFO - [Vosk] Final: this might encompass different sentence structures
+2025-12-15 18:49:12,907 - src.recognizer - INFO - [Vosk] Final: punctuation marks like commerce periods question marks an exclamation points as well as capitalized words numbers and perhaps some less common vocabulary the goal is to assess the system's ability to handle in intonation rhythm and clarity occur
+2025-12-15 18:49:21,368 - src.recognizer - INFO - [Vosk] Final: ross diverse textual features ensuring a smooth and comprehensible listening experience for the user
+2025-12-15 18:50:42,401 - src.recognizer - INFO - [Vosk] Final: the
+2025-12-15 18:51:16,649 - __main__ - INFO - Stopping listening...
+2025-12-15 18:54:43,291 - src.recognizer - INFO - Switching engine to: vosk
+2025-12-15 18:54:43,291 - src.recognizer - INFO - Loading Vosk model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 18:54:43,750 - src.recognizer - INFO - Vosk Model loaded
+2025-12-15 18:54:43,757 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 18:54:43,757 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 18:54:43,860 - __main__ - INFO - VoxInput Application Started
+2025-12-15 18:54:49,538 - __main__ - INFO - Starting listening...
+2025-12-15 18:54:49,555 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 18:54:49,556 - src.audio - INFO - Audio stream started.
+2025-12-15 18:54:59,081 - src.recognizer - INFO - [Vosk] Final: the sun rises early in the morning to start a brand new day
+2025-12-15 18:55:00,579 - src.recognizer - INFO - [Vosk] Final: damn it
+2025-12-15 18:55:07,483 - __main__ - INFO - Stopping listening...
+2025-12-15 18:55:14,746 - src.recognizer - INFO - Switching engine to: vosk
+2025-12-15 18:55:14,746 - src.recognizer - INFO - Loading Vosk model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 18:55:15,214 - src.recognizer - INFO - Vosk Model loaded
+2025-12-15 18:55:15,217 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 18:55:15,218 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 18:55:15,343 - __main__ - INFO - VoxInput Application Started
+2025-12-15 18:55:16,723 - __main__ - INFO - Starting listening...
+2025-12-15 18:55:16,743 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 18:55:16,743 - src.audio - INFO - Audio stream started.
+2025-12-15 18:55:23,269 - src.recognizer - INFO - [Vosk] Final: the sun rises early in the morning to start a brand new day
+2025-12-15 18:55:43,803 - src.recognizer - INFO - [Vosk] Final: birds sing softly in the trees while a gentle breeze moves through the green leaves it is a peaceful time to sit outside and enjoy a warm cup of coffee many people find that a calm routine helps them feel ready for whatever comes next taking a moment to breathe deeply can make everything
+2025-12-15 18:55:45,907 - src.recognizer - INFO - [Vosk] Final: thing feel much easier
+2025-12-15 18:55:53,300 - __main__ - INFO - Stopping listening...
+2025-12-15 19:01:54,100 - src.recognizer - INFO - Switching engine to: vosk
+2025-12-15 19:01:54,100 - src.recognizer - INFO - Loading Vosk model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 19:01:54,625 - src.recognizer - INFO - Vosk Model loaded
+2025-12-15 19:01:54,630 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 19:01:54,630 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 19:01:54,758 - __main__ - INFO - VoxInput Application Started
+2025-12-15 19:01:57,538 - __main__ - INFO - Starting listening...
+2025-12-15 19:01:57,556 - src.audio - INFO - Using Audio Device Index: 5
+2025-12-15 19:01:57,556 - src.audio - INFO - Audio stream started.
+2025-12-15 19:02:06,577 - src.recognizer - INFO - [Vosk] Final: the sun rises early in the morning to start a brand new day
+2025-12-15 19:02:13,074 - src.recognizer - INFO - [Vosk] Final: birds sing softly and the trees while a gentle breeze moves through the green leaves
+2025-12-15 19:02:18,584 - src.recognizer - INFO - [Vosk] Final: it is a peaceful time to sit outside and enjoy a warm cup of coffee
+2025-12-15 19:02:25,078 - src.recognizer - INFO - [Vosk] Final: many people find that a calm routine helps him feel ready for whatever comes next
+2025-12-15 19:02:31,073 - src.recognizer - INFO - [Vosk] Final: taking a moment to breathe deeply can make everything feel much easier
+2025-12-15 19:03:16,073 - src.recognizer - INFO - [Vosk] Final: the sun rises early in the morning to start a brand new day
+2025-12-15 19:03:23,577 - src.recognizer - INFO - [Vosk] Final: birds sing softly and the trees while a gentle breeze moves through the green leaves
+2025-12-15 19:03:29,570 - src.recognizer - INFO - [Vosk] Final: it is a peaceful time to sit outside and enjoy a warm cup of coffee
+2025-12-15 19:03:41,074 - src.recognizer - INFO - [Vosk] Final: many people find that a calm routine helps them feel ready for whatever comes next taking a moment to breathe deeply can make everything feel much better
+2025-12-15 19:04:54,346 - src.recognizer - INFO - Switching engine to: vosk
+2025-12-15 19:04:54,346 - src.recognizer - INFO - Loading Vosk model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-15 19:04:54,935 - src.recognizer - INFO - Vosk Model loaded
+2025-12-15 19:04:54,939 - src.injection - INFO - xdotool detected. Will use as primary injection method (more reliable).
+2025-12-15 19:04:54,940 - __main__ - INFO - Loaded persisted audio device index: 5
+2025-12-15 19:04:55,052 - __main__ - INFO - VoxInput Application Started

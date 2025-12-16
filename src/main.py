@@ -46,7 +46,7 @@ class VoxInputApp:
         self.is_listening = False
         self.should_quit = False
         self.processing_thread = None
-        self.current_partial_len = 0 # Track length of partial text for backspacing
+        self.current_partial_text = "" # Track actual text content for diffing
         
         # Audio Device Persistence
         if saved_index is not None:
@@ -169,7 +169,7 @@ class VoxInputApp:
             
         logger.info("Starting listening...")
         self.is_listening = True
-        self.current_partial_len = 0 # Reset
+        self.current_partial_text = "" # Reset
         self.ui.set_listening_state(True)
         self.audio.start()
         
@@ -196,22 +196,54 @@ class VoxInputApp:
                 try:
                     text, is_final = self.recognizer.process_audio(data)
                     if text:
-                        # Handle backspacing for partials
-                        # We only backspace if we are updating a previous partial.
-                        # If current_partial_len > 0, it means we typed something tentative last time.
-                        if self.current_partial_len > 0:
-                            self.injector.delete_chars(self.current_partial_len)
+                        # Logic:
+                        # 1. Calculate Diff against current_partial_text
+                        # 2. Update screen (Delete + Type)
+                        # 3. Update current_partial_text state
+                        # 4. If Final, CLEAR current_partial_text state
                         
-                        self.injector.type_text(text)
+                        # Early exit optimization for identical text (prevents redundant typing/space deletion)
+                        if text == self.current_partial_text:
+                            if is_final:
+                                self.current_partial_text = "" # Ensure reset!
+                            continue
                         
+                        # Calculate Common Prefix
+                        common_len = 0
+                        if self.current_partial_text:
+                            min_len = min(len(self.current_partial_text), len(text))
+                            for i in range(min_len):
+                                if self.current_partial_text[i] == text[i]:
+                                    common_len += 1
+                                else:
+                                    break
+                        
+                        # Calculate Deletion
+                        chars_to_delete = 0
+                        if self.current_partial_text:
+                            remaining_len = len(self.current_partial_text) - common_len
+                            if remaining_len > 0:
+                                # Divergence: Delete everything after common prefix + trailing space
+                                chars_to_delete = remaining_len + 1 
+                            else:
+                                # Prefix Match: Just delete trailing space to append
+                                chars_to_delete = 1 
+
+                        if chars_to_delete > 0:
+                            self.injector.delete_chars(chars_to_delete)
+                            
+                        # Calculate Addition
+                        text_to_type = text[common_len:]
+                        
+                        # Type Suffix
+                        # add_space=True ensures word separation
+                        self.injector.type_text(text_to_type, add_space=True)
+                        
+                        # State Update
                         if is_final:
-                            # Final result submitted. We are done with this sentence.
-                            # We do NOT want to backspace this text on the next loop.
-                            self.current_partial_len = 0
+                            self.current_partial_text = ""
                         else:
-                            # Partial result. We typed it, but might need to replace it next time.
-                            # Track its length (text + 1 space)
-                            self.current_partial_len = len(text) + 1 
+                            self.current_partial_text = text 
                             
                 except Exception as e:
                     logger.error(f"Error processing audio: {e}", exc_info=True)

@@ -14,30 +14,33 @@ class TextInjector:
         else:
             logger.warning("xdotool not found. Using pynput (might fail on some windows).")
 
-    def type_text(self, text):
+    def type_text(self, text, add_space=True):
         """
         Types the text at the current cursor position.
-        Adds a space at the end for continuity.
+        add_space: If True, appends a space at the end.
         """
-        # Clean text if needed
-        text = text.strip()
         if not text:
             return
             
-        logger.info(f"Injecting text: '{text}'")
+        # logger.info(f"Injecting text: '{text}'")
         
+        final_text = text + (' ' if add_space else '')
+
         # Method 1: xdotool (Best for X11)
         if self.has_xdotool:
             try:
                 # Use --clearmodifiers to ensure shift/ctrl state doesn't mess up typing
-                subprocess.run(['xdotool', 'type', '--clearmodifiers', text + ' '], check=False)
+                # Note: xdotool might strip leading spaces in some contexts or arguments?
+                # Using single quotes for safety in logger, but subprocess passes args directly.
+                # Delay 2ms to prevent dropped keys on high load
+                subprocess.run(['xdotool', 'type', '--clearmodifiers', '--delay', '2', final_text], check=False)
                 return
             except Exception as e:
                 logger.error(f"xdotool failed: {e}")
 
         # Method 2: pynput (Fallback)
         try:
-            self.keyboard.type(text + ' ')
+            self.keyboard.type(final_text)
         except Exception as e:
              logger.error(f"pynput failed: {e}")
 
