@@ -1,5 +1,5 @@
 {
-    "audio_device": "alsa_input.pci-0000_00_1f.3.analog-stereo",
-    "speech_engine": "Whisper",
+    "audio_device": "alsa_input.usb-Logi_USB_Headset_Logi_USB_Headset-00.mono-fallback",
+    "speech_engine": "Vosk",
     "whisper_model_size": "large"
 }

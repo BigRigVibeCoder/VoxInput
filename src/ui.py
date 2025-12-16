@@ -282,7 +282,7 @@ class SettingsDialog(Gtk.Dialog):
     def _on_toggle_test(self, widget):
         if self.is_testing:
             self._stop_test()
-            widget.set_label("Test")
+            # _stop_test triggers playback which handles label reset
         else:
             self._start_test()
             widget.set_label("Stop")
@@ -291,6 +291,7 @@ class SettingsDialog(Gtk.Dialog):
         import pyaudio
         import audioop
         self.is_testing = True
+        self.recorded_frames = []
         self.pa = pyaudio.PyAudio()
         
         # We need the correct device index for PyAudio that matches the PulseAudio default
@@ -305,6 +306,7 @@ class SettingsDialog(Gtk.Dialog):
         except Exception as e:
             print(f"Failed to start test stream: {e}")
             self.is_testing = False
+            self.btn_test.set_label("Test")
 
     def _stop_test(self):
         self.is_testing = False
@@ -312,9 +314,33 @@ class SettingsDialog(Gtk.Dialog):
             self.test_stream.stop_stream()
             self.test_stream.close()
             self.test_stream = None
-        if self.pa:
+        
+        # Trigger Playback
+        if hasattr(self, 'recorded_frames') and self.recorded_frames and self.pa:
+            threading.Thread(target=self._play_playback, args=(self.recorded_frames, self.pa)).start()
+            self.pa = None # Transferred to thread
+            self.recorded_frames = []
+        elif self.pa:
             self.pa.terminate()
             self.pa = None
+            self.btn_test.set_label("Test")
+
+    def _play_playback(self, frames, pa):
+        import pyaudio
+        GLib.idle_add(self.btn_test.set_label, "Playing...")
+        GLib.idle_add(self.btn_test.set_sensitive, False)
+        try:
+             stream = pa.open(format=pyaudio.paInt16, channels=1, rate=16000, output=True)
+             for fr in frames:
+                 stream.write(fr)
+             stream.stop_stream()
+             stream.close()
+        except Exception as e:
+             print(f"Playback error: {e}")
+        finally:
+             pa.terminate()
+             GLib.idle_add(self.btn_test.set_label, "Test")
+             GLib.idle_add(self.btn_test.set_sensitive, True)
 
     def _update_level(self):
         if not self.is_testing or not self.test_stream:
@@ -322,6 +348,7 @@ class SettingsDialog(Gtk.Dialog):
         
         try:
             data = self.test_stream.read(1024, exception_on_overflow=False)
+            self.recorded_frames.append(data)
             import audioop
             rms = audioop.rms(data, 2)
             # Normalize reasonably
