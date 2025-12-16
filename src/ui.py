@@ -14,9 +14,10 @@ ICON_IDLE = "icon_idle"
 ICON_ACTIVE = "icon_active"
 
 class SystemTrayApp:
-    def __init__(self, toggle_callback, quit_callback):
+    def __init__(self, toggle_callback, quit_callback, engine_change_callback=None):
         self.toggle_callback = toggle_callback
         self.quit_callback = quit_callback
+        self.engine_change_callback = engine_change_callback
         self.is_listening = False
         
         # Create Indicator
@@ -55,7 +56,7 @@ class SystemTrayApp:
         self.toggle_callback()
         
     def _on_settings(self, _):
-        dialog = SettingsDialog()
+        dialog = SettingsDialog(self.engine_change_callback)
         dialog.run()
         dialog.destroy()
 
@@ -75,8 +76,9 @@ class SystemTrayApp:
         Gtk.main()
 
 class SettingsDialog(Gtk.Dialog):
-    def __init__(self):
+    def __init__(self, engine_change_callback=None):
         super().__init__(title="VoxInput Settings", flags=0)
+        self.engine_change_callback = engine_change_callback
         self.set_default_size(500, 350)
         self.set_border_width(10)
         
@@ -250,8 +252,12 @@ class SettingsDialog(Gtk.Dialog):
     def _on_engine_changed(self, combo):
         text = combo.get_active_text()
         if text:
-            self.settings.set("speech_engine", text)
-            self._update_visibility()
+            old_engine = self.settings.get("speech_engine")
+            if old_engine != text:
+                self.settings.set("speech_engine", text)
+                self._update_visibility()
+                if self.engine_change_callback:
+                    self.engine_change_callback()
 
     def _on_whisper_size_changed(self, combo):
         text = combo.get_active_text()

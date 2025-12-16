@@ -41,8 +41,26 @@ class VoxInputApp:
         # Initialize UI
         self.ui = SystemTrayApp(
             toggle_callback=self.toggle_listening,
-            quit_callback=self.quit_app
+            quit_callback=self.quit_app,
+            engine_change_callback=self.reload_engine
         )
+
+    def reload_engine(self):
+        logger.info("Reloading speech engine...")
+        was_listening = self.is_listening
+        if was_listening:
+            self.stop_listening()
+            
+        try:
+            # Re-initialize recognizer (reads new settings)
+            self.recognizer = SpeechRecognizer()
+            logger.info("Engine reloaded successfully.")
+        except Exception as e:
+            logger.error(f"Failed to reload engine: {e}")
+            return
+
+        if was_listening:
+            self.start_listening()
 
     def toggle_listening(self):
         if self.is_listening:
@@ -58,6 +76,7 @@ class VoxInputApp:
         logger.info("Starting listening...")
         self.is_listening = True
         self.ui.set_listening_state(True)
+        self.recognizer.reset_state() # Reset streaming buffers
         self.audio.start()
         
         self.processing_thread = threading.Thread(target=self._process_loop)
