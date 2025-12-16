@@ -1,0 +1,3 @@
+vosk>=0.3.45
+pyaudio>=0.2.14
+pynput>=1.7.7
