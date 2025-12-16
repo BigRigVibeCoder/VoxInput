@@ -4181,3 +4181,44 @@ RuntimeError: Error(s) in loading state_dict for Whisper:
 2025-12-16 09:49:53,297 - src.audio - INFO - Audio stream started.
 2025-12-16 09:49:56,356 - __main__ - INFO - Stopping listening...
 2025-12-16 09:50:24,755 - __main__ - INFO - Recognized: Thank you.
+2025-12-16 09:52:29,356 - src.settings - INFO - Settings loaded successfully
+2025-12-16 09:52:29,356 - src.recognizer - INFO - Initializing SpeechRecognizer with engine: Vosk
+2025-12-16 09:52:29,356 - src.recognizer - INFO - Loading Vosk model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-16 09:52:29,941 - src.recognizer - INFO - Model loaded successfully
+2025-12-16 09:52:30,004 - __main__ - INFO - VoxInput Application Started
+2025-12-16 09:52:36,873 - __main__ - INFO - Starting listening...
+2025-12-16 09:52:36,897 - src.audio - INFO - Audio stream started.
+2025-12-16 09:52:45,241 - src.pulseaudio_helper - INFO - Found 7 PulseAudio sources
+2025-12-16 09:52:45,242 - src.pulseaudio_helper - INFO - Filtered to 3 input sources
+2025-12-16 09:52:45,251 - src.pulseaudio_helper - INFO - Current default source: alsa_input.usb-Logi_USB_Headset_Logi_USB_Headset-00.mono-fallback
+2025-12-16 09:52:49,821 - src.pulseaudio_helper - INFO - Set default source to: easyeffects_source
+2025-12-16 09:52:49,821 - src.settings - INFO - Settings saved successfully
+2025-12-16 09:52:53,344 - __main__ - INFO - Recognized: one
+2025-12-16 09:52:57,713 - src.pulseaudio_helper - INFO - Set default source to: alsa_input.usb-Logi_USB_Headset_Logi_USB_Headset-00.mono-fallback
+2025-12-16 09:52:57,714 - src.settings - INFO - Settings saved successfully
+2025-12-16 09:53:05,073 - __main__ - INFO - Recognized: one two three four five six seven eight nine ten
+2025-12-16 09:53:19,319 - __main__ - INFO - Recognized: as one
+2025-12-16 09:53:24,422 - __main__ - INFO - Recognized: one two three four five six seven eight nine ten
+2025-12-16 09:53:44,906 - __main__ - INFO - Recognized: huh
+2025-12-16 09:53:51,397 - src.pulseaudio_helper - INFO - Found 7 PulseAudio sources
+2025-12-16 09:53:51,397 - src.pulseaudio_helper - INFO - Filtered to 3 input sources
+2025-12-16 09:53:51,405 - src.pulseaudio_helper - INFO - Current default source: alsa_input.usb-Logi_USB_Headset_Logi_USB_Headset-00.mono-fallback
+2025-12-16 09:53:57,021 - __main__ - INFO - Stopping listening...
+2025-12-16 09:54:40,727 - src.settings - INFO - Settings loaded successfully
+2025-12-16 09:54:40,727 - src.recognizer - INFO - Initializing SpeechRecognizer with engine: Vosk
+2025-12-16 09:54:40,727 - src.recognizer - INFO - Loading Vosk model from /home/bdavidriggins/Documents/VoxInput/src/../model
+2025-12-16 09:54:41,189 - src.recognizer - INFO - Model loaded successfully
+2025-12-16 09:54:41,243 - __main__ - INFO - VoxInput Application Started
+2025-12-16 09:54:46,302 - src.pulseaudio_helper - INFO - Found 5 PulseAudio sources
+2025-12-16 09:54:46,302 - src.pulseaudio_helper - INFO - Filtered to 2 input sources
+2025-12-16 09:54:46,311 - src.pulseaudio_helper - INFO - Current default source: alsa_input.usb-Logi_USB_Headset_Logi_USB_Headset-00.mono-fallback
+2025-12-16 09:56:47,829 - src.pulseaudio_helper - INFO - Found 7 PulseAudio sources
+2025-12-16 09:56:47,829 - src.pulseaudio_helper - INFO - Filtered to 3 input sources
+2025-12-16 09:56:47,839 - src.pulseaudio_helper - INFO - Current default source: easyeffects_source
+2025-12-16 09:56:50,355 - src.pulseaudio_helper - INFO - Set default source to: easyeffects_source
+2025-12-16 09:56:50,356 - src.settings - INFO - Settings saved successfully
+2025-12-16 09:58:58,008 - __main__ - INFO - Starting listening...
+2025-12-16 09:58:58,029 - src.audio - INFO - Audio stream started.
+2025-12-16 09:59:02,664 - __main__ - INFO - Recognized: the brown fox jumped into the lake
+2025-12-16 09:59:11,876 - __main__ - INFO - Recognized: hello
+2025-12-16 10:03:06,062 - __main__ - INFO - Stopping listening...
