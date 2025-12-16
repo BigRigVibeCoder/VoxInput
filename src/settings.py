@@ -38,6 +38,8 @@ class SettingsManager:
             logger.error(f"Failed to save settings: {e}")
 
     def get(self, key, default=None):
+        if key == "whisper_model_size" and default is None:
+            default = "small"
         return self.settings.get(key, default)
 
     def set(self, key, value):

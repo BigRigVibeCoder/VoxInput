@@ -61,8 +61,14 @@ class SpeechRecognizer:
             try:
                 self.model = whisper.load_model(size)
             except Exception as e:
-                logger.warning(f"Failed to load Whisper with default device: {e}. Using CPU.")
+                error_msg = str(e)
+                if "CUDA error" in error_msg or "RuntimeError" in error_msg:
+                     logger.warning("CUDA/GPU not available or compatible. Falling back to CPU. (This may be slower)")
+                else:
+                     logger.warning(f"Failed to load Whisper with default device: {e}. Using CPU.")
+                
                 self.model = whisper.load_model(size, device="cpu")
+                logger.info("Whisper model loaded on CPU successfully.")
             
             self.whisper_buffer = b""
             # Whisper Streaming State
@@ -93,47 +99,43 @@ class SpeechRecognizer:
         LAG = 1 
         new_words_to_inject = []
 
-        # 1. Check for Full Result (Sentence End)
-        if self.recognizer.AcceptWaveform(data):
-            result = json.loads(self.recognizer.Result())
-            text = result.get('text', '')
-            words = text.split()
+        if not data:
+            return None
             
-            # Inject whatever hasn't been committed yet
-            if len(words) > len(self.committed_text):
-                new_words_to_inject = words[len(self.committed_text):]
-            
-            # Reset for next sentence
-            self.committed_text = []
-        
-        # 2. Check Partial Result (Streaming)
-        else:
-            partial = json.loads(self.recognizer.PartialResult())
-            text = partial.get('partial', '')
-            words = text.split()
-            
-            # Simple stability check:
-            # If we have [A, B, C, D] and we committed [A, B]
-            # And LAG=1, we can commit C if we have D.
-            
-            # We trust partials up to length-LAG
-            stable_len = max(0, len(words) - LAG)
-            
-            current_committed_len = len(self.committed_text)
-            
-            if stable_len > current_committed_len:
-                # We have new stable words!
-                # E.g. Words=[A,B,C,D], Committed=[A,B], Stable=3 (A,B,C).
-                # New to inject = Words[2:3] = [C]
+        try:
+            # 1. Check for Full Result (Sentence End)
+            if self.recognizer.AcceptWaveform(data):
+                result = json.loads(self.recognizer.Result())
+                text = result.get('text', '')
+                words = text.split()
                 
-                # Sanity check: ensure the prefix matches committed text
-                # (Vosk sometimes changes its mind about the past, though rarely for stable prefixes)
-                # If it changed the past structurally, we might just have to ignore the divergence 
-                # or output the new suffix. Let's assume append-only for now.
+                # Inject whatever hasn't been committed yet
+                if len(words) > len(self.committed_text):
+                    new_words_to_inject = words[len(self.committed_text):]
                 
-                new_batch = words[current_committed_len : stable_len]
-                new_words_to_inject = new_batch
-                self.committed_text.extend(new_batch)
+                # Reset for next sentence
+                self.committed_text = []
+            
+            # 2. Check Partial Result (Streaming)
+            else:
+                partial = json.loads(self.recognizer.PartialResult())
+                text = partial.get('partial', '')
+                words = text.split()
+                
+                # Vosk Lag Strategy
+                stable_len = max(0, len(words) - LAG)
+                current_committed_len = len(self.committed_text)
+                
+                if stable_len > current_committed_len:
+                    new_batch = words[current_committed_len : stable_len]
+                    new_words_to_inject = new_batch
+                    self.committed_text.extend(new_batch)
+                    
+        except Exception as e:
+            logger.error(f"Vosk processing error: {e}")
+            # In case of error, just reset stream state to avoid loop
+            self.committed_text = [] 
+            return None
 
         if new_words_to_inject:
             return " ".join(new_words_to_inject)

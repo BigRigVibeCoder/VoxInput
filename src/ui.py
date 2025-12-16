@@ -262,7 +262,15 @@ class SettingsDialog(Gtk.Dialog):
     def _on_whisper_size_changed(self, combo):
         text = combo.get_active_text()
         if text:
-            self.settings.set("whisper_model_size", text)
+            # Check if changed
+            old_size = self.settings.get("whisper_model_size")
+            if old_size != text:
+                self.settings.set("whisper_model_size", text)
+                if self.engine_change_callback:
+                    # Reload if we are currently using Whisper so model updates
+                    current_engine = self.settings.get("speech_engine")
+                    if current_engine == "Whisper":
+                        self.engine_change_callback()
 
     def _on_device_changed(self, combo):
         idx = combo.get_active()
