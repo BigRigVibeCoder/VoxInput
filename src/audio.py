@@ -62,9 +62,21 @@ class AudioCapture:
     def stop(self):
         self.is_running = False
         if self.stream:
-            self.stream.stop_stream()
-            self.stream.close()
-            self.stream = None
+            try:
+                if self.stream.is_active():
+                    self.stream.stop_stream()
+            except Exception as e:
+                logger.warning(f"Error stopping stream: {e}")
+            
+            try:
+                self.stream.close()
+            except Exception as e:
+                logger.warning(f"Error closing stream: {e}")
+            finally:
+                self.stream = None
+        
+        # Clear queue to prevent memory buildup
+        self.queue.queue.clear()
 
     def get_data(self):
         if not self.queue.empty():

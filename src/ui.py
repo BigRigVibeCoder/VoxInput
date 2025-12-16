@@ -5,6 +5,7 @@ import os
 import signal
 import threading
 import logging
+import subprocess
 from .audio import MicTester
 
 logger = logging.getLogger(__name__)
@@ -324,19 +325,50 @@ class SystemTrayApp:
                 pass
             self.flash_timer = None
             
-        
         def _update_ui():
             # Update Menu Label & Tooltip & Icon Directly
             if self.is_listening:
                  self.item_toggle.set_label("Stop Listening (Ctrl+Alt+M)")
                  self.icon.set_tooltip_text("VoxInput: Listening")
                  self._set_icon(ICON_RED, ICON_ACTIVE_FALLBACK)
+                 self._notify_user("Listening Started", "microphone-sensitivity-high")
+                 self._play_sound("on")
             else:
                  self.item_toggle.set_label("Start Listening (Ctrl+Alt+M)")
                  self.icon.set_tooltip_text("VoxInput: Idle")
                  self._set_icon(ICON_GREEN, ICON_IDLE_FALLBACK)
+                 self._notify_user("Listening Stopped", "microphone-sensitivity-muted")
+                 self._play_sound("off")
         
         GLib.idle_add(_update_ui)
+
+    def _notify_user(self, title, icon_name):
+        try:
+             # Ensure Notify is initialized (import at top but init here safely)
+             # We assume gi.repository.Notify is available or we add it.
+             # If not imported, we need to add imports.
+             # For now, simplistic implementation assuming Notify exists or we use Gtk Message?
+             # Better: Use subprocess-notify-send if Notify lib not handy, avoids segfaults.
+             subprocess.Popen(['notify-send', '-i', icon_name, 'VoxInput', title])
+        except Exception as e:
+            pass # Ignore notification errors
+
+    def _play_sound(self, state):
+        try:
+            # Simple beep tones using paplay (PulseAudio) and standard sounds
+            # On: complete.oga or message.oga
+            # Off: suspend-error.oga or similar
+            # Adjust paths to common Ubuntu sounds
+            sound_path = ""
+            if state == "on":
+                sound_path = "/usr/share/sounds/freedesktop/stereo/service-login.oga"
+            else:
+                sound_path = "/usr/share/sounds/freedesktop/stereo/service-logout.oga"
+            
+            if os.path.exists(sound_path):
+                subprocess.Popen(['paplay', sound_path])
+        except Exception:
+            pass
 
     # _flash_step removed as it is no longer used
 
