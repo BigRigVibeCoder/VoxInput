@@ -1,5 +1,5 @@
 {
     "audio_device": "easyeffects_source",
-    "speech_engine": "Whisper",
-    "whisper_model_size": "large"
+    "speech_engine": "Vosk",
+    "whisper_model_size": "small"
 }
