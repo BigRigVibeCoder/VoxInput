@@ -34,6 +34,9 @@ class VoxInputApp:
         self.recognizer = SpeechRecognizer()
         self.injector = TextInjector()
         
+        from .settings import SettingsManager
+        self.settings = SettingsManager()
+        
         self.is_listening = False
         self.should_quit = False
         self.processing_thread = None
@@ -99,8 +102,9 @@ class VoxInputApp:
         import audioop
         
         silence_start_time = None
-        SILENCE_THRESHOLD_RMS = 500  # Adjust based on mic noise floor
-        SILENCE_DURATION_SEC = 0.6   # Wait 600ms before finalizing
+        # Defaults
+        SILENCE_THRESHOLD_RMS = self.settings.get("silence_threshold", 500)
+        SILENCE_DURATION_SEC = self.settings.get("silence_duration", 0.6)
         
         while self.is_listening and not self.should_quit:
             data = self.audio.get_data()
@@ -111,11 +115,11 @@ class VoxInputApp:
                 except Exception:
                     rms = 0
                 
-                if rms < SILENCE_THRESHOLD_RMS:
+                if rms < self.settings.get("silence_threshold", 500):
                     if silence_start_time is None:
                         silence_start_time = time.time()
-                    elif time.time() - silence_start_time > SILENCE_DURATION_SEC:
-                        # User has stopped speaking for > 0.6s
+                    elif time.time() - silence_start_time > self.settings.get("silence_duration", 0.6):
+                        # User has stopped speaking for > duration
                         # Check if we need to finalize (force flush) any pending Whisper buffer
                         try:
                             final_text = self.recognizer.finalize()

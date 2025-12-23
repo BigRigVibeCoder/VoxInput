@@ -68,7 +68,9 @@ class SystemTrayApp:
         
     def _on_settings(self, _):
         dialog = SettingsDialog(self.engine_change_callback)
-        dialog.run()
+        response = dialog.run()
+        if response == Gtk.ResponseType.OK:
+            dialog.save_settings()
         dialog.destroy()
 
     def _on_quit(self, _):
@@ -92,11 +94,17 @@ class SettingsDialog(Gtk.Dialog):
     def __init__(self, engine_change_callback=None):
         super().__init__(title="VoxInput Settings", flags=0)
         self.engine_change_callback = engine_change_callback
-        self.set_default_size(500, 350)
+        self.set_default_size(500, 500)
         self.set_border_width(10)
         
         from .settings import SettingsManager
         self.settings = SettingsManager()
+        # Copy current settings to temp dict for modification
+        self.temp_settings = self.settings.settings.copy()
+        
+        # Add Action Buttons
+        self.add_button("Cancel", Gtk.ResponseType.CANCEL)
+        self.add_button("Save", Gtk.ResponseType.OK)
         
         content_area = self.get_content_area()
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=15)
@@ -128,7 +136,7 @@ class SettingsDialog(Gtk.Dialog):
             self.sources = filter_input_sources(get_pulseaudio_sources())
             
             # Try to get saved device, fallback to system default
-            saved_device = self.settings.get("audio_device")
+            saved_device = self.temp_settings.get("audio_device")
             current_default = get_default_source()
             target_device = saved_device if saved_device else current_default
             
@@ -186,7 +194,7 @@ class SettingsDialog(Gtk.Dialog):
         self.combo_engine.append_text("Vosk")
         self.combo_engine.append_text("Whisper")
         
-        saved_engine = self.settings.get("speech_engine", "Vosk")
+        saved_engine = self.temp_settings.get("speech_engine", "Vosk")
         if saved_engine == "Whisper":
             self.combo_engine.set_active(1)
         else:
@@ -201,7 +209,7 @@ class SettingsDialog(Gtk.Dialog):
         grid_model.attach(self.lbl_vosk_path, 0, 1, 1, 1)
         
         self.file_chooser = Gtk.FileChooserButton(title="Select Model Folder", action=Gtk.FileChooserAction.SELECT_FOLDER)
-        saved_model = self.settings.get("model_path")
+        saved_model = self.temp_settings.get("model_path")
         if saved_model and os.path.exists(saved_model):
             self.file_chooser.set_filename(saved_model)
         else:
@@ -215,14 +223,13 @@ class SettingsDialog(Gtk.Dialog):
         # Whisper Settings
         self.lbl_whisper_size = Gtk.Label(label="Model Size:")
         self.lbl_whisper_size.set_halign(Gtk.Align.START)
-        self.lbl_whisper_size.set_no_show_all(True) # Hidden by default if Vosk is active
         grid_model.attach(self.lbl_whisper_size, 0, 2, 1, 1)
 
         self.combo_whisper = Gtk.ComboBoxText()
         for size in ["tiny", "base", "small", "medium", "large"]:
             self.combo_whisper.append_text(size)
         
-        saved_size = self.settings.get("whisper_model_size", "base")
+        saved_size = self.temp_settings.get("whisper_model_size", "base")
         # Find index
         sizes = ["tiny", "base", "small", "medium", "large"]
         try:
@@ -231,8 +238,75 @@ class SettingsDialog(Gtk.Dialog):
             self.combo_whisper.set_active(1) # default base
 
         self.combo_whisper.connect("changed", self._on_whisper_size_changed)
-        self.combo_whisper.set_no_show_all(True)
         grid_model.attach(self.combo_whisper, 1, 2, 1, 1)
+
+        # --- Advanced Settings (Shared) ---
+        self.frame_adv = Gtk.Frame(label="Advanced Options")
+        vbox.pack_start(self.frame_adv, False, False, 0)
+        
+        grid_adv = Gtk.Grid()
+        grid_adv.set_column_spacing(10)
+        grid_adv.set_row_spacing(10)
+        grid_adv.set_margin_top(10)
+        grid_adv.set_margin_bottom(10)
+        grid_adv.set_margin_start(10)
+        grid_adv.set_margin_end(10)
+        self.frame_adv.add(grid_adv)
+        
+        # Silence Duration
+        lbl_silence = Gtk.Label(label="Pause after speech (seconds):")
+        lbl_silence.set_halign(Gtk.Align.START)
+        grid_adv.attach(lbl_silence, 0, 0, 1, 1)
+        
+        self.spin_silence = Gtk.SpinButton.new_with_range(0.1, 5.0, 0.1)
+        self.spin_silence.set_value(self.temp_settings.get("silence_duration", 0.6))
+        self.spin_silence.connect("value-changed", lambda w: self._set_temp("silence_duration", round(w.get_value(), 2)))
+        grid_adv.attach(self.spin_silence, 1, 0, 1, 1)
+        
+        lbl_silence_desc = Gtk.Label()
+        lbl_silence_desc.set_markup("<small><i>How long to wait for silence before finalizing.\nDefault: 0.6s. Range: 0.1 - 2.0s.\nLower = Snappier response. Higher = Allows longer pauses.</i></small>")
+        lbl_silence_desc.set_line_wrap(True)
+        lbl_silence_desc.set_halign(Gtk.Align.START)
+        grid_adv.attach(lbl_silence_desc, 0, 1, 2, 1)
+
+        # Spacer
+        grid_adv.attach(Gtk.Label(label=""), 0, 2, 2, 1)
+
+        # Whisper Lag
+        lbl_lag = Gtk.Label(label="Stability Lag (words):")
+        lbl_lag.set_halign(Gtk.Align.START)
+        grid_adv.attach(lbl_lag, 0, 3, 1, 1)
+        
+        self.spin_lag = Gtk.SpinButton.new_with_range(0, 10, 1)
+        self.spin_lag.set_value(self.temp_settings.get("stability_lag", 2))
+        self.spin_lag.connect("value-changed", lambda w: self._set_temp("stability_lag", int(w.get_value())))
+        grid_adv.attach(self.spin_lag, 1, 3, 1, 1)
+        
+        lbl_lag_desc = Gtk.Label()
+        lbl_lag_desc.set_markup("<small><i>Number of words to hold back to prevent flickering.\nDefault: 2. Range: 0 - 5.\nIncrease if text changes frequently while speaking.</i></small>")
+        lbl_lag_desc.set_line_wrap(True)
+        lbl_lag_desc.set_halign(Gtk.Align.START)
+        grid_adv.attach(lbl_lag_desc, 0, 4, 2, 1)
+
+        # Spacer
+        grid_adv.attach(Gtk.Label(label=""), 0, 5, 2, 1)
+        
+        # Silence Threshold
+        lbl_thresh = Gtk.Label(label="Mic Noise Threshold:")
+        lbl_thresh.set_halign(Gtk.Align.START)
+        grid_adv.attach(lbl_thresh, 0, 6, 1, 1)
+        
+        self.spin_thresh = Gtk.SpinButton.new_with_range(0, 5000, 100)
+        self.spin_thresh.set_value(self.temp_settings.get("silence_threshold", 500))
+        self.spin_thresh.connect("value-changed", lambda w: self._set_temp("silence_threshold", int(w.get_value())))
+        grid_adv.attach(self.spin_thresh, 1, 6, 1, 1)
+
+        lbl_thresh_desc = Gtk.Label()
+        lbl_thresh_desc.set_markup("<small><i>Volume level required to detect speech.\nDefault: 500. Range: 100 - 3000.\nIncrease if background noise triggers random typing.</i></small>")
+        lbl_thresh_desc.set_line_wrap(True)
+        lbl_thresh_desc.set_halign(Gtk.Align.START)
+        grid_adv.attach(lbl_thresh_desc, 0, 7, 2, 1)
+
 
         # -- Actions --
         # View Logs logic specifically requested in summary previously
@@ -248,6 +322,11 @@ class SettingsDialog(Gtk.Dialog):
         self._update_visibility()
         
         self.show_all()
+        # Re-apply visibility filtering (show_all shows everything)
+        self._update_visibility()
+
+    def _set_temp(self, key, value):
+        self.temp_settings[key] = value
 
     def _update_visibility(self):
         engine = self.combo_engine.get_active_text()
@@ -256,47 +335,36 @@ class SettingsDialog(Gtk.Dialog):
             self.file_chooser.show()
             self.lbl_whisper_size.hide()
             self.combo_whisper.hide()
+            # Advanced frame is now shared
+            self.frame_adv.show()
         else:
             self.lbl_vosk_path.hide()
             self.file_chooser.hide()
             self.lbl_whisper_size.show()
             self.combo_whisper.show()
+            self.frame_adv.show()
 
     def _on_engine_changed(self, combo):
         text = combo.get_active_text()
         if text:
-            old_engine = self.settings.get("speech_engine")
-            if old_engine != text:
-                self.settings.set("speech_engine", text)
-                self._update_visibility()
-                if self.engine_change_callback:
-                    self.engine_change_callback()
+            self._set_temp("speech_engine", text)
+            self._update_visibility()
 
     def _on_whisper_size_changed(self, combo):
         text = combo.get_active_text()
         if text:
-            # Check if changed
-            old_size = self.settings.get("whisper_model_size")
-            if old_size != text:
-                self.settings.set("whisper_model_size", text)
-                if self.engine_change_callback:
-                    # Reload if we are currently using Whisper so model updates
-                    current_engine = self.settings.get("speech_engine")
-                    if current_engine == "Whisper":
-                        self.engine_change_callback()
+            self._set_temp("whisper_model_size", text)
 
     def _on_device_changed(self, combo):
         idx = combo.get_active()
         if idx >= 0:
             source = self.sources[idx]
-            from .pulseaudio_helper import set_default_source
-            set_default_source(source.name)
-            self.settings.set("audio_device", source.name)
+            self._set_temp("audio_device", source.name)
 
     def _on_model_set(self, widget):
         path = widget.get_filename()
         if path:
-            self.settings.set("model_path", path)
+            self._set_temp("model_path", path)
             
     def _on_view_logs(self, widget):
         from .config import LOG_FILE
@@ -386,9 +454,38 @@ class SettingsDialog(Gtk.Dialog):
             
         return True
 
+    def save_settings(self):
+        changes = False
+        reinit_engine = False
+        
+        # Check Audio Device changes specifically for PulseAudio logic
+        new_device = self.temp_settings.get("audio_device")
+        old_device = self.settings.get("audio_device")
+        
+        if new_device != old_device and new_device:
+            try:
+                from .pulseaudio_helper import set_default_source
+                set_default_source(new_device)
+            except ImportError:
+                pass
+
+        # Apply all settings
+        for key, value in self.temp_settings.items():
+            if self.settings.get(key) != value:
+                self.settings.set(key, value)
+                changes = True
+                if key in ["speech_engine", "whisper_model_size", "model_path"]:
+                    reinit_engine = True
+
+        # Trigger callback if needed
+        if changes and self.engine_change_callback:
+            if reinit_engine:
+                 self.engine_change_callback()
+
+
     def destroy(self):
         self._stop_test()
         super().destroy()
 
 
-# Switch implementation below to GTK 3.0 safely
+# End of SettingsDialog

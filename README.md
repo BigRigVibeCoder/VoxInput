@@ -86,6 +86,32 @@ Switch engines via the tray menu → Settings:
 | **Whisper** | 🐢 Batched | Excellent | Capitalized, punctuated |
 
 ---
+89: 
+90: ## 🧠 Using Better VOSK Models
+91: 
+92: By default, the installer downloads a lightweight VOSK model (~40MB). It is fast but may make mistakes. For desktop dictation, the larger models (~2GB) are much more accurate.
+93: 
+94: **How to upgrade:**
+95: 
+96: 1. **Download the large English model**:
+97:    - Go to: [https://alphacephei.com/vosk/models](https://alphacephei.com/vosk/models)
+98:    - Download `vosk-model-en-us-0.22` (approx 1.8 GB).
+99: 
+100: 2. **Extract the file**:
+101:    - Unzip the downloaded file. You will get a folder named `vosk-model-en-us-0.22`.
+102: 
+103: 3. **Move to VoxInput**:
+104:    - Inside `VoxInput/model`, create a new folder (e.g. `large_model`).
+105:    - Move the **contents** of the extracted folder into `VoxInput/model/large_model`.
+106: 
+107: 4. **Select in Settings**:
+108:    - Open VoxInput **Settings**.
+109:    - Select **Engine Type: Vosk**.
+110:    - Click the folder icon next to **Vosk Model Path**.
+111:    - Select your new `VoxInput/model/large_model` folder.
+112:    - Click **Save**.
+113: 
+114: ---
 
 ## ⚡ How to Enable Whisper & GPU
 

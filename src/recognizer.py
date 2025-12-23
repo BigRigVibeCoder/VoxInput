@@ -109,7 +109,7 @@ class SpeechRecognizer:
     def _process_vosk(self, data):
         # Vosk strategy: Lag-N Stabilization
         # We hold back the last N words until they are stable or the sentence ends.
-        LAG = 1 
+        LAG = self.settings.get("stability_lag", 1) 
         new_words_to_inject = []
 
         if not data:
@@ -198,7 +198,7 @@ class SpeechRecognizer:
             # We only commit if the word is "far enough back" from the edge.
             
             words = current_transcript.split()
-            LAG = 2 # Higher lag for Whisper as it fluctuates more at the tail
+            LAG = self.settings.get("stability_lag", 2) # Higher lag for Whisper as it fluctuates more at the tail
             
             stable_len = max(0, len(words) - LAG)
             current_committed_len = len(self.committed_text)
