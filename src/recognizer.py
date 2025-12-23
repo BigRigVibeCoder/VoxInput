@@ -60,6 +60,7 @@ class SpeechRecognizer:
             logger.info(f"Loading Whisper model: {size}")
             try:
                 self.model = whisper.load_model(size)
+                logger.info(f"Whisper model loaded successfully on device: {self.model.device}")
             except Exception as e:
                 error_msg = str(e)
                 if "CUDA error" in error_msg or "RuntimeError" in error_msg:

@@ -87,6 +87,35 @@ Switch engines via the tray menu → Settings:
 
 ---
 
+## ⚡ How to Enable Whisper & GPU
+
+Whisper can be significantly faster on a GPU. This app attempts to use your GPU automatically if available.
+
+### 1. Enable Whisper
+1. Click the VoxInput tray icon.
+2. Go to **Settings** -> **Engine** -> **Whisper**.
+
+### 2. Verify GPU Usage
+When you start the application, check `voxinput.log`. You should see:
+`INFO - Whisper model loaded successfully on device: cuda:0`
+
+If you see a warning about "falling back to CPU", your GPU was not detected.
+
+### ⚠️ GPU Compatibility Disclaimer
+**This application is not "smart enough" to automatically install the correct GPU drivers for every single graphics card.**
+It installs a standard version of PyTorch by default. If you have an older or specialized GPU (e.g., Maxwell, Pascal), you may need to manually install a compatible version of PyTorch.
+
+**Example Fix for Older GPUs:**
+If you have an older card (like Quadro M2200), you might need PyTorch with CUDA 11.8 support:
+```bash
+source venv/bin/activate
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+```
+
+Check [pytorch.org](https://pytorch.org/get-started/locally/) for the correct command for your specific hardware.
+
+---
+
 ## 🔧 Troubleshooting
 
 ### Hotkey Not Working?
@@ -152,16 +181,42 @@ tail -f voxinput.log
 
 ---
 
+## 🔄 Reinstall / Update
+
+To fix issues or update to the latest version:
+
+### Option 1: Quick Update
+Run the installer again. It is safe to run multiple times:
+```bash
+./install.sh
+```
+
+### Option 2: Clean Reinstall
+If you are facing deep issues (like corrupted Python environments), perform a clean install:
+
+1. **Delete the virtual environment**:
+   ```bash
+   rm -rf venv
+   ```
+2. **Run the installer**:
+   ```bash
+   ./install.sh
+   ```
+
+---
+
 ## 🗑️ Uninstall
 
 ```bash
-# Remove desktop shortcut
+# 1. Remove desktop shortcut
 rm ~/.local/share/applications/voxinput.desktop
 
-# Remove keyboard shortcut
-gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "[]"
+# 2. Remove keyboard shortcut
+# Go to Settings -> Keyboard -> Shortcuts -> Custom Shortcuts
+# Find "VoxInput Toggle" and remove it.
+# (Or use CLI if you know the specific path, but manual is safer to avoid wiping other shortcuts)
 
-# Delete project folder
+# 3. Delete project folder
 rm -rf /path/to/VoxInput
 ```
 

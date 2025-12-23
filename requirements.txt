@@ -1,5 +1,9 @@
+--extra-index-url https://download.pytorch.org/whl/cu118
 vosk>=0.3.45
 pyaudio>=0.2.14
 pynput>=1.7.7
 openai-whisper
 numpy
+torch==2.7.1+cu118
+torchvision==0.22.1+cu118
+torchaudio==2.7.1+cu118

@@ -23,7 +23,7 @@ $SUDO apt install -y python3-pip python3-venv python3-gi python3-gi-cairo gir1.2
 # 2. Setup Python Environment
 echo "Setting up Python environment..."
 if [ ! -d "venv" ]; then
-    python3 -m venv venv
+    python3 -m venv --system-site-packages venv
 fi
 source venv/bin/activate
 pip install -r requirements.txt
