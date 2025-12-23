@@ -112,10 +112,18 @@ except Exception as e:
     print(f'You may need to manually set the shortcut to: {toggle_script}')
 PYEOF
 
-# 6. Refresh GNOME keybindings (so hotkey works immediately without logout)
-echo "Refreshing GNOME keybindings..."
+# 6. Ensure gsd-media-keys daemon is running (handles custom shortcuts)
+echo "Ensuring GNOME media-keys daemon is running..."
 killall gsd-media-keys 2>/dev/null || true
 sleep 1
+# Restart gsd-media-keys in background
+/usr/libexec/gsd-media-keys &
+sleep 1
+if pgrep -x gsd-media-keys > /dev/null; then
+    echo "✓ gsd-media-keys daemon is running"
+else
+    echo "⚠ Warning: gsd-media-keys may not have started. Try logging out and back in."
+fi
 
 echo ""
 echo "✅ Installation Complete!"
