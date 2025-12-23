@@ -1,9 +1,0 @@
-[Desktop Entry]
-Name=VoxInput
-Comment=Voice-to-Text Dictation
-Exec=/home/bdavidriggins/Documents/VoxInput/venv/bin/python /home/bdavidriggins/Documents/VoxInput/run.py
-Icon=/home/bdavidriggins/Documents/VoxInput/assets/icon_idle.svg
-Terminal=false
-Type=Application
-Categories=Utility;Accessibility;
-Keywords=Voice;Dictation;Speech;

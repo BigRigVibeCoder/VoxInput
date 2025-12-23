@@ -1,0 +1,5 @@
+{
+    "audio_device": null,
+    "engine": "vosk",
+    "whisper_model_size": "small"
+}
