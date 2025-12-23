@@ -3,6 +3,10 @@ set -e
 
 echo "Starting VoxInput Installation..."
 
+# 0. Kill existing instances
+echo "Stopping any running instances..."
+pkill -f "VoxInput/run.py" || true
+
 # 1. Install System Dependencies
 echo "Installing system dependencies..."
 # Check if sudo is available or if we are root
