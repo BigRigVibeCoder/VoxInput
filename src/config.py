@@ -10,7 +10,7 @@ CHANNELS = 1
 CHUNK_SIZE = 8000
 
 # Hotkey
-HOTKEY = '<cmd>+m'  # Super+M
+HOTKEY = '<cmd>+<shift>+v'  # Super+Shift+V
 
 # Logging
 LOG_FILE = os.path.join(BASE_DIR, "..", "voxinput.log")

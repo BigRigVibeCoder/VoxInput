@@ -10,8 +10,10 @@ VoxInput is a powerful, privacy-first voice recognition tool for Linux (Ubuntu 2
     *   **Green Icon**: Idle / Ready.
     *   **Red Icon**: Active / Listening.
     *   **Right-Click Menu**: Quick access to Engine switching and Settings.
-*   **Global Hotkey**: Toggle listening from anywhere with `Super` + `M` (Windows Key + M).
-*   **Privacy First**: All processing happens locally on your machine. No audio is sent to the cloud.
+*   **Global Hotkey**: Toggle listening from anywhere with `Win + Shift + V`.
+    *   *The Windows key (⊞) is called "Super" in Linux settings.*
+    *   *If the app is closed, this key will launch it.*
+    *   *If the app is running, this key will toggle listening.*
 
 ---
 
@@ -19,31 +21,36 @@ VoxInput is a powerful, privacy-first voice recognition tool for Linux (Ubuntu 2
 
 Follow these steps to install the application, create a desktop shortcut, and pin it to your taskbar.
 
-### 1. Install System Dependencies
-Open your terminal and run the following command to install required system libraries (GTK support, Audio, Text Control):
+### Quick Install (Recommended)
+Run the automated installer script. This handles **everything** including:
+1.  Installing all system dependencies (`apt install ...`)
+2.  Setting up the Python virtual environment
+3.  Downloading the required speech model automatically
+4.  Creating a desktop shortcut
+5.  Registering the Global Hotkey (`Win + Shift + V`) in GNOME Settings
+
+```bash
+cd /home/bdavidriggins/Documents/VoxInput/
+./install.sh
+```
+
+> **Note**: The installer will prompt for your password to install system packages via `sudo apt install`.
+
+### Manual Dependency Installation (Optional)
+If the installer fails or you prefer manual control, you can install dependencies first:
 
 ```bash
 sudo apt update
-sudo apt install python3-pip python3-venv python3-gi python3-gi-cairo gir1.2-gtk-3.0 gir1.2-appindicator3-0.1 libportaudio2 portaudio19-dev xdotool ffmpeg
+sudo apt install -y python3-pip python3-venv python3-gi python3-gi-cairo \
+    gir1.2-gtk-3.0 gir1.2-appindicator3-0.1 libportaudio2 portaudio19-dev \
+    xdotool ffmpeg unzip wget
 ```
+
 *Note: `xdotool` is critical for typing text into other windows.*
 
-### 2. Run the Installer
-Run the automated installer script. This will:
-1.  Install necessary system dependencies.
-2.  Set up the Python virtual environment.
-3.  **Download the required speech model** automatically.
-4.  Create a desktop shortcut.
-
-Run this command in the project directory:
-```bash
-./install.sh
-```
-*If the installation succeeds, you will see a success message.*
-
-### 3. Pin to Taskbar (Ubuntu Dock)
+### Pin to Taskbar (Ubuntu Dock)
 Once installed, you can make VoxInput easy to access:
-1.  Press the **Super** (Windows) key to open the Activities overview.
+1.  Press the **Win** (⊞) key to open the Activities overview.
 2.  Type **"VoxInput"**.
 3.  You should see the VoxInput icon (Microphone).
 4.  **Right-click** the icon.
@@ -52,22 +59,45 @@ Once installed, you can make VoxInput easy to access:
 
 ---
 
+## ⌨️ Keyboard Shortcut
+
+| Shortcut | Action |
+|----------|--------|
+| **`Win + Shift + V`** | Toggle listening on/off (or launch app if closed) |
+
+> **Windows Keyboard Users**: The `Win` key (⊞ Windows logo key) is called "Super" in Linux. They are the same key!
+
+### After Installation
+The keyboard shortcut is automatically registered during installation. If you need to verify or manually configure it:
+
+1. Open **Settings** → **Keyboard** → **Keyboard Shortcuts** → **Custom Shortcuts**
+2. Look for **"VoxInput Toggle"**
+3. It should show the shortcut as `Super+Shift+V`
+
+### First-Time Use After Install
+Sometimes GNOME needs to refresh keybindings. If the shortcut doesn't work immediately:
+- **Log out and log back in**, OR
+- Run: `killall gsd-media-keys` (it will auto-restart)
+
+---
+
 ## 🎙️ Usage
 
 ### Starting the App
-*   Click the **VoxInput** icon on your taskbar.
+*   Press **`Win + Shift + V`** to launch the app instantly.
+*   OR Click the **VoxInput** icon on your taskbar.
 *   Look for the **Microphone Icon** in your system tray (usually top-right corner of the screen).
     *   **Green Mic**: The app is open and ready.
     *   **Red Mic**: The app is actively listening and typing.
 
 ### Dictation
 1.  Click into a text box (e.g., a document, Slack, or terminal).
-2.  Press **`Super` + `M`** OR **Double-Click** the tray icon to start listening.
+2.  Press **`Win + Shift + V`** to start listening.
     *   *The icon will turn RED.*
 3.  Speak clearly. Text will type out in real-time.
     *   *Note: Using the Vosk engine (default), text is lowercase and unpunctuated for speed.*
     *   *Note: Using the Whisper engine (in Settings), text is capitalized and punctuated but appears in sentence batches.*
-4.  Press **`Super` + `M`** again to stop.
+4.  Press **`Win + Shift + V`** again to stop.
 
 ### Context Menu (Right-Click Tray)
 *   **Start/Stop Listening**: Manual toggle.
@@ -91,29 +121,65 @@ source venv/bin/activate
 python3 run.py
 ```
 
-### Running Tests
-To verify audio devices and logic without running the full UI:
-```bash
-./venv/bin/python -m unittest discover tests
-```
-
 ### File Structure
 *   `src/main.py`: Entry point and main application logic.
 *   `src/ui.py`: System Tray and Settings Window implementation (GTK).
 *   `src/recognizer.py`: DeepSpeech/Vosk/Whisper engine wrappers.
 *   `src/injection.py`: Handles keyboard simulation (xdotool/pynput).
-*   `install.sh`: Setup script.
+*   `bin/toggle.sh`: Helper script for the global hotkey.
+*   `install.sh`: Setup script (installs dependencies, model, and hotkey).
+
+---
+
+## 🔄 Uninstall or Reinstall
+
+### Re-installing / Upgrading
+If you have pulled new code or want to reset the environment:
+1.  Simply run the installer script again. It is safe to re-run.
+    ```bash
+    ./install.sh
+    ```
+    This will check dependencies, update the virtual environment, and refresh the desktop shortcut.
+
+### Uninstalling
+To completely remove VoxInput from your system:
+
+1.  **Remove the Desktop Shortcut**:
+    ```bash
+    rm ~/.local/share/applications/voxinput.desktop
+    ```
+2.  **Remove the Keyboard Shortcut**:
+    ```bash
+    gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "[]"
+    ```
+3.  **Delete the Application Folder**:
+    ```bash
+    rm -rf /home/bdavidriggins/Documents/VoxInput
+    ```
+    *Note: This deletes the downloaded model files as well.*
 
 ---
 
 ## ❓ Troubleshooting
 
+### Hotkey Doesn't Work
+1.  Ensure you ran `./install.sh`.
+2.  **Log out and log back in** (GNOME needs to refresh keybindings).
+3.  Check: **Settings** → **Keyboard** → **Shortcuts** → **Custom Shortcuts**. You should see "VoxInput Toggle".
+4.  If the shortcut shows but doesn't trigger, run:
+    ```bash
+    killall gsd-media-keys
+    ```
+5.  If that failed, manually add a shortcut:
+    *   **Name**: VoxInput Toggle
+    *   **Command**: `/home/bdavidriggins/Documents/VoxInput/bin/toggle.sh`
+    *   **Shortcut**: Press `Win + Shift + V`
+
+### Other Issues
 *   **"Model not found"**: Ensure the `model/` directory exists and contains the Vosk model files.
 *   **Typing is glitchy**: Ensure `xdotool` is installed (`sudo apt install xdotool`). It is much more reliable than the fallback method.
-*   **Hotkey doesn't work**: On some Wayland composites, global hotkeys are restricted. You can bind a custom system shortcut to run:  
-    `pkill -USR1 -f 'run.py'`  
-    This signal toggles the listening state externally.
 *   **Audio is silent**: Check your OS Sound Settings > Input. Make sure the correct microphone is selected and unmuted.
 
 ---
-*Created by Antigravity*
+
+*Created with ❤️ for productivity*

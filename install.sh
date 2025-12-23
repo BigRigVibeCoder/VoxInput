@@ -61,6 +61,63 @@ mkdir -p ~/.local/share/applications
 cp voxinput.desktop ~/.local/share/applications/
 chmod +x ~/.local/share/applications/voxinput.desktop
 
-echo "Installation Complete!"
+# 5. Setup Global Hotkey (GNOME)
+echo "Setting up Global Hotkey (Super+Shift+V)..."
+TOGGLE_SCRIPT="$(pwd)/bin/toggle.sh"
+chmod +x "$TOGGLE_SCRIPT"
+
+# Use Python to safely append to gsettings list
+export TOGGLE_SCRIPT_PATH="$TOGGLE_SCRIPT"
+python3 << 'PYEOF'
+import subprocess
+import ast
+import os
+
+toggle_script = os.environ.get('TOGGLE_SCRIPT_PATH', '/home/bdavidriggins/Documents/VoxInput/bin/toggle.sh')
+
+try:
+    # 1. Get current custom keybindings list
+    output = subprocess.check_output(['gsettings', 'get', 'org.gnome.settings-daemon.plugins.media-keys', 'custom-keybindings']).decode('utf-8').strip()
+    if output == '@as []' or output == '':
+        current_list = []
+    else:
+        # gsettings returns variants like '@as []' sometimes, usually just "['path', ...]"
+        # we strictly need to parse it. 
+        if output.startswith('@as'):
+            output = output[3:].strip()
+        current_list = ast.literal_eval(output)
+
+    # 2. Define our new binding path
+    new_binding = '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom-voxinput/'
+    
+    # 3. Add if not present
+    if new_binding not in current_list:
+        current_list.append(new_binding)
+        # Convert back to GVariant string format
+        new_list_str = str(current_list)
+        subprocess.run(['gsettings', 'set', 'org.gnome.settings-daemon.plugins.media-keys', 'custom-keybindings', new_list_str], check=True)
+        print('Added custom keybinding path to list.')
+    else:
+        print('Keybinding path already exists.')
+
+    # 4. Set the properties for this binding
+    base_cmd = ['gsettings', 'set', f'org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:{new_binding}']
+    subprocess.run(base_cmd + ['name', 'VoxInput Toggle'], check=True)
+    subprocess.run(base_cmd + ['command', toggle_script], check=True)
+    subprocess.run(base_cmd + ['binding', '<Super><Shift>v'], check=True)
+    print('Successfully configured Super+Shift+V shortcut.')
+
+except Exception as e:
+    print(f'Failed to set hotkey: {e}')
+    print(f'You may need to manually set the shortcut to: {toggle_script}')
+PYEOF
+
+# 6. Refresh GNOME keybindings (so hotkey works immediately without logout)
+echo "Refreshing GNOME keybindings..."
+killall gsd-media-keys 2>/dev/null || true
+sleep 1
+
+echo ""
+echo "✅ Installation Complete!"
 echo "You can now find VoxInput in your applications menu."
-echo "If the icon does not appear immediately, you may need to log out and log back in."
+echo "Press Win+Shift+V to toggle voice dictation."

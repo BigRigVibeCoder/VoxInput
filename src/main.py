@@ -121,13 +121,15 @@ class VoxInputApp:
     def run(self):
         # Setup signal handlers
         signal.signal(signal.SIGINT, lambda s, f: self.quit_app())
+        signal.signal(signal.SIGUSR1, lambda s, f: self.toggle_listening())
         
         # Start global hotkey listener
         # Note: Global hotkeys with pynput on Linux can be tricky and might block.
-        # Running it in a separate thread.
-        self.hotkey_thread = threading.Thread(target=self._listen_hotkeys)
-        self.hotkey_thread.daemon = True
-        self.hotkey_thread.start()
+        # We are now using system-level shortcuts via SIGUSR1, so we disable this internal listener
+        # to prevent double-triggering (System Shortcut + Internal Pynput).
+        # self.hotkey_thread = threading.Thread(target=self._listen_hotkeys)
+        # self.hotkey_thread.daemon = True
+        # self.hotkey_thread.start()
         
         # Run UI loop
         Gtk.main()
