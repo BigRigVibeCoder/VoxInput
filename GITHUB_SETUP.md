@@ -161,6 +161,24 @@ Before going public, ensure:
 
 ---
 
+## Step 8: Stay Updated (Notifications)
+
+To ensure you get emails or phone alerts when someone stars, forks, or opens an issue:
+
+1. **Watch Your Repo**:
+   - Go to your repo page
+   - Click the **"Watch"** button (top right)
+   - Select **"All Activity"**
+
+2. **Configure Email/Mobile Alerts**:
+   - Click your profile photo (top right) → **Settings**
+   - Go to **Notifications** (left sidebar)
+   - Under "Watching":
+     - Check **"Email"** to get emails
+     - Check **"Web"** (and install the **GitHub Mobile** app on iOS/Android for phone push notifications)
+
+---
+
 ## Maintaining Your Project
 
 After going public:
