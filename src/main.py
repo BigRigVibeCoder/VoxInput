@@ -96,15 +96,45 @@ class VoxInputApp:
             self.processing_thread = None
 
     def _process_loop(self):
+        import audioop
+        
+        silence_start_time = None
+        SILENCE_THRESHOLD_RMS = 500  # Adjust based on mic noise floor
+        SILENCE_DURATION_SEC = 0.6   # Wait 600ms before finalizing
+        
         while self.is_listening and not self.should_quit:
             data = self.audio.get_data()
             if data:
+                # --- Silence Detection ---
+                try:
+                    rms = audioop.rms(data, 2) # 2 bytes per sample (16-bit)
+                except Exception:
+                    rms = 0
+                
+                if rms < SILENCE_THRESHOLD_RMS:
+                    if silence_start_time is None:
+                        silence_start_time = time.time()
+                    elif time.time() - silence_start_time > SILENCE_DURATION_SEC:
+                        # User has stopped speaking for > 0.6s
+                        # Check if we need to finalize (force flush) any pending Whisper buffer
+                        try:
+                            final_text = self.recognizer.finalize()
+                            if final_text:
+                                logger.info(f"Finalized (Silence): {final_text}")
+                                self.injector.type_text(final_text)
+                        except Exception as e:
+                            logger.error(f"Error finalizing: {e}")
+                        
+                        silence_start_time = None # Reset so we don't spam finalize
+                else:
+                    # Voice detected
+                    silence_start_time = None
+
+                # --- Normal Processing ---
                 try:
                     text = self.recognizer.process_audio(data)
                     if text:
                         logger.info(f"Recognized: {text}")
-                        # Inject text to main thread or via UI idle add if needed?
-                        # pynput is thread safe mostly, but let's be careful.
                         self.injector.type_text(text)
                 except Exception as e:
                     logger.error(f"Error processing audio: {e}", exc_info=True)

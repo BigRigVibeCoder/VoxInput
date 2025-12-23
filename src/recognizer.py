@@ -3,6 +3,8 @@ import os
 import logging
 import audioop
 import numpy as np
+import gc
+
 import time
 
 # Try to import engines
@@ -26,6 +28,16 @@ class SpeechRecognizer:
         from .settings import SettingsManager
         self.settings = SettingsManager()
         self.engine_type = self.settings.get("speech_engine", "Vosk")
+
+        # CLEANUP: Ensure previous models are cleared from GPU memory
+        # We check for torch availability and CUDA
+        try:
+            import torch
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                gc.collect()
+        except ImportError:
+            pass
         
         logger.info(f"Initializing SpeechRecognizer with engine: {self.engine_type}")
 
@@ -207,9 +219,69 @@ class SpeechRecognizer:
                 self.committed_text.extend(new_batch)
                 
             if new_words_to_inject:
-                return " ".join(new_words_to_inject)
+                text_result = " ".join(new_words_to_inject)
+                
+                # Heuristic: If we successfully committed a full sentence, flush the buffer
+                # to prevent infinite buffer growth and improve future responsiveness.
+                if new_words_to_inject[-1].endswith(('.', '!', '?')):
+                    logger.info("Sentence completed. Flushing Whisper buffer.")
+                    self.whisper_buffer = b""
+                    self.committed_text = [] # Start fresh
+                    # Note: We lose the "context" for the NEXT sentence with this hard flush.
+                    # But it prevents the drift/hallucination/lag issues.
+                
+                return text_result
 
         except Exception as e:
             logger.error(f"Whisper inference error: {e}")
             
         return None
+
+    def finalize(self):
+        """
+        Called when silence is detected. Forces processing of the remaining buffer with zero lag.
+        """
+        if self.engine_type != "Whisper" or not self.model:
+            return None
+            
+        if len(self.whisper_buffer) == 0:
+            return None
+            
+        logger.info("Finalizing Whisper buffer (Silence detected)...")
+        try:
+            # Similar to _process_whisper but with LAG = 0
+            audio_np = np.frombuffer(self.whisper_buffer, dtype=np.int16).astype(np.float32) / 32768.0
+            
+            # Safety check for empty tensor
+            if audio_np.size == 0:
+                return None
+
+            result = self.model.transcribe(audio_np, fp16=False, beam_size=1, language='en')
+            current_transcript = result.get('text', '').strip()
+            
+            # Logic: We just want to output whatever is NEW compared to committed
+            words = current_transcript.split()
+            current_committed_len = len(self.committed_text)
+            
+            new_words = []
+            if len(words) > current_committed_len:
+                new_words = words[current_committed_len:]
+                
+            # Flush everything
+            self.whisper_buffer = b""
+            self.committed_text = []
+            
+            if new_words:
+                logger.info(f"Finalized flush: {new_words}")
+                return " ".join(new_words)
+
+        except Exception as e:
+            logger.error(f"Error during finalize: {e}")
+            
+        return None
+
+    def reset_state(self):
+        if self.engine_type == "Whisper":
+            self.whisper_buffer = b""
+            self.committed_text = []
+            self.whisper_last_transcript = ""
