@@ -74,3 +74,4 @@ htmlcov/
 # Distribution
 *.tar.gz
 *.zip
+!VoxInput_v*.zip
