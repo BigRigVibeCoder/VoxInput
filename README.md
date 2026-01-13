@@ -207,7 +207,33 @@ tail -f voxinput.log
 
 ---
 
-## 🔄 Reinstall / Update
+---
+183: 
+184: ## 📦 Deployment on Other Machines
+185: 
+186: To install VoxInput on another computer, you can create a standalone zip package:
+187: 
+188: ### 1. Create a Release Package
+189: Run this script on your development machine:
+190: ```bash
+191: ./bin/create_package.sh
+192: ```
+193: This will generate a file named `VoxInput_v1.0.zip`.
+194: 
+195: ### 2. Install on New Machine
+196: 1. Copy `VoxInput_v1.0.zip` to the new computer.
+197: 2. Unzip it.
+198: 3. Run the installer:
+199:    ```bash
+200:    cd VoxInput_v1.0
+201:    ./install.sh
+202:    ```
+203: 
+204: **Note**: The installer will automatically download the standard model if it's not included in the zip (which keeps the zip file small).
+205: 
+206: ---
+207: 
+208: ## 🔄 Reinstall / Update
 
 To fix issues or update to the latest version:
 

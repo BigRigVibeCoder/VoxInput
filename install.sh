@@ -77,7 +77,9 @@ import subprocess
 import ast
 import os
 
-toggle_script = os.environ.get('TOGGLE_SCRIPT_PATH', '/home/bdavidriggins/Documents/VoxInput/bin/toggle.sh')
+toggle_script = os.environ.get('TOGGLE_SCRIPT_PATH')
+if not toggle_script:
+    raise ValueError("TOGGLE_SCRIPT_PATH environment variable is not set")
 
 try:
     # 1. Get current custom keybindings list
