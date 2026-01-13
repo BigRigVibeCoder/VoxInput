@@ -1,7 +1,9 @@
-import pyaudio
-import queue
 import logging
-from .config import SAMPLE_RATE, CHANNELS, CHUNK_SIZE
+import queue
+
+import pyaudio
+
+from .config import CHANNELS, CHUNK_SIZE, SAMPLE_RATE
 
 logger = logging.getLogger(__name__)
 

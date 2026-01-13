@@ -1,5 +1,6 @@
-import subprocess
 import logging
+import subprocess
+
 from pynput.keyboard import Controller, Key
 
 logger = logging.getLogger(__name__)

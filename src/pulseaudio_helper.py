@@ -6,9 +6,8 @@ PulseAudio/PipeWire instead of relying only on PyAudio's limited ALSA view.
 This allows VoxInput to see all virtual devices like Easy Effects Source.
 """
 
-import subprocess
 import logging
-import re
+import subprocess
 
 logger = logging.getLogger(__name__)
 

@@ -1,9 +1,22 @@
+import audioop
+import logging
 import signal
 import sys
 import threading
 import time
-import logging
+
+from gi.repository import GLib
+from pynput import keyboard
+
+from .audio import AudioCapture
 from .config import HOTKEY, LOG_FILE
+from .injection import TextInjector
+from .recognizer import SpeechRecognizer
+from .settings import SettingsManager
+
+# Imports moved to top level compliant with PEP8 (requires careful circular dep check)
+# In this simple app, these depend only on standard libs or other simple modules
+from .ui import Gtk, SystemTrayApp
 
 # Configure Logging
 logging.basicConfig(
@@ -16,25 +29,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-try:
-    from .ui import SystemTrayApp, Gtk
-except ImportError as e:
-    import traceback
-    logger.critical(f"Could not import UI modules: {e}")
-    traceback.print_exc()
-    sys.exit(1)
-
-from .audio import AudioCapture
-from .recognizer import SpeechRecognizer
-from .injection import TextInjector
 
 class VoxInputApp:
     def __init__(self):
         self.audio = AudioCapture()
         self.recognizer = SpeechRecognizer()
         self.injector = TextInjector()
-        
-        from .settings import SettingsManager
         self.settings = SettingsManager()
         
         self.is_listening = False
@@ -99,12 +99,8 @@ class VoxInputApp:
             self.processing_thread = None
 
     def _process_loop(self):
-        import audioop
         
         silence_start_time = None
-        # Defaults
-        SILENCE_THRESHOLD_RMS = self.settings.get("silence_threshold", 500)
-        SILENCE_DURATION_SEC = self.settings.get("silence_duration", 0.6)
         
         while self.is_listening and not self.should_quit:
             data = self.audio.get_data()
@@ -169,12 +165,10 @@ class VoxInputApp:
         Gtk.main()
 
     def _listen_hotkeys(self):
-        from pynput import keyboard
         
         def on_activate():
             # Run in main thread context if possible, or careful with Gtk
             # Gtk is not thread safe. Use GLib.idle_add
-            from gi.repository import GLib
             GLib.idle_add(self.toggle_listening)
 
         # Parse hotkey string or hardcode for now

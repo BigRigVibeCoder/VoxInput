@@ -1,0 +1,7 @@
+ruff
+mypy
+pytest
+pytest-mock
+pytest-asyncio
+types-setuptools
+types-requests

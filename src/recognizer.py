@@ -1,15 +1,14 @@
-import json
-import os
-import logging
-import audioop
-import numpy as np
 import gc
-
+import json
+import logging
+import os
 import time
+
+import numpy as np
 
 # Try to import engines
 try:
-    from vosk import Model, KaldiRecognizer
+    from vosk import KaldiRecognizer, Model
 except ImportError:
     Model = None
     KaldiRecognizer = None
@@ -280,8 +279,4 @@ class SpeechRecognizer:
             
         return None
 
-    def reset_state(self):
-        if self.engine_type == "Whisper":
-            self.whisper_buffer = b""
-            self.committed_text = []
-            self.whisper_last_transcript = ""
+

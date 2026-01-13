@@ -1,9 +1,10 @@
-import gi
-gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, GLib, GObject
-import threading
 import os
-import signal
+import threading
+
+import gi
+
+gi.require_version('Gtk', '3.0')
+from gi.repository import GLib, Gtk  # noqa: E402
 
 # Constants
 APP_ID = "com.voxinput.app"
@@ -132,7 +133,7 @@ class SettingsDialog(Gtk.Dialog):
         
         # Populate devices
         try:
-            from .pulseaudio_helper import get_pulseaudio_sources, filter_input_sources, get_default_source
+            from .pulseaudio_helper import filter_input_sources, get_default_source, get_pulseaudio_sources
             self.sources = filter_input_sources(get_pulseaudio_sources())
             
             # Try to get saved device, fallback to system default
@@ -208,7 +209,10 @@ class SettingsDialog(Gtk.Dialog):
         self.lbl_vosk_path.set_halign(Gtk.Align.START)
         grid_model.attach(self.lbl_vosk_path, 0, 1, 1, 1)
         
-        self.file_chooser = Gtk.FileChooserButton(title="Select Model Folder", action=Gtk.FileChooserAction.SELECT_FOLDER)
+        self.file_chooser = Gtk.FileChooserButton(
+            title="Select Model Folder", 
+            action=Gtk.FileChooserAction.SELECT_FOLDER
+        )
         saved_model = self.temp_settings.get("model_path")
         if saved_model and os.path.exists(saved_model):
             self.file_chooser.set_filename(saved_model)
@@ -260,11 +264,18 @@ class SettingsDialog(Gtk.Dialog):
         
         self.spin_silence = Gtk.SpinButton.new_with_range(0.1, 5.0, 0.1)
         self.spin_silence.set_value(self.temp_settings.get("silence_duration", 0.6))
-        self.spin_silence.connect("value-changed", lambda w: self._set_temp("silence_duration", round(w.get_value(), 2)))
+        self.spin_silence.connect(
+            "value-changed", 
+            lambda w: self._set_temp("silence_duration", round(w.get_value(), 2))
+        )
         grid_adv.attach(self.spin_silence, 1, 0, 1, 1)
         
         lbl_silence_desc = Gtk.Label()
-        lbl_silence_desc.set_markup("<small><i>How long to wait for silence before finalizing.\nDefault: 0.6s. Range: 0.1 - 2.0s.\nLower = Snappier response. Higher = Allows longer pauses.</i></small>")
+        lbl_silence_desc.set_markup(
+            "<small><i>How long to wait for silence before finalizing.\n"
+            "Default: 0.6s. Range: 0.1 - 2.0s.\n"
+            "Lower = Snappier response. Higher = Allows longer pauses.</i></small>"
+        )
         lbl_silence_desc.set_line_wrap(True)
         lbl_silence_desc.set_halign(Gtk.Align.START)
         grid_adv.attach(lbl_silence_desc, 0, 1, 2, 1)
@@ -283,7 +294,11 @@ class SettingsDialog(Gtk.Dialog):
         grid_adv.attach(self.spin_lag, 1, 3, 1, 1)
         
         lbl_lag_desc = Gtk.Label()
-        lbl_lag_desc.set_markup("<small><i>Number of words to hold back to prevent flickering.\nDefault: 2. Range: 0 - 5.\nIncrease if text changes frequently while speaking.</i></small>")
+        lbl_lag_desc.set_markup(
+            "<small><i>Number of words to hold back to prevent flickering.\n"
+            "Default: 2. Range: 0 - 5.\n"
+            "Increase if text changes frequently while speaking.</i></small>"
+        )
         lbl_lag_desc.set_line_wrap(True)
         lbl_lag_desc.set_halign(Gtk.Align.START)
         grid_adv.attach(lbl_lag_desc, 0, 4, 2, 1)
@@ -302,7 +317,11 @@ class SettingsDialog(Gtk.Dialog):
         grid_adv.attach(self.spin_thresh, 1, 6, 1, 1)
 
         lbl_thresh_desc = Gtk.Label()
-        lbl_thresh_desc.set_markup("<small><i>Volume level required to detect speech.\nDefault: 500. Range: 100 - 3000.\nIncrease if background noise triggers random typing.</i></small>")
+        lbl_thresh_desc.set_markup(
+            "<small><i>Volume level required to detect speech.\n"
+            "Default: 500. Range: 100 - 3000.\n"
+            "Increase if background noise triggers random typing.</i></small>"
+        )
         lbl_thresh_desc.set_line_wrap(True)
         lbl_thresh_desc.set_halign(Gtk.Align.START)
         grid_adv.attach(lbl_thresh_desc, 0, 7, 2, 1)
@@ -367,8 +386,9 @@ class SettingsDialog(Gtk.Dialog):
             self._set_temp("model_path", path)
             
     def _on_view_logs(self, widget):
-        from .config import LOG_FILE
         import subprocess
+
+        from .config import LOG_FILE
         try:
             subprocess.Popen(['xdg-open', LOG_FILE])
         except Exception as e:
@@ -383,8 +403,8 @@ class SettingsDialog(Gtk.Dialog):
             widget.set_label("Stop")
 
     def _start_test(self):
+
         import pyaudio
-        import audioop
         self.is_testing = True
         self.recorded_frames = []
         self.pa = pyaudio.PyAudio()

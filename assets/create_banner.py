@@ -1,5 +1,7 @@
-import cairo
 import math
+
+import cairo
+
 
 def create_banner():
     WIDTH = 1280
