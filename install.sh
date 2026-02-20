@@ -153,6 +153,13 @@ if command -v update-desktop-database >/dev/null 2>&1; then
 fi
 echo "  ✓ Launcher registered: $DESKTOP_DEST"
 
+# Copy to Desktop so the icon appears on the GNOME desktop (ding extension)
+if [ -d "$HOME/Desktop" ]; then
+    cp "$DESKTOP_DEST" "$HOME/Desktop/voxinput.desktop"
+    chmod +x "$HOME/Desktop/voxinput.desktop"
+    echo "  ✓ Desktop icon added: ~/Desktop/voxinput.desktop"
+fi
+
 # ── 7. Autostart (optional) ────────────────────────────────────────────────
 if [ "$AUTOSTART" = true ]; then
     echo "▶ Setting up autostart on login..."
