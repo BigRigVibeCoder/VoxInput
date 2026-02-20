@@ -108,6 +108,7 @@ class VoxInputApp:
         logger.info("Stopping listening...")
         self.is_listening = False
         self.ui.set_listening_state(False)
+        self.ui.update_osd("", 0.0)   # P5: clear OSD on stop
         self.audio.stop()
 
         if self.processing_thread:
@@ -132,6 +133,7 @@ class VoxInputApp:
         import numpy as np  # numpy always present (P0-01)
 
         silence_start_time = None
+        osd_words: list[str] = []   # P5: accumulate words for OSD display
 
         while self.is_listening and not self.should_quit:
             data = self.audio.get_data()
@@ -143,6 +145,10 @@ class VoxInputApp:
                 except Exception:
                     rms = 0
 
+                # P5: feed live level to OSD (normalised 0–1)
+                level = min(rms / 8000.0, 1.0)
+                self.ui.update_osd(" ".join(osd_words[-8:]), level)
+
                 if rms < self.settings.get("silence_threshold", 500):
                     if silence_start_time is None:
                         silence_start_time = time.time()
@@ -152,6 +158,7 @@ class VoxInputApp:
                             if final_text:
                                 logger.info(f"Finalized (Silence): {final_text}")
                                 self._enqueue_injection(final_text)
+                                osd_words.clear()          # reset OSD accumulator
                         except Exception as e:
                             logger.error(f"Error finalizing: {e}")
                         silence_start_time = None
@@ -164,6 +171,7 @@ class VoxInputApp:
                     if text:
                         logger.info(f"Recognized: {text}")
                         self._enqueue_injection(text)
+                        osd_words.extend(text.split())   # P5: accumulate for OSD
                 except Exception as e:
                     logger.error(f"Error processing audio: {e}", exc_info=True)
             else:
