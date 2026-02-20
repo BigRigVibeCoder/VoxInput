@@ -53,6 +53,12 @@ class SpeechRecognizer:
                 raise ImportError("vosk not installed")
 
             model_path = self.settings.get("model_path", MODEL_PATH)
+            
+            # Resolve relative paths against the application root
+            if not os.path.isabs(model_path):
+                from .config import ROOT_DIR
+                model_path = os.path.join(ROOT_DIR, model_path)
+                
             if not os.path.exists(model_path):
                  if model_path != MODEL_PATH and os.path.exists(MODEL_PATH):
                      model_path = MODEL_PATH
