@@ -4,7 +4,8 @@ import threading
 import gi
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import GLib, Gtk  # noqa: E402
+import cairo  # noqa: E402  (for OSD waveform)
+from gi.repository import GLib, Gtk, Gdk, Pango, PangoCairo  # noqa: E402
 
 # Constants
 APP_ID = "com.voxinput.app"
@@ -13,13 +14,130 @@ ASSETS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "assets"))
 ICON_IDLE = "icon_idle"
 ICON_ACTIVE = "icon_active"
 
+
+# ──────────────────────────────────────────────────────────────
+# OSD Overlay (Phase 5) — floating borderless window
+# Renders recognized text + audio level bar at bottom-right of screen
+# ──────────────────────────────────────────────────────────────
+
+class OSDOverlay(Gtk.Window):
+    """
+    Floating on-screen display.  Shows the current recognition text
+    and a live audio level bar while dictating.
+
+    Usage:
+        osd = OSDOverlay()
+        osd.set_text("hello world")   # called from recognizer thread via GLib.idle_add
+        osd.set_level(0.4)            # called every audio chunk
+        osd.show()  / osd.hide()
+    """
+    _WIDTH  = 520
+    _HEIGHT = 70
+    _MARGIN = 18   # px from screen edge
+
+    def __init__(self):
+        super().__init__(type=Gtk.WindowType.POPUP)
+        self.set_decorated(False)
+        self.set_keep_above(True)
+        self.set_skip_taskbar_hint(True)
+        self.set_skip_pager_hint(True)
+        self.set_app_paintable(True)
+
+        # RGBA (transparency)
+        screen = self.get_screen()
+        visual = screen.get_rgba_visual()
+        if visual:
+            self.set_visual(visual)
+
+        self._text  = ""
+        self._level = 0.0
+        self._pos_set = False
+
+        draw_area = Gtk.DrawingArea()
+        draw_area.set_size_request(self._WIDTH, self._HEIGHT)
+        draw_area.connect("draw", self._on_draw)
+        self.add(draw_area)
+        self._draw_area = draw_area
+
+        self.set_default_size(self._WIDTH, self._HEIGHT)
+        self._update_position()
+
+    # ─ Public API ──────────────────────────────────────────
+
+    def set_text(self, text: str):
+        self._text = text
+        GLib.idle_add(self._draw_area.queue_draw)
+
+    def set_level(self, level: float):
+        """level: 0.0 – 1.0"""
+        self._level = max(0.0, min(1.0, level))
+        GLib.idle_add(self._draw_area.queue_draw)
+
+    # ─ Internal ─────────────────────────────────────────
+
+    def _update_position(self):
+        """Position bottom-right of the primary monitor."""
+        display  = Gdk.Display.get_default()
+        monitor  = display.get_primary_monitor() if display else None
+        if monitor:
+            geo = monitor.get_geometry()
+            x = geo.x + geo.width  - self._WIDTH  - self._MARGIN
+            y = geo.y + geo.height - self._HEIGHT - self._MARGIN
+            self.move(x, y)
+
+    def _on_draw(self, widget, cr: cairo.Context):
+        w = widget.get_allocated_width()
+        h = widget.get_allocated_height()
+        r  = 12.0   # corner radius
+
+        # ─ Background: semi-transparent dark pill ─
+        cr.new_sub_path()
+        cr.arc(r,     r,     r, 3.14, 2.70)
+        cr.arc(w - r, r,     r, 4.71, 0.0)
+        cr.arc(w - r, h - r, r, 0.0,  1.57)
+        cr.arc(r,     h - r, r, 1.57, 3.14)
+        cr.close_path()
+        cr.set_source_rgba(0.05, 0.05, 0.10, 0.82)
+        cr.fill()
+
+        # ─ Mic level bar (thin, bottom, cyan) ─
+        bar_h  = 4
+        bar_y  = h - bar_h - 4
+        bar_w  = max(4, int((w - 20) * self._level))
+        cr.set_source_rgba(0.0, 0.85, 0.95, 0.9)
+        cr.rectangle(10, bar_y, bar_w, bar_h)
+        cr.fill()
+
+        # ─ Text ─
+        if self._text:
+            layout = PangoCairo.create_layout(cr)
+            font   = Pango.FontDescription.from_string("Sans Bold 14")
+            layout.set_font_description(font)
+            layout.set_text(self._text[-80:], -1)   # last 80 chars
+            layout.set_width((w - 20) * Pango.SCALE)
+            layout.set_ellipsize(Pango.EllipsizeMode.START)
+            tw, th = layout.get_pixel_size()
+            cr.set_source_rgba(1.0, 1.0, 1.0, 0.95)
+            cr.move_to(10, (h - bar_h - 8 - th) / 2)
+            PangoCairo.show_layout(cr, layout)
+
+        # ─ Mic icon dot (left side, green when active) ─
+        dot_color = (0.15, 0.9, 0.45) if self._level > 0.05 else (0.5, 0.5, 0.5)
+        cr.set_source_rgb(*dot_color)
+        cr.arc(w - 16, 16, 5, 0, 6.28)
+        cr.fill()
+
+
 class SystemTrayApp:
     def __init__(self, toggle_callback, quit_callback, engine_change_callback=None):
         self.toggle_callback = toggle_callback
         self.quit_callback = quit_callback
         self.engine_change_callback = engine_change_callback
         self.is_listening = False
-        
+
+        # P5: OSD overlay — hidden until listening starts
+        self.osd = OSDOverlay()
+
         # Create StatusIcon (replaces AppIndicator3)
         self.icon = Gtk.StatusIcon()
         self.icon.set_from_file(os.path.join(ASSETS_DIR, f"{ICON_IDLE}.svg"))
@@ -83,10 +201,18 @@ class SystemTrayApp:
             self.icon.set_from_file(os.path.join(ASSETS_DIR, f"{ICON_ACTIVE}.svg"))
             self.icon.set_tooltip_text("VoxInput (Listening)")
             GLib.idle_add(self.item_toggle.set_label, "Stop Listening")
+            GLib.idle_add(self.osd.show_all)   # P5: show OSD
         else:
             self.icon.set_from_file(os.path.join(ASSETS_DIR, f"{ICON_IDLE}.svg"))
             self.icon.set_tooltip_text("VoxInput (Idle)")
             GLib.idle_add(self.item_toggle.set_label, "Start Listening")
+            GLib.idle_add(self.osd.hide)        # P5: hide OSD
+            GLib.idle_add(self.osd.set_text, "")
+
+    def update_osd(self, text: str, level: float = 0.0):
+        """Called from main.py injection thread to update the OSD in real-time."""
+        self.osd.set_text(text)
+        self.osd.set_level(level)
 
     def run(self):
         Gtk.main()
@@ -348,6 +474,93 @@ class SettingsDialog(Gtk.Dialog):
         lbl_fast_desc.set_halign(Gtk.Align.START)
         grid_adv.attach(lbl_fast_desc, 0, 10, 2, 1)
 
+        # --- Microphone Enhancement Tab (Phase 6 UI) ---
+        frame_mic = Gtk.Frame(label="🎤  Microphone Enhancement")
+        vbox.pack_start(frame_mic, False, False, 0)
+
+        grid_mic = Gtk.Grid()
+        grid_mic.set_column_spacing(10)
+        grid_mic.set_row_spacing(10)
+        grid_mic.set_margin_top(10)
+        grid_mic.set_margin_bottom(10)
+        grid_mic.set_margin_start(10)
+        grid_mic.set_margin_end(10)
+        frame_mic.add(grid_mic)
+
+        # Input Volume
+        lbl_vol = Gtk.Label(label="Input Volume:")
+        lbl_vol.set_halign(Gtk.Align.START)
+        grid_mic.attach(lbl_vol, 0, 0, 1, 1)
+
+        self.spin_volume = Gtk.SpinButton.new_with_range(50, 150, 5)
+        self.spin_volume.set_value(self.temp_settings.get("mic_volume", 100))
+        self.spin_volume.connect(
+            "value-changed", lambda w: self._set_temp("mic_volume", int(w.get_value()))
+        )
+        grid_mic.attach(self.spin_volume, 1, 0, 1, 1)
+        grid_mic.attach(Gtk.Label(label="%"), 2, 0, 1, 1)
+
+        # Noise Suppression
+        self.check_noise = Gtk.CheckButton(label="🔇  WebRTC Noise Suppression (module-echo-cancel)")
+        self.check_noise.set_active(self.temp_settings.get("noise_suppression", False))
+        self.check_noise.connect(
+            "toggled", lambda w: self._set_temp("noise_suppression", w.get_active())
+        )
+        grid_mic.attach(self.check_noise, 0, 1, 3, 1)
+
+        # Mic Boost
+        lbl_boost = Gtk.Label(label="ALSA Mic Boost:")
+        lbl_boost.set_halign(Gtk.Align.START)
+        grid_mic.attach(lbl_boost, 0, 2, 1, 1)
+
+        self.spin_boost = Gtk.SpinButton.new_with_range(0, 100, 10)
+        self.spin_boost.set_value(self.temp_settings.get("mic_boost", 0))
+        self.spin_boost.connect(
+            "value-changed", lambda w: self._set_temp("mic_boost", int(w.get_value()))
+        )
+        grid_mic.attach(self.spin_boost, 1, 2, 1, 1)
+        grid_mic.attach(Gtk.Label(label="%"), 2, 2, 1, 1)
+
+        # Auto-calibrate button
+        btn_cal = Gtk.Button(label="📊 Auto-Calibrate Silence Threshold")
+        btn_cal.connect("clicked", self._on_auto_calibrate)
+        grid_mic.attach(btn_cal, 0, 3, 3, 1)
+
+        self.lbl_cal_result = Gtk.Label(label="")
+        self.lbl_cal_result.set_halign(Gtk.Align.START)
+        grid_mic.attach(self.lbl_cal_result, 0, 4, 3, 1)
+
+        # --- Spell Correction Toggle (Phase 3) ---
+        frame_spell = Gtk.Frame(label="🖊️  Speech Processing")
+        vbox.pack_start(frame_spell, False, False, 0)
+
+        grid_spell = Gtk.Grid()
+        grid_spell.set_column_spacing(10)
+        grid_spell.set_row_spacing(6)
+        grid_spell.set_margin_top(8)
+        grid_spell.set_margin_bottom(8)
+        grid_spell.set_margin_start(10)
+        grid_spell.set_margin_end(10)
+        frame_spell.add(grid_spell)
+
+        self.check_spell = Gtk.CheckButton(
+            label="✨  Spell Correction (SymSpellPy + ASR artifact rules)"
+        )
+        self.check_spell.set_active(self.temp_settings.get("spell_correction", True))
+        self.check_spell.connect(
+            "toggled", lambda w: self._set_temp("spell_correction", w.get_active())
+        )
+        grid_spell.attach(self.check_spell, 0, 0, 2, 1)
+
+        self.check_voice_punct = Gtk.CheckButton(
+            label=". , ?  Voice Punctuation (say 'period', 'comma', 'new line')"
+        )
+        self.check_voice_punct.set_active(self.temp_settings.get("voice_punctuation", True))
+        self.check_voice_punct.connect(
+            "toggled", lambda w: self._set_temp("voice_punctuation", w.get_active())
+        )
+        grid_spell.attach(self.check_voice_punct, 0, 1, 2, 1)
+
         # -- Actions --
         btn_logs = Gtk.Button(label="View Logs")
         btn_logs.connect("clicked", self._on_view_logs)
@@ -405,6 +618,31 @@ class SettingsDialog(Gtk.Dialog):
         if path:
             self._set_temp("model_path", path)
             
+    def _on_auto_calibrate(self, widget):
+        """Run MicEnhancer auto-calibration in a background thread."""
+        self.lbl_cal_result.set_text("Calibrating... stay quiet for 3 seconds.")
+        widget.set_sensitive(False)
+
+        def _run():
+            try:
+                from .mic_enhancer import MicEnhancer
+                enh = MicEnhancer(self.settings)
+                result = enh.auto_calibrate()
+                recommended = result.get("recommended_threshold", 500)
+                GLib.idle_add(
+                    self.lbl_cal_result.set_text,
+                    f"✅ Noise floor: {result.get('noise_floor_rms',0):.0f} RMS  "
+                    f"→ Recommended threshold: {recommended}"
+                )
+                GLib.idle_add(self.spin_thresh.set_value, float(recommended))
+                GLib.idle_add(self._set_temp, "silence_threshold", recommended)
+            except Exception as e:
+                GLib.idle_add(self.lbl_cal_result.set_text, f"❌ Calibration failed: {e}")
+            finally:
+                GLib.idle_add(widget.set_sensitive, True)
+
+        threading.Thread(target=_run, daemon=True).start()
+
     def _on_view_logs(self, widget):
         import subprocess
 
@@ -479,19 +717,18 @@ class SettingsDialog(Gtk.Dialog):
 
     def _update_level(self):
         if not self.is_testing or not self.test_stream:
-            return False # Stop timer
-        
+            return False  # Stop timer
+
         try:
+            import numpy as np
             data = self.test_stream.read(1024, exception_on_overflow=False)
             self.recorded_frames.append(data)
-            import audioop
-            rms = audioop.rms(data, 2)
-            # Normalize reasonably
-            level = min(rms / 10000.0, 1.0) 
-            self.level_bar.set_value(level)
+            pcm = np.frombuffer(data, dtype=np.int16)
+            rms = float(np.sqrt(np.mean(pcm.astype(np.float32) ** 2)))
+            self.level_bar.set_value(min(rms / 10000.0, 1.0))
         except Exception:
             pass
-            
+
         return True
 
     def save_settings(self):
