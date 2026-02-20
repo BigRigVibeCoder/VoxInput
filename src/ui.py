@@ -326,9 +326,29 @@ class SettingsDialog(Gtk.Dialog):
         lbl_thresh_desc.set_halign(Gtk.Align.START)
         grid_adv.attach(lbl_thresh_desc, 0, 7, 2, 1)
 
+        # Spacer
+        grid_adv.attach(Gtk.Label(label=""), 0, 8, 2, 1)
+
+        # Speed Mode Toggle (P1-03)
+        self.check_fast_mode = Gtk.CheckButton(
+            label="⚡ Speed Mode (LAG=0 — instant output, may reduce accuracy)"
+        )
+        self.check_fast_mode.set_active(self.temp_settings.get("fast_mode", False))
+        self.check_fast_mode.connect(
+            "toggled", lambda w: self._set_temp("fast_mode", w.get_active())
+        )
+        grid_adv.attach(self.check_fast_mode, 0, 9, 2, 1)
+
+        lbl_fast_desc = Gtk.Label()
+        lbl_fast_desc.set_markup(
+            "<small><i>Bypasses stability lag — words appear as you speak.\n"
+            "Best for Vosk. For Whisper, combine with tiny/base model.</i></small>"
+        )
+        lbl_fast_desc.set_line_wrap(True)
+        lbl_fast_desc.set_halign(Gtk.Align.START)
+        grid_adv.attach(lbl_fast_desc, 0, 10, 2, 1)
 
         # -- Actions --
-        # View Logs logic specifically requested in summary previously
         btn_logs = Gtk.Button(label="View Logs")
         btn_logs.connect("clicked", self._on_view_logs)
         vbox.pack_start(btn_logs, False, False, 0)
