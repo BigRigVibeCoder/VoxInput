@@ -28,6 +28,22 @@ ASR_CORRECTIONS: dict[str, str] = {
     "woulda":  "would have",
 }
 
+# Words that should NEVER be corrected.
+# Includes: tech abbreviations, proper nouns, brands, org names.
+# Extend this list or use Settings -> custom_dict_path for user words.
+_PASSTHROUGH: set[str] = {
+    # Tech abbreviations
+    "os", "ui", "ux", "vs", "api", "url", "http", "https", "html", "json",
+    "ai", "ml", "db", "id", "ip", "ok", "tv", "pc", "vm", "py", "js", "css",
+    "sql", "ram", "cpu", "gpu", "ssh", "git", "log", "dev", "app", "web",
+    "cli", "gui", "sdk", "aws", "gcp", "dns", "tcp", "udp", "ios", "amd",
+    # Proper nouns / orgs / brands that SymSpell mangles
+    "nasa", "linux", "ubuntu", "debian", "google", "github", "docker",
+    "python", "nvidia", "intel", "reddit", "youtube", "discord", "gmail",
+    "macos", "wayland", "gnome", "kde", "vosk", "whisper", "cuda", "venv",
+}
+
+
 
 class SpellCorrector:
     """
@@ -39,7 +55,7 @@ class SpellCorrector:
 
     def __init__(self, settings):
         self.settings = settings
-        self.enabled: bool = settings.get("spell_check_enabled", True)
+        self.enabled: bool = settings.get("spell_correction", True)   # always on by default
         self._sym_spell = None
         self._load()
 
@@ -108,18 +124,42 @@ class SpellCorrector:
         words = text.split()
         corrected = []
         for word in words:
-            # Preserve capitalized words (proper nouns, acronyms, abbreviations)
-            if word and (word[0].isupper() or word.isupper() or not word.isalpha()):
+            # Skip non-alpha, capitalized (proper nouns / acronyms), and ALL-CAPS
+            if not word.isalpha() or word[0].isupper() or word.isupper():
                 corrected.append(word)
                 continue
 
+            lower = word.lower()
             suggestions = self._sym_spell.lookup(
-                word.lower(), self._Verbosity.CLOSEST, max_edit_distance=2
+                lower, self._Verbosity.CLOSEST, max_edit_distance=2
             )
-            if suggestions and suggestions[0].term != word.lower():
-                fix = suggestions[0].term
-                logger.debug(f"SpellCorrector: '{word}' → '{fix}'")
-                corrected.append(fix)
+
+            # No suggestion or suggestion is same word → pass through
+            if not suggestions or suggestions[0].term == lower:
+                corrected.append(word)
+                continue
+
+            best = suggestions[0]
+
+            # Never correct known short tech terms / abbreviations
+            if lower in _PASSTHROUGH:
+                corrected.append(word)
+                continue
+
+            # For remaining short words (<=3 chars): only correct if the word
+            # is NOT in the dictionary at edit distance 0 (i.e. it's a typo).
+            # 'is', 'to', 'an' etc. will be found and kept.
+            # 'teh', 'adn' won't be found -> proceed to correction.
+            if len(lower) <= 3:
+                in_dict = self._sym_spell.lookup(lower, self._Verbosity.ALL, max_edit_distance=0)
+                if in_dict:
+                    corrected.append(word)
+                    continue
+
+            # Apply correction if suggestion has decent frequency
+            if best.count > 100:
+                logger.debug(f"SpellCorrector: '{word}' -> '{best.term}'")
+                corrected.append(best.term)
             else:
                 corrected.append(word)
 
