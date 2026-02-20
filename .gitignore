@@ -41,9 +41,20 @@ model/
 .pydevproject
 .settings/
 
-# Logs
+# Logs and databases (NEVER commit runtime data)
+logs/
 *.log
-voxinput.log
+*.db
+*.sqlite
+*.sqlite3
+
+# Secrets (keep .env.example, never .env)
+.env
+!.env.example
+
+# Test recordings (large binary WAV files)
+tests/fixtures/golden/recordings/*.wav
+
 
 # OS Files
 .DS_Store
@@ -74,5 +85,5 @@ htmlcov/
 *.tar.gz
 *.zip
 !VoxInput_v*.zip
-.env
+# C extension build artifacts
 src/c_ext/librms.so
