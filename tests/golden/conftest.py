@@ -11,7 +11,12 @@ Provides:
 import os
 import re
 import subprocess
+import sys
 import pytest
+
+# ── Root conftest.py mocks vosk + pyaudio at module level.
+# We restore them inside a session-scoped fixture so it runs
+# AFTER all conftest loading is done (at actual test execution time).
 
 FIXTURES_DIR = os.path.join(os.path.dirname(__file__), "..", "fixtures", "golden")
 RECORDINGS_DIR = os.path.join(FIXTURES_DIR, "recordings")
@@ -70,6 +75,19 @@ def _parse_ground_truth(path: str) -> dict[str, str]:
         paragraphs[current_label] = " ".join(current_lines).strip()
 
     return paragraphs
+
+
+@pytest.fixture(scope="session", autouse=True)
+def restore_real_vosk():
+    """
+    Remove the MagicMock for vosk/pyaudio that root conftest.py injects.
+    Golden tests require the REAL vosk for actual speech transcription.
+    This fixture runs at session-start, after all conftests are loaded.
+    """
+    for _mod in ("vosk", "pyaudio"):
+        if _mod in sys.modules and type(sys.modules[_mod]).__name__ == "MagicMock":
+            del sys.modules[_mod]
+    yield
 
 
 @pytest.fixture(scope="session")
