@@ -349,6 +349,9 @@ separator {
     background-color: #0f3460;
     min-height: 1px;
 }
+scrolledwindow, viewport {
+    background-color: #1a1a2e;
+}
 """
 
 
@@ -578,6 +581,7 @@ class SettingsDialog(Gtk.Window):
         vbox.set_margin_bottom(12)
         vbox.set_margin_start(16)
         vbox.set_margin_end(16)
+        vbox.get_style_context().add_class("tab-content")
         scroll.add(vbox)
 
         # ── Engine type ─────────────────────────────────────────
@@ -691,6 +695,7 @@ class SettingsDialog(Gtk.Window):
         inner.set_margin_bottom(12)
         inner.set_margin_start(16)
         inner.set_margin_end(16)
+        inner.get_style_context().add_class("tab-content")
         vbox.pack_start(inner, True, True, 0)
         scroll.add(vbox)
 
