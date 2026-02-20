@@ -1,5 +1,6 @@
-import audioop
 import logging
+import logging.handlers
+import queue as _queue
 import signal
 import sys
 import threading
@@ -18,12 +19,14 @@ from .settings import SettingsManager
 # In this simple app, these depend only on standard libs or other simple modules
 from .ui import Gtk, SystemTrayApp
 
-# Configure Logging
+# Configure Logging — rotating 5MB × 3 files (P0-03)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler(LOG_FILE),
+        logging.handlers.RotatingFileHandler(
+            LOG_FILE, maxBytes=5_000_000, backupCount=3
+        ),
         logging.StreamHandler(sys.stdout)
     ]
 )
@@ -36,11 +39,19 @@ class VoxInputApp:
         self.recognizer = SpeechRecognizer()
         self.injector = TextInjector()
         self.settings = SettingsManager()
-        
+
         self.is_listening = False
         self.should_quit = False
         self.processing_thread = None
-        
+
+        # P0-04 / P1-04: Dedicated injection thread — decouples xdotool latency
+        # from the audio processing loop so recognition never stalls on typing.
+        self._injection_queue: _queue.Queue = _queue.Queue(maxsize=100)
+        self._injection_thread = threading.Thread(
+            target=self._injection_loop, daemon=True, name="injection"
+        )
+        self._injection_thread.start()
+
         # Initialize UI
         self.ui = SystemTrayApp(
             toggle_callback=self.toggle_listening,
@@ -88,46 +99,58 @@ class VoxInputApp:
     def stop_listening(self):
         if not self.is_listening:
             return
-            
+
         logger.info("Stopping listening...")
         self.is_listening = False
         self.ui.set_listening_state(False)
         self.audio.stop()
-        
+
         if self.processing_thread:
-            self.processing_thread.join(timeout=1.0)
+            # P0-04: 8s timeout — must outlast worst-case CPU Whisper inference
+            self.processing_thread.join(timeout=8.0)
+            if self.processing_thread.is_alive():
+                logger.warning("Processing thread did not exit cleanly within 8s")
             self.processing_thread = None
 
+    def _injection_loop(self):
+        """Dedicated thread: drains injection queue → xdotool. (P1-04)"""
+        while not self.should_quit:
+            try:
+                text = self._injection_queue.get(timeout=0.1)
+                self.injector.type_text(text)
+            except _queue.Empty:
+                continue
+            except Exception as e:
+                logger.error(f"Injection error: {e}")
+
     def _process_loop(self):
-        
+        import numpy as np  # numpy always present (P0-01)
+
         silence_start_time = None
-        
+
         while self.is_listening and not self.should_quit:
             data = self.audio.get_data()
             if data:
-                # --- Silence Detection ---
+                # --- Silence Detection (P0-01: numpy RMS replaces audioop) ---
                 try:
-                    rms = audioop.rms(data, 2) # 2 bytes per sample (16-bit)
+                    audio_np = np.frombuffer(data, dtype=np.int16)
+                    rms = int(np.sqrt(np.mean(audio_np.astype(np.float64) ** 2)))
                 except Exception:
                     rms = 0
-                
+
                 if rms < self.settings.get("silence_threshold", 500):
                     if silence_start_time is None:
                         silence_start_time = time.time()
                     elif time.time() - silence_start_time > self.settings.get("silence_duration", 0.6):
-                        # User has stopped speaking for > duration
-                        # Check if we need to finalize (force flush) any pending Whisper buffer
                         try:
                             final_text = self.recognizer.finalize()
                             if final_text:
                                 logger.info(f"Finalized (Silence): {final_text}")
-                                self.injector.type_text(final_text)
+                                self._enqueue_injection(final_text)
                         except Exception as e:
                             logger.error(f"Error finalizing: {e}")
-                        
-                        silence_start_time = None # Reset so we don't spam finalize
+                        silence_start_time = None
                 else:
-                    # Voice detected
                     silence_start_time = None
 
                 # --- Normal Processing ---
@@ -135,11 +158,18 @@ class VoxInputApp:
                     text = self.recognizer.process_audio(data)
                     if text:
                         logger.info(f"Recognized: {text}")
-                        self.injector.type_text(text)
+                        self._enqueue_injection(text)
                 except Exception as e:
                     logger.error(f"Error processing audio: {e}", exc_info=True)
             else:
                 time.sleep(0.01)
+
+    def _enqueue_injection(self, text: str):
+        """Non-blocking push to injection queue. Drops if full."""
+        try:
+            self._injection_queue.put_nowait(text)
+        except _queue.Full:
+            logger.warning("Injection queue full — dropping word batch (engine too slow?)")
 
     def quit_app(self):
         self.should_quit = True

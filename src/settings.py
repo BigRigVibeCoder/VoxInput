@@ -45,3 +45,8 @@ class SettingsManager:
     def set(self, key, value):
         self.settings[key] = value
         self.save()
+
+    @classmethod
+    def reset(cls):
+        """Reset singleton instance. Used in tests to prevent state pollution. (P0-05)"""
+        cls._instance = None

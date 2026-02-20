@@ -106,9 +106,11 @@ class SpeechRecognizer:
             return self._process_vosk(data)
 
     def _process_vosk(self, data):
-        # Vosk strategy: Lag-N Stabilization
-        # We hold back the last N words until they are stable or the sentence ends.
-        LAG = self.settings.get("stability_lag", 1) 
+        # Vosk strategy: Lag-N Stabilization (P1-02/03)
+        # fast_mode=True → LAG=0 (every word injected immediately, highest speed)
+        # fast_mode=False → LAG=N (hold back N words until stable, higher accuracy)
+        fast_mode = self.settings.get("fast_mode", False)
+        LAG = 0 if fast_mode else self.settings.get("stability_lag", 1)
         new_words_to_inject = []
 
         if not data:
@@ -120,11 +122,11 @@ class SpeechRecognizer:
                 result = json.loads(self.recognizer.Result())
                 text = result.get('text', '')
                 words = text.split()
-                
-                # Inject whatever hasn't been committed yet
-                if len(words) > len(self.committed_text):
-                    new_words_to_inject = words[len(self.committed_text):]
-                
+
+                # P1-02: Full result = sentence confirmed final by Vosk.
+                # Inject ALL uncommitted words with zero lag — no reason to hold back.
+                new_words_to_inject = words[len(self.committed_text):]
+
                 # Reset for next sentence
                 self.committed_text = []
             
@@ -163,8 +165,8 @@ class SpeechRecognizer:
             return None
         self.whisper_last_process_time = now
         
-        # Don't process if buffer is too short (< 1s) to save CPU
-        if len(self.whisper_buffer) < SAMPLE_RATE * 2 * 1.0:
+        # P1: Minimum buffer 0.5s (was 1.0s). Viable now with faster inference path.
+        if len(self.whisper_buffer) < SAMPLE_RATE * 2 * 0.5:
             return None
 
         try:
@@ -197,7 +199,10 @@ class SpeechRecognizer:
             # We only commit if the word is "far enough back" from the edge.
             
             words = current_transcript.split()
-            LAG = self.settings.get("stability_lag", 2) # Higher lag for Whisper as it fluctuates more at the tail
+            # P1-03: fast_mode=True → LAG=0 (inject every word immediately)
+            # Higher lag for Whisper by default as it fluctuates more at the tail
+            fast_mode = self.settings.get("fast_mode", False)
+            LAG = 0 if fast_mode else self.settings.get("stability_lag", 2)
             
             stable_len = max(0, len(words) - LAG)
             current_committed_len = len(self.committed_text)
@@ -238,9 +243,26 @@ class SpeechRecognizer:
 
     def finalize(self):
         """
-        Called when silence is detected. Forces processing of the remaining buffer with zero lag.
+        Called when silence is detected. Forces processing of any remaining buffer
+        with zero lag. Handles both Vosk and Whisper engines. (P1)
         """
-        if self.engine_type != "Whisper" or not self.model:
+        # P1: Vosk finalize — flush any uncommitted partial words
+        if self.engine_type != "Whisper":
+            try:
+                result = json.loads(self.recognizer.FinalResult())
+                text = result.get('text', '')
+                words = text.split()
+                uncommitted = words[len(self.committed_text):]
+                self.committed_text = []
+                if uncommitted:
+                    logger.info(f"Vosk final flush: {uncommitted}")
+                    return " ".join(uncommitted)
+            except Exception as e:
+                logger.error(f"Vosk finalize error: {e}")
+            return None
+
+        # Whisper finalize — flush rolling buffer
+        if not self.model:
             return None
             
         if len(self.whisper_buffer) == 0:

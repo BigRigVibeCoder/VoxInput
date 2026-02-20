@@ -24,7 +24,11 @@ minversion = "6.0"
 addopts = "-ra -q --asyncio-mode=auto"
 testpaths = [
     "tests",
+    "tests/golden",
 ]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
+markers = [
+    "golden: Golden recording WER tests (require ./bin/record_golden.sh to be run first)",
+]

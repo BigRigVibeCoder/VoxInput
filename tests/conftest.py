@@ -30,3 +30,12 @@ def mock_settings_file(tmp_path):
     settings_file = tmp_path / "settings.json"
     settings_file.write_text('{"engine": "vosk", "vosk_model_path": "/tmp/fake/model"}')
     return str(settings_file)
+
+# P0-05: Reset SettingsManager singleton between every test to prevent pollution.
+@pytest.fixture(autouse=True)
+def reset_settings_singleton():
+    """Ensure SettingsManager singleton is clean for every test."""
+    from src.settings import SettingsManager
+    SettingsManager.reset()
+    yield
+    SettingsManager.reset()

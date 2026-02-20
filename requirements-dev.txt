@@ -5,3 +5,7 @@ pytest-mock
 pytest-asyncio
 types-setuptools
 types-requests
+
+# Golden recording WER tests
+jiwer>=3.0.3          # WER / CER / word-level alignment
+faster-whisper>=1.0.3 # Phase 2 engine upgrade + accuracy parity test
