@@ -17,6 +17,7 @@ from .recognizer import SpeechRecognizer
 from .settings import SettingsManager
 from .spell_corrector import SpellCorrector
 from .ui import Gtk, SystemTrayApp
+from .c_ext import rms_int16, using_c_extension      # P8: C RMS extension
 
 # P7: Enterprise logging — TRACE level, SQLite black box, sys.excepthook
 # Level resolved from .env file (LOG_LEVEL=TRACE by default on desktop install).
@@ -81,12 +82,16 @@ class VoxInputApp:
             logger.warning("Already listening.")
             return
             
-        logger.info("Starting listening...")
+        logger.info("Starting listening... (C_RMS=%s)", using_c_extension())
         self.is_listening = True
         self.ui.set_listening_state(True)
-        self.recognizer.reset_state() # Reset streaming buffers
+        self.recognizer.reset_state()
         self.audio.start()
-        
+
+        # P8-02: cache hot-path settings so _process_loop never calls settings.get() per-chunk
+        self._sil_threshold: int = int(self.settings.get("silence_threshold", 500))
+        self._sil_duration:  float = float(self.settings.get("silence_duration", 0.6))
+
         self.processing_thread = threading.Thread(target=self._process_loop)
         self.processing_thread.start()
 
@@ -119,35 +124,40 @@ class VoxInputApp:
                 logger.error(f"Injection error: {e}")
 
     def _process_loop(self):
-        import numpy as np  # numpy always present (P0-01)
-
         silence_start_time = None
         osd_words: list[str] = []   # P5: accumulate words for OSD display
+        _last_osd_words = ""        # P8-04: only marshal to GTK when content changes
+        _last_osd_level  = -1.0
+        _OSD_LEVEL_BAND  = 0.05     # only update OSD if level shifts by >5%
 
         while self.is_listening and not self.should_quit:
             data = self.audio.get_data()
             if data:
-                # --- Silence Detection (P0-01: numpy RMS replaces audioop) ---
-                try:
-                    audio_np = np.frombuffer(data, dtype=np.int16)
-                    rms = int(np.sqrt(np.mean(audio_np.astype(np.float64) ** 2)))
-                except Exception:
-                    rms = 0
+                # P8-01: C extension RMS (single-pass, no float64 array alloc).
+                # Falls back to numpy if librms.so not present.
+                rms = int(rms_int16(data))
 
-                # P5: feed live level to OSD (normalised 0–1)
+                # P8-04: OSD rate-limit — only marshal to GTK when content changes
                 level = min(rms / 8000.0, 1.0)
-                self.ui.update_osd(" ".join(osd_words[-8:]), level)
+                osd_str = " ".join(osd_words[-8:])
+                level_changed = abs(level - _last_osd_level) > _OSD_LEVEL_BAND
+                words_changed  = osd_str != _last_osd_words
+                if level_changed or words_changed:
+                    self.ui.update_osd(osd_str, level)
+                    _last_osd_words  = osd_str
+                    _last_osd_level  = level
 
-                if rms < self.settings.get("silence_threshold", 500):
+                # P8-02: use cached threshold/duration (no settings.get per chunk)
+                if rms < self._sil_threshold:
                     if silence_start_time is None:
                         silence_start_time = time.time()
-                    elif time.time() - silence_start_time > self.settings.get("silence_duration", 0.6):
+                    elif time.time() - silence_start_time > self._sil_duration:
                         try:
                             final_text = self.recognizer.finalize()
                             if final_text:
                                 logger.info(f"Finalized (Silence): {final_text}")
                                 self._enqueue_injection(final_text)
-                                osd_words.clear()          # reset OSD accumulator
+                                osd_words.clear()
                         except Exception as e:
                             logger.error(f"Error finalizing: {e}")
                         silence_start_time = None
@@ -160,7 +170,7 @@ class VoxInputApp:
                     if text:
                         logger.info(f"Recognized: {text}")
                         self._enqueue_injection(text)
-                        osd_words.extend(text.split())   # P5: accumulate for OSD
+                        osd_words.extend(text.split())
                 except Exception as e:
                     logger.error(f"Error processing audio: {e}", exc_info=True)
             else:

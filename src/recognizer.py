@@ -1,3 +1,4 @@
+import collections
 import gc
 import json
 import logging
@@ -94,7 +95,10 @@ class SpeechRecognizer:
                 self.whisper_backend = "openai"
                 logger.info(f"openai-whisper loaded: {size} on {self.model.device}")
 
-            self.whisper_buffer = b""
+            # P8-03: use a deque of raw chunk bytes instead of bytes concat.
+            # np.concatenate() once at transcription time is O(N), not O(N^2).
+            # Max 300 chunks = 30s @ 100ms chunks (prevents runaway growth).
+            self.whisper_chunks: collections.deque[bytes] = collections.deque(maxlen=300)
             self.whisper_last_transcript = ""
             self.whisper_last_process_time = 0
             self.whisper_process_interval = 0.5
@@ -103,7 +107,7 @@ class SpeechRecognizer:
         """Reset streaming state (called on silence or manual stop)"""
         self.committed_text = []
         if self.engine_type == "Whisper":
-            self.whisper_buffer = b""
+            self.whisper_chunks.clear()
             self.whisper_last_transcript = ""
 
     def process_audio(self, data):
@@ -167,18 +171,24 @@ class SpeechRecognizer:
         return None
 
     def _process_whisper(self, data):
-        # Whisper Strategy: Rolling Window + Common Prefix
-        self.whisper_buffer += data
+        # P8-03: append chunk to deque — O(1), no copy
+        self.whisper_chunks.append(data)
         now = time.time()
         
         # Throttle inference
         if now - self.whisper_last_process_time < self.whisper_process_interval:
             return None
         self.whisper_last_process_time = now
-        
-        # P1: Minimum buffer 0.5s (was 1.0s). Viable now with faster inference path.
-        if len(self.whisper_buffer) < SAMPLE_RATE * 2 * 0.5:
+
+        # P1: Minimum buffer 0.5s
+        total_bytes = sum(len(c) for c in self.whisper_chunks)
+        if total_bytes < SAMPLE_RATE * 2 * 0.5:
             return None
+
+        # Concatenate chunks once into numpy array (O(N) single alloc)
+        audio_np = np.concatenate(
+            [np.frombuffer(c, dtype=np.int16) for c in self.whisper_chunks]
+        ).astype(np.float32) / 32768.0
 
         try:
             # P2-02/03: Route to faster-whisper or openai-whisper backend
@@ -231,10 +241,8 @@ class SpeechRecognizer:
                 # to prevent infinite buffer growth and improve future responsiveness.
                 if new_words_to_inject[-1].endswith(('.', '!', '?')):
                     logger.info("Sentence completed. Flushing Whisper buffer.")
-                    self.whisper_buffer = b""
-                    self.committed_text = [] # Start fresh
-                    # Note: We lose the "context" for the NEXT sentence with this hard flush.
-                    # But it prevents the drift/hallucination/lag issues.
+                    self.whisper_chunks.clear()
+                    self.committed_text = []
                 
                 return text_result
 
@@ -267,13 +275,15 @@ class SpeechRecognizer:
         if not self.model:
             return None
             
-        if len(self.whisper_buffer) == 0:
+        if len(self.whisper_chunks) == 0:
             return None
-            
+
         logger.info("Finalizing Whisper buffer (Silence detected)...")
         try:
-            # Similar to _process_whisper but with LAG = 0
-            audio_np = np.frombuffer(self.whisper_buffer, dtype=np.int16).astype(np.float32) / 32768.0
+            # P8-03: concatenate once
+            audio_np = np.concatenate(
+                [np.frombuffer(c, dtype=np.int16) for c in self.whisper_chunks]
+            ).astype(np.float32) / 32768.0
             
             # Safety check for empty tensor
             if audio_np.size == 0:
@@ -291,7 +301,7 @@ class SpeechRecognizer:
                 new_words = words[current_committed_len:]
                 
             # Flush everything
-            self.whisper_buffer = b""
+            self.whisper_chunks.clear()
             self.committed_text = []
             
             if new_words:

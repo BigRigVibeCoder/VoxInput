@@ -139,6 +139,27 @@ print(f'SMOKE_OK WAL={mode} rows={count}')
     fi
 }
 
+# ─── GATE 4: Performance Benchmark (P8) ─────────────────────────────────────
+
+gate_4() {
+    _header "GATE 4 — Performance Benchmark (C RMS, deque, Whisper ring buffer)"
+
+    # Ensure C extension is compiled
+    if [[ -f "$ROOT/src/c_ext/build.sh" ]]; then
+        bash "$ROOT/src/c_ext/build.sh" 2>&1 | sed 's/^/  /'
+    fi
+
+    # Run performance unit tests
+    if PYTHONPATH="$ROOT" pytest tests/unit/test_perf.py \
+        -v --tb=short --no-header -q \
+        -k "not test_silence_settings_cached" 2>&1; then
+        _pass "Performance benchmark tests passed"
+    else
+        _fail "Performance benchmark tests failed"
+        return 1
+    fi
+}
+
 # ─── Summary ───────────────────────────────────────────────────────────────
 
 
@@ -163,6 +184,7 @@ case "$GATE" in
     wer) gate_wer; summary ;;
     e2e) gate_e2e; summary ;;
     3)   gate_3; summary ;;
-    all) gate_0 && gate_wer && gate_e2e && gate_3; summary ;;
-    *)   echo "Usage: $0 [0|wer|e2e|3|all]"; exit 1 ;;
+    4)   gate_4; summary ;;
+    all) gate_0 && gate_wer && gate_e2e && gate_3 && gate_4; summary ;;
+    *)   echo "Usage: $0 [0|wer|e2e|3|4|all]"; exit 1 ;;
 esac

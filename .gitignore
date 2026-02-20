@@ -74,3 +74,5 @@ htmlcov/
 *.tar.gz
 *.zip
 !VoxInput_v*.zip
+.env
+src/c_ext/librms.so
