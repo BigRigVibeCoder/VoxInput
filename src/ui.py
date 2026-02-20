@@ -237,121 +237,156 @@ class SystemTrayApp:
 # ─── CSS ───────────────────────────────────────────────────────────────────────
 
 _SETTINGS_CSS = b"""
-window.settings-dialog {
+/* ── Base window ─────────────────────────────────────── */
+window.settings-dialog,
+window.settings-dialog > *,
+window.settings-dialog box,
+window.settings-dialog scrolledwindow,
+window.settings-dialog viewport,
+window.settings-dialog frame,
+window.settings-dialog .tab-content {
     background-color: #1a1a2e;
-}
-notebook {
-    background-color: #1a1a2e;
-}
-notebook header {
-    background-color: #16213e;
-    border-bottom: 2px solid #0f3460;
-}
-notebook tab {
-    padding: 10px 20px;
-    color: #8892a4;
-    font-weight: 600;
-    font-size: 12px;
-}
-notebook tab:checked {
-    color: #e94560;
-    border-bottom: 3px solid #e94560;
-    background-color: #1a1a2e;
-}
-notebook tab label {
-    color: inherit;
-}
-.tab-content {
-    background-color: #1a1a2e;
-    padding: 16px;
-}
-label {
     color: #c8d0e0;
 }
-.section-title {
-    color: #e94560;
-    font-weight: 700;
-    font-size: 11px;
-    letter-spacing: 1px;
-}
-.hint {
-    color: #5a6478;
-    font-size: 10px;
-    font-style: italic;
-}
-spinbutton, combobox, entry {
-    background-color: #0f3460;
+
+/* ── Notebook tabs ───────────────────────────────────── */
+notebook { background-color: #1a1a2e; }
+notebook header { background-color: #16213e; border-bottom: 2px solid #0f3460; }
+notebook tab { padding: 10px 20px; color: #8892a4; font-weight: 600; font-size: 12px; }
+notebook tab:checked { color: #e94560; border-bottom: 3px solid #e94560; background-color: #1a1a2e; }
+notebook tab label { color: inherit; }
+notebook stack { background-color: #1a1a2e; }
+
+/* ── Labels ──────────────────────────────────────────── */
+label { color: #c8d0e0; }
+.section-title { color: #e94560; font-weight: 700; font-size: 11px; letter-spacing: 1px; }
+.hint { color: #5a6478; font-size: 10px; font-style: italic; }
+
+/* ── Separators ──────────────────────────────────────── */
+separator { background-color: #1e2a45; min-height: 1px; }
+
+/* ── Entry / text fields ─────────────────────────────── */
+entry {
+    background-color: #0f253e;
     color: #e0e6f0;
     border: 1px solid #1a4a80;
     border-radius: 6px;
-    padding: 4px 8px;
+    padding: 5px 10px;
+    caret-color: #e94560;
 }
-spinbutton:focus, combobox:focus, entry:focus {
-    border-color: #e94560;
-    box-shadow: 0 0 0 2px rgba(233,69,96,0.25);
-}
-checkbutton {
-    color: #c8d0e0;
-}
-checkbutton check {
-    background-color: #0f3460;
+entry:focus { border-color: #e94560; box-shadow: 0 0 0 2px rgba(233,69,96,0.2); }
+
+/* ── SpinButton — must target the inner entry AND arrow buttons ── */
+spinbutton {
+    background-color: #0f253e;
     border: 1px solid #1a4a80;
+    border-radius: 6px;
+    color: #e0e6f0;
+}
+spinbutton entry,
+spinbutton > entry,
+spinbutton text {
+    background-color: #0f253e;
+    color: #e0e6f0;
+    border: none;
+    padding: 4px 6px;
+}
+spinbutton button,
+spinbutton > button {
+    background-color: #16213e;
+    border: none;
+    border-left: 1px solid #1a4a80;
+    border-radius: 0;
+    color: #e94560;
+    padding: 2px 8px;
+    min-width: 28px;
+}
+spinbutton button:hover { background-color: #0f3460; }
+spinbutton button:first-child { border-left: none; border-right: 1px solid #1a4a80; border-radius: 6px 0 0 6px; }
+spinbutton button:last-child { border-radius: 0 6px 6px 0; }
+
+/* ── ComboBox ────────────────────────────────────────── */
+combobox button,
+combobox > button,
+combobox button.combo {
+    background-color: #0f253e;
+    color: #e0e6f0;
+    border: 1px solid #1a4a80;
+    border-radius: 6px;
+    padding: 5px 10px;
+}
+combobox button:hover { border-color: #e94560; background-color: #16213e; }
+combobox arrow { color: #e94560; }
+
+/* Dropdown list */
+.combo > window, popover { background-color: #16213e; }
+popover row, .combo row { background-color: #16213e; color: #c8d0e0; }
+popover row:hover, .combo row:hover { background-color: #0f3460; }
+
+/* ── FileChooserButton ───────────────────────────────── */
+filechooserbutton,
+filechooserbutton button {
+    background-color: #0f253e;
+    color: #e0e6f0;
+    border: 1px solid #1a4a80;
+    border-radius: 6px;
+    padding: 5px 10px;
+}
+filechooserbutton button:hover { border-color: #e94560; background-color: #16213e; }
+
+/* ── Checkbutton ─────────────────────────────────────── */
+checkbutton { color: #c8d0e0; }
+checkbutton check {
+    background-color: #0f253e;
+    border: 1.5px solid #1a4a80;
     border-radius: 4px;
+    min-width: 16px;
+    min-height: 16px;
 }
-checkbutton:checked check {
-    background-color: #e94560;
-    border-color: #e94560;
-}
-button {
+checkbutton:checked check { background-color: #e94560; border-color: #e94560; }
+
+/* ── Buttons (generic) ───────────────────────────────── */
+button, button.text-button {
     background-color: #0f3460;
+    background-image: none;
     color: #e0e6f0;
     border: 1px solid #1a4a80;
     border-radius: 8px;
     padding: 8px 16px;
     font-weight: 600;
+    box-shadow: none;
     transition: all 150ms ease;
 }
-button:hover {
-    background-color: #1a4a80;
-    border-color: #e94560;
-    color: #ffffff;
-}
-button.action-btn {
-    background: linear-gradient(135deg, #e94560 0%, #b83050 100%);
+button:hover { background-color: #1a4a80; border-color: #e94560; color: #ffffff; }
+button:active { background-color: #0a2040; }
+
+button.action-btn, button.action-btn.text-button {
+    background: linear-gradient(135deg, #e94560, #b83050);
+    background-image: linear-gradient(135deg, #e94560, #b83050);
     border: none;
     color: #ffffff;
     font-size: 13px;
     padding: 10px 28px;
     border-radius: 10px;
 }
-button.action-btn:hover {
-    background: linear-gradient(135deg, #ff5577 0%, #e94560 100%);
-}
-button.cancel-btn {
+button.action-btn:hover { background: linear-gradient(135deg, #ff5577, #e94560); background-image: linear-gradient(135deg, #ff5577, #e94560); }
+
+button.cancel-btn, button.cancel-btn.text-button {
     background-color: transparent;
+    background-image: none;
     border: 1px solid #3a4458;
     color: #8892a4;
 }
-button.cancel-btn:hover {
-    border-color: #e94560;
-    color: #e94560;
-}
-levelbar block.filled {
-    background: linear-gradient(90deg, #00d4cc, #e94560);
-    border-radius: 3px;
-}
-levelbar trough {
-    background-color: #0f3460;
-    border-radius: 3px;
-    border: none;
-}
-separator {
-    background-color: #0f3460;
-    min-height: 1px;
-}
-scrolledwindow, viewport {
-    background-color: #1a1a2e;
-}
+button.cancel-btn:hover { border-color: #e94560; color: #e94560; background-color: rgba(233,69,96,0.08); }
+
+/* ── Level bar ───────────────────────────────────────── */
+levelbar trough { background-color: #0f253e; border: none; border-radius: 4px; }
+levelbar block.filled { background: linear-gradient(90deg, #00d4cc, #e94560); border-radius: 3px; }
+
+/* ── Scrollbar ───────────────────────────────────────── */
+scrollbar trough { background-color: #16213e; }
+scrollbar slider { background-color: #1a4a80; border-radius: 4px; min-width: 6px; }
+scrollbar slider:hover { background-color: #e94560; }
 """
 
 
