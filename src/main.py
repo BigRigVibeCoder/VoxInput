@@ -27,34 +27,68 @@ logger = get_logger(__name__)
 
 class VoxInputApp:
     def __init__(self):
-        self.audio = AudioCapture()
-        self.recognizer = SpeechRecognizer()
-        self.injector = TextInjector()
+        self._model_ready = False          # gate: block toggle until loaded
+
+        # ── Fast path: everything the user sees immediately ────
+        self.audio    = AudioCapture()
         self.settings = SettingsManager()
-        self.spell = SpellCorrector(self.settings)     # P3: corrects before injection
-        self.mic = MicEnhancer(self.settings)          # P6: Ubuntu mic controls
-        self.mic.restore_settings()                    # re-apply saved vol/noise/boost
+        self.mic      = MicEnhancer(self.settings)
+        self.mic.restore_settings()
 
         self.is_listening = False
-        self.should_quit = False
+        self.should_quit  = False
         self.processing_thread = None
 
-        # P0-04 / P1-04: Dedicated injection thread — decouples xdotool latency
-        # from the audio processing loop so recognition never stalls on typing.
+        # Stubs — replaced by background thread when ready
+        self.recognizer = None
+        self.injector   = None
+        self.spell      = None
+
+        # Injection queue + thread (safe to start early; drains empty queue)
         self._injection_queue: _queue.Queue = _queue.Queue(maxsize=100)
         self._injection_thread = threading.Thread(
             target=self._injection_loop, daemon=True, name="injection"
         )
         self._injection_thread.start()
 
-        # Initialize UI
+        # ── UI appears here ─────────────────────────────────────
         self.ui = SystemTrayApp(
             toggle_callback=self.toggle_listening,
             quit_callback=self.quit_app,
             engine_change_callback=self.reload_engine
         )
+        # Show loading state in tray tooltip immediately
+        self.ui.icon.set_tooltip_text("VoxInput — Loading model…")
+
+        # ── Background: load heavy components then auto-listen ──
+        threading.Thread(target=self._load_models, daemon=True, name="model-load").start()
+
+    def _load_models(self):
+        """Background thread: loads Vosk/Whisper model, SymSpell dict, injection backend.
+        Fires start_listening() on the GTK main thread when done."""
+        try:
+            logger.info("Background model load starting…")
+            self.recognizer = SpeechRecognizer()
+            self.spell      = SpellCorrector(self.settings)
+            self.injector   = TextInjector()
+            self._model_ready = True
+            logger.info("Background model load complete — auto-starting listening.")
+            # Auto-start listening on GTK main thread
+            GLib.idle_add(self._on_models_ready)
+        except Exception as e:
+            logger.critical(f"Model load failed: {e}", exc_info=True)
+            GLib.idle_add(self.ui.icon.set_tooltip_text, f"VoxInput — Load failed: {e}")
+
+    def _on_models_ready(self):
+        """Called on GTK main thread once models are loaded."""
+        self.ui.icon.set_tooltip_text("VoxInput (Idle)")
+        self.start_listening()   # auto-start listening
+        return False             # one-shot GLib idle
+
 
     def reload_engine(self):
+        if not self._model_ready:
+            return  # initial load not done yet
         logger.info("Reloading speech engine...")
         was_listening = self.is_listening
         if was_listening:
@@ -72,6 +106,10 @@ class VoxInputApp:
             self.start_listening()
 
     def toggle_listening(self):
+        if not self._model_ready:
+            self.ui.icon.set_tooltip_text("VoxInput — Still loading model, please wait…")
+            GLib.timeout_add(2000, lambda: self.ui.icon.set_tooltip_text("VoxInput — Loading model…"))
+            return
         if self.is_listening:
             self.stop_listening()
         else:
@@ -178,6 +216,8 @@ class VoxInputApp:
 
     def _enqueue_injection(self, text: str):
         """Spell-correct then push to injection queue (non-blocking). (P3)"""
+        if not self.spell or not self.injector:
+            return  # models not ready yet
         try:
             corrected = self.spell.correct(text)  # P3: SymSpellPy + ASR rules
             self._injection_queue.put_nowait(corrected)
