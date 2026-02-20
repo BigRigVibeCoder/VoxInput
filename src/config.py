@@ -2,7 +2,9 @@ import os
 
 # Paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "..", "model")
+ROOT_DIR  = os.path.dirname(BASE_DIR)
+MODEL_PATH = os.path.join(ROOT_DIR, "model")
+LOGS_DIR   = os.path.join(ROOT_DIR, "logs")   # DB + rotating log file
 
 # Audio Settings
 SAMPLE_RATE = 16000
@@ -14,5 +16,5 @@ CHUNK_SIZE = 1600  # 100ms @ 16kHz — optimal for real-time feel (P1-01)
 # Hotkey
 HOTKEY = '<cmd>+<shift>+v'  # Super+Shift+V
 
-# Logging
-LOG_FILE = os.path.join(BASE_DIR, "..", "voxinput.log")
+# Logging — see src/logger.py for full configuration (P7)
+# Level / DB path / console are controlled via .env file or LOG_LEVEL env var.

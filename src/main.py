@@ -1,5 +1,4 @@
 import logging
-import logging.handlers
 import queue as _queue
 import signal
 import sys
@@ -10,29 +9,19 @@ from gi.repository import GLib
 from pynput import keyboard
 
 from .audio import AudioCapture
-from .config import HOTKEY, LOG_FILE
+from .config import HOTKEY
 from .injection import TextInjector
-from .mic_enhancer import MicEnhancer       # P6: Ubuntu mic signal enhancement
+from .logger import init_logging, get_logger         # P7: enterprise logging
+from .mic_enhancer import MicEnhancer
 from .recognizer import SpeechRecognizer
 from .settings import SettingsManager
-from .spell_corrector import SpellCorrector  # P3: SymSpellPy ASR correction
-
-# Imports moved to top level compliant with PEP8 (requires careful circular dep check)
-# In this simple app, these depend only on standard libs or other simple modules
+from .spell_corrector import SpellCorrector
 from .ui import Gtk, SystemTrayApp
 
-# Configure Logging — rotating 5MB × 3 files (P0-03)
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.handlers.RotatingFileHandler(
-            LOG_FILE, maxBytes=5_000_000, backupCount=3
-        ),
-        logging.StreamHandler(sys.stdout)
-    ]
-)
-logger = logging.getLogger(__name__)
+# P7: Enterprise logging — TRACE level, SQLite black box, sys.excepthook
+# Level resolved from .env file (LOG_LEVEL=TRACE by default on desktop install).
+init_logging("voxinput")
+logger = get_logger(__name__)
 
 
 class VoxInputApp:
