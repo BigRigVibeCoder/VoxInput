@@ -100,7 +100,6 @@ class TextInjector:
         Detect the best available injection backend.
         ydotool preferred: works natively on Wayland and XWayland.
         """
-        import os
         try:
             subprocess.run(
                 ["ydotool", "type", "--help"],

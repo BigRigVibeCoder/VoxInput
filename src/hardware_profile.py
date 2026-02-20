@@ -77,7 +77,6 @@ class HardwareProfile:
                 self.cuda_capability     = (props.major, props.minor)
                 # Free VRAM (subtract PyTorch reserved)
                 reserved = torch.cuda.memory_reserved(idx)
-                allocated = torch.cuda.memory_allocated(idx)
                 self.cuda_vram_free_gb = (props.total_memory - reserved) / 1024**3
         except ImportError:
             # torch not installed — try nvidia-smi as fallback

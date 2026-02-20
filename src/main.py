@@ -1,4 +1,3 @@
-import logging
 import queue as _queue
 import signal
 import sys
