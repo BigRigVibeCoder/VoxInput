@@ -87,3 +87,5 @@ htmlcov/
 !VoxInput_v*.zip
 # C extension build artifacts
 src/c_ext/librms.so
+data/custom_words.db
+*.log

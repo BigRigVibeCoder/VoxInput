@@ -18,6 +18,7 @@ from .settings import SettingsManager
 from .spell_corrector import SpellCorrector
 from .ui import Gtk, SystemTrayApp
 from .c_ext import rms_int16, using_c_extension      # P8: C RMS extension
+from .word_db import WordDatabase
 
 # P7: Enterprise logging — TRACE level, SQLite black box, sys.excepthook
 # Level resolved from .env file (LOG_LEVEL=TRACE by default on desktop install).
@@ -43,6 +44,7 @@ class VoxInputApp:
         self.recognizer = None
         self.injector   = None
         self.spell      = None
+        self.word_db    = None
 
         # Injection queue + thread (safe to start early; drains empty queue)
         self._injection_queue: _queue.Queue = _queue.Queue(maxsize=100)
@@ -67,13 +69,25 @@ class VoxInputApp:
         """Background thread: loads Vosk/Whisper model, SymSpell dict, injection backend.
         Fires start_listening() on the GTK main thread when done."""
         try:
-            logger.info("Background model load starting…")
+            logger.info("Background model load starting...")
+            # Word database (protected words list) — seed on first run
+            import os
+            db_path = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "..", "data", "custom_words.db"
+            )
+            self.word_db = WordDatabase(db_path)
+            # Seed with initial dataset if DB is empty (first run)
+            try:
+                from data.seed_words import SEED_WORDS
+                self.word_db.seed(SEED_WORDS)
+            except Exception as seed_err:
+                logger.warning(f"Word DB seed skipped: {seed_err}")
+
             self.recognizer = SpeechRecognizer()
-            self.spell      = SpellCorrector(self.settings)
+            self.spell      = SpellCorrector(self.settings, word_db=self.word_db)
             self.injector   = TextInjector()
             self._model_ready = True
             logger.info("Background model load complete — auto-starting listening.")
-            # Auto-start listening on GTK main thread
             GLib.idle_add(self._on_models_ready)
         except Exception as e:
             logger.critical(f"Model load failed: {e}", exc_info=True)

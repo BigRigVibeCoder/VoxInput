@@ -470,6 +470,7 @@ class SettingsDialog(Gtk.Window):
         self.notebook.append_page(self._build_audio_tab(),      Gtk.Label(label="🎤  Audio"))
         self.notebook.append_page(self._build_engine_tab(),     Gtk.Label(label="🧠  Engine"))
         self.notebook.append_page(self._build_processing_tab(), Gtk.Label(label="✏️  Processing"))
+        self.notebook.append_page(self._build_words_tab(),      Gtk.Label(label="📖  Words"))
 
         # ── Button bar ──────────────────────────────────────────
         sep = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
@@ -756,7 +757,160 @@ class SettingsDialog(Gtk.Window):
 
         return scroll
 
-    # ── Internal ────────────────────────────────────────────────────────────────
+    def _build_words_tab(self):
+        """Protected words list — words that are never spell-corrected."""
+        # Load word_db lazily (may not be ready during init; falls back gracefully)
+        self._word_db = None
+        try:
+            import os
+            from .word_db import WordDatabase
+            db_path = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "..", "data", "custom_words.db"
+            )
+            self._word_db = WordDatabase(db_path)
+        except Exception:
+            pass
+
+        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        outer.get_style_context().add_class("tab-content")
+        outer.set_margin_top(12)
+        outer.set_margin_bottom(12)
+        outer.set_margin_start(16)
+        outer.set_margin_end(16)
+
+        outer.pack_start(_section_label("📖  Protected Words"), False, False, 0)
+
+        hint = Gtk.Label(label="Words listed here are never spell-corrected. "
+                               "Useful for names, brands, tech terms.")
+        hint.set_line_wrap(True)
+        hint.set_xalign(0)
+        hint.get_style_context().add_class("hint")
+        hint.set_margin_bottom(8)
+        outer.pack_start(hint, False, False, 0)
+
+        # ── Search bar ────────────────────────────────────────────
+        search_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        lbl_search = Gtk.Label(label="🔍")
+        self._words_search = Gtk.Entry()
+        self._words_search.set_placeholder_text("Filter words / categories…")
+        self._words_search.connect("changed", self._on_words_filter_changed)
+        search_box.pack_start(lbl_search, False, False, 0)
+        search_box.pack_start(self._words_search, True, True, 0)
+        outer.pack_start(search_box, False, False, 4)
+
+        # ── TreeView ──────────────────────────────────────────────
+        # Columns: word, category, added-date
+        self._words_store = Gtk.ListStore(int, str, str, str)  # id, word, cat, date
+        self._words_view  = Gtk.TreeView(model=self._words_store)
+        self._words_view.set_headers_visible(True)
+        self._words_view.set_activate_on_single_click(False)
+        self._words_view.get_style_context().add_class("words-tree")
+
+        for i, (title, expand) in enumerate([("Word", True), ("Category", False), ("Added", False)]):
+            col = Gtk.TreeViewColumn(title, Gtk.CellRendererText(), text=i + 1)
+            col.set_expand(expand)
+            col.set_sort_column_id(i + 1)
+            self._words_view.append_column(col)
+
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scroll.set_min_content_height(220)
+        scroll.add(self._words_view)
+        outer.pack_start(scroll, True, True, 4)
+
+        # ── Word count label ──────────────────────────────────────
+        self._words_count_label = Gtk.Label(label="")
+        self._words_count_label.set_xalign(0)
+        self._words_count_label.get_style_context().add_class("hint")
+        outer.pack_start(self._words_count_label, False, False, 0)
+
+        # ── Add row ───────────────────────────────────────────────
+        outer.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL), False, False, 8)
+        add_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+
+        self._words_entry = Gtk.Entry()
+        self._words_entry.set_placeholder_text("New word…")
+        self._words_entry.connect("activate", self._on_word_add)
+
+        # Category dropdown
+        cat_store = Gtk.ListStore(str)
+        for c in ["custom", "tech", "ai", "linux", "dev", "brand", "org",
+                  "name", "place", "sports", "culture", "agile", "project", "future"]:
+            cat_store.append([c])
+        self._words_cat_combo = Gtk.ComboBox.new_with_model(cat_store)
+        renderer = Gtk.CellRendererText()
+        self._words_cat_combo.pack_start(renderer, True)
+        self._words_cat_combo.add_attribute(renderer, "text", 0)
+        self._words_cat_combo.set_active(0)
+
+        btn_add = Gtk.Button(label="➕ Add")
+        btn_add.get_style_context().add_class("action-btn")
+        btn_add.connect("clicked", self._on_word_add)
+
+        btn_remove = Gtk.Button(label="🗑️ Remove")
+        btn_remove.get_style_context().add_class("cancel-btn")
+        btn_remove.connect("clicked", self._on_word_remove)
+
+        add_box.pack_start(self._words_entry,     True,  True,  0)
+        add_box.pack_start(self._words_cat_combo, False, False, 0)
+        add_box.pack_start(btn_add,               False, False, 0)
+        add_box.pack_start(btn_remove,            False, False, 0)
+        outer.pack_start(add_box, False, False, 0)
+
+        self._refresh_words_list()
+        return outer
+
+    def _refresh_words_list(self, filter_text=""):
+        """Reload the TreeView from the database."""
+        self._words_store.clear()
+        if self._word_db is None:
+            return
+        import datetime
+        rows = self._word_db.get_all(filter_text)
+        for row_id, word, cat, added_at in rows:
+            ts = datetime.datetime.fromtimestamp(added_at).strftime("%Y-%m-%d") if added_at else ""
+            self._words_store.append([row_id, word, cat, ts])
+        total = self._word_db.count()
+        visible = len(rows)
+        if filter_text:
+            self._words_count_label.set_text(f"{visible} shown / {total} total protected words")
+        else:
+            self._words_count_label.set_text(f"{total} protected words")
+
+    def _on_words_filter_changed(self, entry):
+        self._refresh_words_list(entry.get_text())
+
+    def _on_word_add(self, _widget):
+        word = self._words_entry.get_text().strip()
+        if not word or self._word_db is None:
+            return
+        # Get selected category
+        it = self._words_cat_combo.get_active_iter()
+        cat = "custom"
+        if it is not None:
+            cat = self._words_cat_combo.get_model()[it][0]
+        added = self._word_db.add_word(word, cat)
+        if added:
+            self._words_entry.set_text("")
+            self._refresh_words_list(self._words_search.get_text())
+        else:
+            # Word already exists — flash entry red briefly
+            self._words_entry.get_style_context().add_class("entry-error")
+            GLib.timeout_add(800, lambda: (
+                self._words_entry.get_style_context().remove_class("entry-error"), False
+            ))
+
+    def _on_word_remove(self, _widget):
+        if self._word_db is None:
+            return
+        selection = self._words_view.get_selection()
+        model, treeiter = selection.get_selected()
+        if treeiter is None:
+            return
+        word = model[treeiter][1]
+        self._word_db.remove_word(word)
+        self._refresh_words_list(self._words_search.get_text())
+
 
     def _set_temp(self, key, value):
         self.temp_settings[key] = value
