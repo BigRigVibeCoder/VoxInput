@@ -70,15 +70,19 @@ else
     echo "  ✓ ydotool already installed"
 fi
 
-# ── Enable ydotoold daemon ─────────────────────────────────────────────────
-if command -v ydotool >/dev/null 2>&1; then
-    if ! pgrep -x ydotoold >/dev/null 2>&1; then
+# ── Enable ydotoold daemon (only if binary exists — apt pkg doesn't ship it) ──
+if command -v ydotoold &>/dev/null; then
+    if ! pgrep -x ydotoold &>/dev/null; then
         echo "  Starting ydotoold daemon..."
         ydotoold &
         sleep 0.5
     else
         echo "  ✓ ydotoold already running"
     fi
+else
+    echo "  ℹ ydotoold not found (Ubuntu apt pkg uses uinput directly)"
+    echo "    If ydotool fails, add yourself to the input group and relog:"
+    echo "    sudo usermod -aG input \$USER"
 fi
 
 # ── 2. Python virtual environment ──────────────────────────────────────────
