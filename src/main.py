@@ -12,8 +12,10 @@ from pynput import keyboard
 from .audio import AudioCapture
 from .config import HOTKEY, LOG_FILE
 from .injection import TextInjector
+from .mic_enhancer import MicEnhancer       # P6: Ubuntu mic signal enhancement
 from .recognizer import SpeechRecognizer
 from .settings import SettingsManager
+from .spell_corrector import SpellCorrector  # P3: SymSpellPy ASR correction
 
 # Imports moved to top level compliant with PEP8 (requires careful circular dep check)
 # In this simple app, these depend only on standard libs or other simple modules
@@ -39,6 +41,9 @@ class VoxInputApp:
         self.recognizer = SpeechRecognizer()
         self.injector = TextInjector()
         self.settings = SettingsManager()
+        self.spell = SpellCorrector(self.settings)     # P3: corrects before injection
+        self.mic = MicEnhancer(self.settings)          # P6: Ubuntu mic controls
+        self.mic.restore_settings()                    # re-apply saved vol/noise/boost
 
         self.is_listening = False
         self.should_quit = False
@@ -165,9 +170,10 @@ class VoxInputApp:
                 time.sleep(0.01)
 
     def _enqueue_injection(self, text: str):
-        """Non-blocking push to injection queue. Drops if full."""
+        """Spell-correct then push to injection queue (non-blocking). (P3)"""
         try:
-            self._injection_queue.put_nowait(text)
+            corrected = self.spell.correct(text)  # P3: SymSpellPy + ASR rules
+            self._injection_queue.put_nowait(corrected)
         except _queue.Full:
             logger.warning("Injection queue full — dropping word batch (engine too slow?)")
 

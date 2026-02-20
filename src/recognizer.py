@@ -19,6 +19,7 @@ except ImportError:
     whisper = None
 
 from .config import MODEL_PATH, SAMPLE_RATE
+from .hardware_profile import HardwareProfile
 
 logger = logging.getLogger(__name__)
 
@@ -66,18 +67,13 @@ class SpeechRecognizer:
             size = self.settings.get("whisper_model_size", "base")
             logger.info(f"Loading Whisper model: {size}")
 
-            # P2-01: Try faster-whisper first (4x faster, INT8, no CUDA required)
+            # P2-01: Try faster-whisper. Use HardwareProfile for optimal device/compute.
+            hw = HardwareProfile.detect()
             faster_loaded = False
             try:
                 from faster_whisper import WhisperModel
-                compute = "int8"   # INT8 on CPU: fastest, minimal quality loss
-                device = "cpu"
-                try:
-                    import torch
-                    if torch.cuda.is_available():
-                        device, compute = "cuda", "float16"
-                except ImportError:
-                    pass
+                device  = hw.whisper_device
+                compute = hw.whisper_compute
                 self.model = WhisperModel(size, device=device, compute_type=compute)
                 self.whisper_backend = "faster"
                 faster_loaded = True
