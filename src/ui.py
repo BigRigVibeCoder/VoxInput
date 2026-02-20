@@ -52,6 +52,8 @@ class OSDOverlay(Gtk.Window):
         self._text  = ""
         self._level = 0.0
         self._pos_set = False
+        self._last_activity = 0.0   # timestamp of last non-zero level or text
+        self._auto_hide_ms = 3000   # hide after 3s of silence
 
         draw_area = Gtk.DrawingArea()
         draw_area.set_size_request(self._WIDTH, self._HEIGHT)
@@ -66,12 +68,27 @@ class OSDOverlay(Gtk.Window):
 
     def set_text(self, text: str):
         self._text = text
+        if text:
+            import time
+            self._last_activity = time.monotonic()
         GLib.idle_add(self._draw_area.queue_draw)
 
     def set_level(self, level: float):
         """level: 0.0 – 1.0"""
+        import time
         self._level = max(0.0, min(1.0, level))
+        if self._level > 0.04:          # mic is picking up audio
+            self._last_activity = time.monotonic()
         GLib.idle_add(self._draw_area.queue_draw)
+        # auto-hide after 3s of silence
+        GLib.timeout_add(self._auto_hide_ms, self._check_auto_hide)
+
+    def _check_auto_hide(self):
+        import time
+        idle_s = time.monotonic() - self._last_activity
+        if idle_s >= (self._auto_hide_ms / 1000.0):
+            GLib.idle_add(self.hide)
+        return False  # one-shot
 
     # ─ Internal ─────────────────────────────────────────
 
@@ -187,10 +204,9 @@ class SystemTrayApp:
         
     def _on_settings(self, _):
         dialog = SettingsDialog(self.engine_change_callback)
-        response = dialog.run()
-        if response == Gtk.ResponseType.OK:
-            dialog.save_settings()
-        dialog.destroy()
+        # SettingsDialog is now a Gtk.Window — it manages its own lifecycle.
+        # Showing it is all we need; Save/Cancel are handled internally.
+        dialog.show()
 
     def _on_quit(self, _):
         self.quit_callback()
@@ -217,21 +233,658 @@ class SystemTrayApp:
     def run(self):
         Gtk.main()
 
-class SettingsDialog(Gtk.Dialog):
+
+# ─── CSS ───────────────────────────────────────────────────────────────────────
+
+_SETTINGS_CSS = b"""
+window.settings-dialog {
+    background-color: #1a1a2e;
+}
+notebook {
+    background-color: #1a1a2e;
+}
+notebook header {
+    background-color: #16213e;
+    border-bottom: 2px solid #0f3460;
+}
+notebook tab {
+    padding: 10px 20px;
+    color: #8892a4;
+    font-weight: 600;
+    font-size: 12px;
+}
+notebook tab:checked {
+    color: #e94560;
+    border-bottom: 3px solid #e94560;
+    background-color: #1a1a2e;
+}
+notebook tab label {
+    color: inherit;
+}
+.tab-content {
+    background-color: #1a1a2e;
+    padding: 16px;
+}
+label {
+    color: #c8d0e0;
+}
+.section-title {
+    color: #e94560;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 1px;
+}
+.hint {
+    color: #5a6478;
+    font-size: 10px;
+    font-style: italic;
+}
+spinbutton, combobox, entry {
+    background-color: #0f3460;
+    color: #e0e6f0;
+    border: 1px solid #1a4a80;
+    border-radius: 6px;
+    padding: 4px 8px;
+}
+spinbutton:focus, combobox:focus, entry:focus {
+    border-color: #e94560;
+    box-shadow: 0 0 0 2px rgba(233,69,96,0.25);
+}
+checkbutton {
+    color: #c8d0e0;
+}
+checkbutton check {
+    background-color: #0f3460;
+    border: 1px solid #1a4a80;
+    border-radius: 4px;
+}
+checkbutton:checked check {
+    background-color: #e94560;
+    border-color: #e94560;
+}
+button {
+    background-color: #0f3460;
+    color: #e0e6f0;
+    border: 1px solid #1a4a80;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 600;
+    transition: all 150ms ease;
+}
+button:hover {
+    background-color: #1a4a80;
+    border-color: #e94560;
+    color: #ffffff;
+}
+button.action-btn {
+    background: linear-gradient(135deg, #e94560 0%, #b83050 100%);
+    border: none;
+    color: #ffffff;
+    font-size: 13px;
+    padding: 10px 28px;
+    border-radius: 10px;
+}
+button.action-btn:hover {
+    background: linear-gradient(135deg, #ff5577 0%, #e94560 100%);
+}
+button.cancel-btn {
+    background-color: transparent;
+    border: 1px solid #3a4458;
+    color: #8892a4;
+}
+button.cancel-btn:hover {
+    border-color: #e94560;
+    color: #e94560;
+}
+levelbar block.filled {
+    background: linear-gradient(90deg, #00d4cc, #e94560);
+    border-radius: 3px;
+}
+levelbar trough {
+    background-color: #0f3460;
+    border-radius: 3px;
+    border: none;
+}
+separator {
+    background-color: #0f3460;
+    min-height: 1px;
+}
+"""
+
+
+def _apply_settings_css():
+    provider = Gtk.CssProvider()
+    provider.load_from_data(_SETTINGS_CSS)
+    Gtk.StyleContext.add_provider_for_screen(
+        Gdk.Screen.get_default(), provider,
+        Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+    )
+
+
+def _row(label_text, widget, hint=None):
+    """Build a label+widget row for a grid attachment."""
+    lbl = Gtk.Label(label=label_text)
+    lbl.set_halign(Gtk.Align.START)
+    lbl.set_valign(Gtk.Align.CENTER)
+    if hint:
+        h = Gtk.Label()
+        h.set_markup(f'<span size="small"><i>{hint}</i></span>')
+        h.get_style_context().add_class("hint")
+        h.set_halign(Gtk.Align.START)
+        h.set_line_wrap(True)
+        return lbl, widget, h
+    return lbl, widget
+
+
+def _section_label(text):
+    lbl = Gtk.Label()
+    lbl.set_markup(f'<span weight="bold" size="small">{text.upper()}</span>')
+    lbl.get_style_context().add_class("section-title")
+    lbl.set_halign(Gtk.Align.START)
+    lbl.set_margin_top(8)
+    lbl.set_margin_bottom(4)
+    return lbl
+
+
+class SettingsDialog(Gtk.Window):
+    """
+    VoxInput Settings — compact tabbed window.
+    Always fits on screen; Save/Cancel always reachable.
+
+    Tabs:
+      🎤 Audio   — device, mic test, enhancement
+      🧠 Engine  — Vosk/Whisper, silence tuning, speed mode
+      ✏️ Processing — spell correction, punctuation, logs
+    """
+
     def __init__(self, engine_change_callback=None):
-        super().__init__(title="VoxInput Settings", flags=0)
+        super().__init__(title="VoxInput Settings")
         self.engine_change_callback = engine_change_callback
-        self.set_default_size(500, 500)
-        self.set_border_width(10)
-        
+        self.get_style_context().add_class("settings-dialog")
+
+        _apply_settings_css()
+
         from .settings import SettingsManager
         self.settings = SettingsManager()
-        # Copy current settings to temp dict for modification
         self.temp_settings = self.settings.settings.copy()
-        
-        # Add Action Buttons
-        self.add_button("Cancel", Gtk.ResponseType.CANCEL)
-        self.add_button("Save", Gtk.ResponseType.OK)
+
+        self.set_default_size(560, 540)
+        self.set_resizable(False)
+        self.set_position(Gtk.WindowPosition.CENTER)
+        self.set_decorated(True)
+        self.connect("delete-event", self._on_delete)
+
+        self.is_testing = False
+        self.test_stream = None
+        self.pa = None
+
+        # ── Root layout: notebook + button bar ─────────────────
+        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        self.add(root)
+
+        self.notebook = Gtk.Notebook()
+        self.notebook.set_tab_pos(Gtk.PositionType.TOP)
+        self.notebook.set_show_border(False)
+        root.pack_start(self.notebook, True, True, 0)
+
+        # ── Tabs ────────────────────────────────────────────────
+        self.notebook.append_page(self._build_audio_tab(),      Gtk.Label(label="🎤  Audio"))
+        self.notebook.append_page(self._build_engine_tab(),     Gtk.Label(label="🧠  Engine"))
+        self.notebook.append_page(self._build_processing_tab(), Gtk.Label(label="✏️  Processing"))
+
+        # ── Button bar ──────────────────────────────────────────
+        sep = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+        root.pack_start(sep, False, False, 0)
+
+        btn_bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        btn_bar.set_margin_top(10)
+        btn_bar.set_margin_bottom(12)
+        btn_bar.set_margin_start(16)
+        btn_bar.set_margin_end(16)
+        root.pack_start(btn_bar, False, False, 0)
+
+        btn_cancel = Gtk.Button(label="Cancel")
+        btn_cancel.get_style_context().add_class("cancel-btn")
+        btn_cancel.connect("clicked", lambda _: self._close(save=False))
+
+        btn_save = Gtk.Button(label="  Save Settings  ")
+        btn_save.get_style_context().add_class("action-btn")
+        btn_save.connect("clicked", lambda _: self._close(save=True))
+
+        btn_bar.pack_end(btn_save, False, False, 0)
+        btn_bar.pack_end(btn_cancel, False, False, 0)
+
+        self._update_engine_visibility()
+        self.show_all()
+        self._update_engine_visibility()
+
+    # ── Tab builders ────────────────────────────────────────────────────────────
+
+    def _build_audio_tab(self):
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        vbox.set_margin_top(12)
+        vbox.set_margin_bottom(12)
+        vbox.set_margin_start(16)
+        vbox.set_margin_end(16)
+        vbox.get_style_context().add_class("tab-content")
+        scroll.add(vbox)
+
+        # ── Device ─────────────────────────────────────────────
+        vbox.pack_start(_section_label("Input Device"), False, False, 0)
+
+        dev_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        lbl_dev = Gtk.Label(label="Microphone:")
+        lbl_dev.set_halign(Gtk.Align.START)
+        lbl_dev.set_width_chars(16)
+        dev_row.pack_start(lbl_dev, False, False, 0)
+
+        self.combo = Gtk.ComboBoxText()
+        dev_row.pack_start(self.combo, True, True, 0)
+        vbox.pack_start(dev_row, False, False, 4)
+
+        try:
+            from .pulseaudio_helper import filter_input_sources, get_default_source, get_pulseaudio_sources
+            self.sources = filter_input_sources(get_pulseaudio_sources())
+            saved_device = self.temp_settings.get("audio_device")
+            current_default = get_default_source()
+            target_device = saved_device if saved_device else current_default
+            active_index = -1
+            for i, source in enumerate(self.sources):
+                self.combo.append_text(f"{source.description}")
+                if source.name == target_device:
+                    active_index = i
+            if active_index != -1:
+                self.combo.set_active(active_index)
+            elif self.sources:
+                self.combo.set_active(0)
+            self.combo.connect("changed", self._on_device_changed)
+        except ImportError:
+            self.combo.append_text("pulseaudio_helper not found")
+            self.combo.set_sensitive(False)
+            self.sources = []
+
+        # ── Mic test ────────────────────────────────────────────
+        vbox.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL), False, False, 6)
+        vbox.pack_start(_section_label("Microphone Test"), False, False, 0)
+
+        test_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        lbl_level = Gtk.Label(label="Input level:")
+        lbl_level.set_halign(Gtk.Align.START)
+        lbl_level.set_width_chars(16)
+        test_row.pack_start(lbl_level, False, False, 0)
+
+        self.level_bar = Gtk.LevelBar()
+        self.level_bar.set_min_value(0)
+        self.level_bar.set_max_value(1.0)
+        self.level_bar.set_size_request(200, 12)
+        test_row.pack_start(self.level_bar, True, True, 0)
+
+        self.btn_test = Gtk.Button(label="▶  Test")
+        self.btn_test.connect("clicked", self._on_toggle_test)
+        test_row.pack_start(self.btn_test, False, False, 0)
+        vbox.pack_start(test_row, False, False, 4)
+
+        # ── Enhancement ─────────────────────────────────────────
+        vbox.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL), False, False, 6)
+        vbox.pack_start(_section_label("🎤  Microphone Enhancement"), False, False, 0)
+
+        vol_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        lbl_vol = Gtk.Label(label="Input Volume:")
+        lbl_vol.set_halign(Gtk.Align.START)
+        lbl_vol.set_width_chars(16)
+        vol_row.pack_start(lbl_vol, False, False, 0)
+        self.spin_volume = Gtk.SpinButton.new_with_range(50, 150, 5)
+        self.spin_volume.set_value(self.temp_settings.get("mic_volume", 100))
+        self.spin_volume.connect("value-changed", lambda w: self._set_temp("mic_volume", int(w.get_value())))
+        vol_row.pack_start(self.spin_volume, False, False, 0)
+        vol_row.pack_start(Gtk.Label(label="%"), False, False, 0)
+        vbox.pack_start(vol_row, False, False, 4)
+
+        self.check_noise = Gtk.CheckButton(label="🔇  WebRTC Noise Suppression")
+        self.check_noise.set_active(self.temp_settings.get("noise_suppression", False))
+        self.check_noise.connect("toggled", lambda w: self._set_temp("noise_suppression", w.get_active()))
+        vbox.pack_start(self.check_noise, False, False, 2)
+
+        boost_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        lbl_boost = Gtk.Label(label="ALSA Mic Boost:")
+        lbl_boost.set_halign(Gtk.Align.START)
+        lbl_boost.set_width_chars(16)
+        boost_row.pack_start(lbl_boost, False, False, 0)
+        self.spin_boost = Gtk.SpinButton.new_with_range(0, 100, 10)
+        self.spin_boost.set_value(self.temp_settings.get("mic_boost", 0))
+        self.spin_boost.connect("value-changed", lambda w: self._set_temp("mic_boost", int(w.get_value())))
+        boost_row.pack_start(self.spin_boost, False, False, 0)
+        boost_row.pack_start(Gtk.Label(label="%"), False, False, 0)
+        vbox.pack_start(boost_row, False, False, 4)
+
+        btn_cal = Gtk.Button(label="📊  Auto-Calibrate Silence Threshold")
+        btn_cal.connect("clicked", self._on_auto_calibrate)
+        vbox.pack_start(btn_cal, False, False, 6)
+
+        self.lbl_cal_result = Gtk.Label(label="")
+        self.lbl_cal_result.set_halign(Gtk.Align.START)
+        self.lbl_cal_result.get_style_context().add_class("hint")
+        vbox.pack_start(self.lbl_cal_result, False, False, 0)
+
+        return scroll
+
+    def _build_engine_tab(self):
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        vbox.set_margin_top(12)
+        vbox.set_margin_bottom(12)
+        vbox.set_margin_start(16)
+        vbox.set_margin_end(16)
+        scroll.add(vbox)
+
+        # ── Engine type ─────────────────────────────────────────
+        vbox.pack_start(_section_label("Speech Engine"), False, False, 0)
+
+        eng_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        lbl_eng = Gtk.Label(label="Engine:")
+        lbl_eng.set_halign(Gtk.Align.START)
+        lbl_eng.set_width_chars(18)
+        eng_row.pack_start(lbl_eng, False, False, 0)
+        self.combo_engine = Gtk.ComboBoxText()
+        self.combo_engine.append_text("Vosk")
+        self.combo_engine.append_text("Whisper")
+        saved_engine = self.temp_settings.get("speech_engine", "Vosk")
+        self.combo_engine.set_active(1 if saved_engine == "Whisper" else 0)
+        self.combo_engine.connect("changed", self._on_engine_changed)
+        eng_row.pack_start(self.combo_engine, False, False, 0)
+        vbox.pack_start(eng_row, False, False, 4)
+
+        # Vosk model path (shown for Vosk)
+        self.vosk_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        self.lbl_vosk_path = Gtk.Label(label="Vosk Model:")
+        self.lbl_vosk_path.set_halign(Gtk.Align.START)
+        self.lbl_vosk_path.set_width_chars(18)
+        self.vosk_row.pack_start(self.lbl_vosk_path, False, False, 0)
+        self.file_chooser = Gtk.FileChooserButton(title="Select Model Folder", action=Gtk.FileChooserAction.SELECT_FOLDER)
+        saved_model = self.temp_settings.get("model_path")
+        if saved_model and os.path.exists(saved_model):
+            self.file_chooser.set_filename(saved_model)
+        else:
+            default_model = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "model"))
+            if os.path.exists(default_model):
+                self.file_chooser.set_current_folder(default_model)
+        self.file_chooser.connect("file-set", self._on_model_set)
+        self.vosk_row.pack_start(self.file_chooser, True, True, 0)
+        vbox.pack_start(self.vosk_row, False, False, 4)
+
+        # Whisper model size (shown for Whisper)
+        self.whisper_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        self.lbl_whisper_size = Gtk.Label(label="Whisper Model:")
+        self.lbl_whisper_size.set_halign(Gtk.Align.START)
+        self.lbl_whisper_size.set_width_chars(18)
+        self.whisper_row.pack_start(self.lbl_whisper_size, False, False, 0)
+        self.combo_whisper = Gtk.ComboBoxText()
+        WHISPER_SIZES = ["tiny", "base", "small", "medium", "large", "large-v3-turbo", "distil-large-v3"]
+        for sz in WHISPER_SIZES:
+            self.combo_whisper.append_text(sz)
+        saved_size = self.temp_settings.get("whisper_model_size", "base")
+        try:
+            self.combo_whisper.set_active(WHISPER_SIZES.index(saved_size))
+        except ValueError:
+            self.combo_whisper.set_active(1)
+        self.combo_whisper.connect("changed", self._on_whisper_size_changed)
+        self.whisper_row.pack_start(self.combo_whisper, False, False, 0)
+        vbox.pack_start(self.whisper_row, False, False, 4)
+
+        # ── Tuning ──────────────────────────────────────────────
+        vbox.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL), False, False, 6)
+        vbox.pack_start(_section_label("Silence Tuning"), False, False, 0)
+
+        def _spin_row(label, low, high, step, key, default, fmt=None, hint=None):
+            row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+            lbl = Gtk.Label(label=label)
+            lbl.set_halign(Gtk.Align.START)
+            lbl.set_width_chars(22)
+            row.pack_start(lbl, False, False, 0)
+            spin = Gtk.SpinButton.new_with_range(low, high, step)
+            spin.set_value(self.temp_settings.get(key, default))
+            spin.connect("value-changed", lambda w: self._set_temp(key, (round(w.get_value(), 2) if step < 1 else int(w.get_value()))))
+            row.pack_start(spin, False, False, 0)
+            if fmt:
+                row.pack_start(Gtk.Label(label=fmt), False, False, 0)
+            vbox.pack_start(row, False, False, 4)
+            if hint:
+                hl = Gtk.Label()
+                hl.set_markup(f'<span size="small"><i>{hint}</i></span>')
+                hl.get_style_context().add_class("hint")
+                hl.set_halign(Gtk.Align.START)
+                hl.set_line_wrap(True)
+                vbox.pack_start(hl, False, False, 2)
+            return spin
+
+        self.spin_silence = _spin_row(
+            "Pause after speech:", 0.1, 5.0, 0.1, "silence_duration", 0.6, "s",
+            "Lower = snappier. Higher = allows longer pauses."
+        )
+        self.spin_thresh = _spin_row(
+            "Noise threshold:", 0, 5000, 100, "silence_threshold", 500, "RMS",
+            "Raise if background noise triggers typing."
+        )
+        self.spin_lag = _spin_row(
+            "Stability lag:", 0, 10, 1, "stability_lag", 2, "words",
+            "Words held back to prevent flicker. 0 = instant."
+        )
+
+        # ── Speed mode ──────────────────────────────────────────
+        vbox.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL), False, False, 6)
+        self.check_fast_mode = Gtk.CheckButton(label="⚡  Speed Mode (LAG=0 — instant output, may reduce accuracy)")
+        self.check_fast_mode.set_active(self.temp_settings.get("fast_mode", False))
+        self.check_fast_mode.connect("toggled", lambda w: self._set_temp("fast_mode", w.get_active()))
+        vbox.pack_start(self.check_fast_mode, False, False, 6)
+
+        return scroll
+
+    def _build_processing_tab(self):
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        vbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
+        inner = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        inner.set_margin_top(12)
+        inner.set_margin_bottom(12)
+        inner.set_margin_start(16)
+        inner.set_margin_end(16)
+        vbox.pack_start(inner, True, True, 0)
+        scroll.add(vbox)
+
+        inner.pack_start(_section_label("✏️  Speech Processing"), False, False, 0)
+
+        self.check_spell = Gtk.CheckButton(label="✨  Spell Correction (SymSpellPy + ASR artifact rules)")
+        self.check_spell.set_active(self.temp_settings.get("spell_correction", True))
+        self.check_spell.connect("toggled", lambda w: self._set_temp("spell_correction", w.get_active()))
+        inner.pack_start(self.check_spell, False, False, 4)
+
+        self.check_voice_punct = Gtk.CheckButton(label=". , ?  Voice Punctuation (say 'period', 'comma', 'new line')")
+        self.check_voice_punct.set_active(self.temp_settings.get("voice_punctuation", True))
+        self.check_voice_punct.connect("toggled", lambda w: self._set_temp("voice_punctuation", w.get_active()))
+        inner.pack_start(self.check_voice_punct, False, False, 4)
+
+        inner.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL), False, False, 8)
+        inner.pack_start(_section_label("📋  Diagnostics"), False, False, 0)
+
+        btn_logs = Gtk.Button(label="📄  View Log File")
+        btn_logs.connect("clicked", self._on_view_logs)
+        inner.pack_start(btn_logs, False, False, 4)
+
+        return scroll
+
+    # ── Internal ────────────────────────────────────────────────────────────────
+
+    def _set_temp(self, key, value):
+        self.temp_settings[key] = value
+
+    def _update_engine_visibility(self):
+        engine = self.combo_engine.get_active_text()
+        if engine == "Vosk":
+            self.vosk_row.show_all()
+            self.whisper_row.hide()
+        else:
+            self.vosk_row.hide()
+            self.whisper_row.show_all()
+
+    def _on_engine_changed(self, combo):
+        text = combo.get_active_text()
+        if text:
+            self._set_temp("speech_engine", text)
+            self._update_engine_visibility()
+
+    def _on_whisper_size_changed(self, combo):
+        text = combo.get_active_text()
+        if text:
+            self._set_temp("whisper_model_size", text)
+
+    def _on_device_changed(self, combo):
+        idx = combo.get_active()
+        if idx >= 0 and self.sources:
+            self._set_temp("audio_device", self.sources[idx].name)
+
+    def _on_model_set(self, widget):
+        path = widget.get_filename()
+        if path:
+            self._set_temp("model_path", path)
+
+    def _on_auto_calibrate(self, widget):
+        self.lbl_cal_result.set_text("Calibrating… stay quiet for 3 seconds.")
+        widget.set_sensitive(False)
+
+        def _run():
+            try:
+                from .mic_enhancer import MicEnhancer
+                enh = MicEnhancer(self.settings)
+                result = enh.auto_calibrate()
+                recommended = result.get("recommended_threshold", 500)
+                GLib.idle_add(self.lbl_cal_result.set_text,
+                              f"✅ Noise floor: {result.get('noise_floor_rms', 0):.0f} RMS → threshold: {recommended}")
+                GLib.idle_add(self.spin_thresh.set_value, float(recommended))
+                GLib.idle_add(self._set_temp, "silence_threshold", recommended)
+            except Exception as e:
+                GLib.idle_add(self.lbl_cal_result.set_text, f"❌ Calibration failed: {e}")
+            finally:
+                GLib.idle_add(widget.set_sensitive, True)
+
+        import threading
+        threading.Thread(target=_run, daemon=True).start()
+
+    def _on_view_logs(self, widget):
+        import subprocess
+        log_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "logs", "voxinput.log"))
+        try:
+            subprocess.Popen(["xdg-open", log_path])
+        except Exception as e:
+            print(f"Failed to open logs: {e}")
+
+    def _on_toggle_test(self, widget):
+        if self.is_testing:
+            self._stop_test()
+        else:
+            self._start_test()
+            widget.set_label("⏹  Stop")
+
+    def _start_test(self):
+        import pyaudio
+        self.is_testing = True
+        self.recorded_frames = []
+        self.pa = pyaudio.PyAudio()
+        try:
+            self.test_stream = self.pa.open(format=pyaudio.paInt16, channels=1,
+                                            rate=16000, input=True, frames_per_buffer=1024)
+            GLib.timeout_add(100, self._update_level)
+        except Exception as e:
+            print(f"Failed to start test stream: {e}")
+            self.is_testing = False
+            self.btn_test.set_label("▶  Test")
+
+    def _stop_test(self):
+        self.is_testing = False
+        if self.test_stream:
+            self.test_stream.stop_stream()
+            self.test_stream.close()
+            self.test_stream = None
+        if hasattr(self, "recorded_frames") and self.recorded_frames and self.pa:
+            import threading
+            threading.Thread(target=self._play_playback, args=(self.recorded_frames, self.pa)).start()
+            self.pa = None
+            self.recorded_frames = []
+        elif self.pa:
+            self.pa.terminate()
+            self.pa = None
+            self.btn_test.set_label("▶  Test")
+
+    def _play_playback(self, frames, pa):
+        import pyaudio
+        GLib.idle_add(self.btn_test.set_label, "🔊  Playing…")
+        GLib.idle_add(self.btn_test.set_sensitive, False)
+        try:
+            stream = pa.open(format=pyaudio.paInt16, channels=1, rate=16000, output=True)
+            for fr in frames:
+                stream.write(fr)
+            stream.stop_stream()
+            stream.close()
+        except Exception as e:
+            print(f"Playback error: {e}")
+        finally:
+            pa.terminate()
+            GLib.idle_add(self.btn_test.set_label, "▶  Test")
+            GLib.idle_add(self.btn_test.set_sensitive, True)
+
+    def _update_level(self):
+        if not self.is_testing or not self.test_stream:
+            return False
+        try:
+            import numpy as np
+            data = self.test_stream.read(1024, exception_on_overflow=False)
+            self.recorded_frames.append(data)
+            pcm = np.frombuffer(data, dtype=np.int16)
+            rms = float(np.sqrt(np.mean(pcm.astype(np.float32) ** 2)))
+            self.level_bar.set_value(min(rms / 10000.0, 1.0))
+        except Exception:
+            pass
+        return True
+
+    def _close(self, save: bool):
+        if save:
+            self.save_settings()
+        self._stop_test()
+        self.destroy()
+
+    def _on_delete(self, *_):
+        self._close(save=False)
+        return False
+
+    def save_settings(self):
+        changes = False
+        reinit_engine = False
+
+        new_device = self.temp_settings.get("audio_device")
+        old_device = self.settings.get("audio_device")
+        if new_device != old_device and new_device:
+            try:
+                from .pulseaudio_helper import set_default_source
+                set_default_source(new_device)
+            except ImportError:
+                pass
+
+        for key, value in self.temp_settings.items():
+            if self.settings.get(key) != value:
+                self.settings.set(key, value)
+                changes = True
+                if key in ["speech_engine", "whisper_model_size", "model_path"]:
+                    reinit_engine = True
+
+        if changes and self.engine_change_callback and reinit_engine:
+            self.engine_change_callback()
+
+    def destroy(self):
+        self._stop_test()
+        super().destroy()
+
         
         content_area = self.get_content_area()
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=15)
