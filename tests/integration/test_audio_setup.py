@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from src import pulseaudio_helper
 
@@ -22,16 +22,13 @@ Source #3
     Driver: module-null-sink.c
 """
 
-def test_get_pulseaudio_sources(mocker):
+def test_get_pulseaudio_sources(monkeypatch):
     """Test parsing of pactl output."""
-    mock_run = mocker.patch('subprocess.run')
-    mock_run.return_value = MagicMock(
-        stdout=FAKE_PACTL_OUTPUT,
-        returncode=0
-    )
-    
+    mock_run = MagicMock(stdout=FAKE_PACTL_OUTPUT, returncode=0)
+    monkeypatch.setattr("subprocess.run", lambda *a, **kw: mock_run)
+
     sources = pulseaudio_helper.get_pulseaudio_sources()
-    
+
     assert len(sources) == 3
     assert sources[0].name == "alsa_output.pci-0000_00_1f.3.analog-stereo.monitor"
     assert sources[1].name == "alsa_input.pci-0000_00_1f.3.analog-stereo"
@@ -39,11 +36,10 @@ def test_get_pulseaudio_sources(mocker):
 
 def test_filter_input_sources():
     """Test filtering logic excludes monitors."""
-    # Create fake device objects
     s1 = pulseaudio_helper.PulseAudioDevice("test.monitor", "Monitor of Speaker")
     s2 = pulseaudio_helper.PulseAudioDevice("mic.input", "Real Microphone")
-    
+
     inputs = pulseaudio_helper.filter_input_sources([s1, s2])
-    
+
     assert len(inputs) == 1
     assert inputs[0].name == "mic.input"

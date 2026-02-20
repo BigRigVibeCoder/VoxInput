@@ -1,44 +1,40 @@
 
 # Ensure mocks are in place before importing app
-# (conftest.py handles module-level mocks, but we verify here)
+# conftest.py handles gi/pyaudio/vosk at module level.
+# pynput is not installed in the test venv — mock it here too.
+import sys
+from unittest.mock import MagicMock
 
-def test_app_initialization(mocker, mock_settings_file):
+# Mock pynput before any src imports attempt it
+if "pynput" not in sys.modules:
+    sys.modules["pynput"] = MagicMock()
+    sys.modules["pynput.keyboard"] = MagicMock()
+
+def test_app_initialization(monkeypatch, mock_settings_file):
     """
-    E2E-ish test: Initialize the main app class.
-    We mock out:
-    - AudioCapture (pyaudio dependencies)
-    - SpeechRecognizer (vosk/torch dependencies)
-    - SettingsManager (filesystem)
-    - SystemTrayApp (GTK)
+    E2E-ish test: Initialize the main app class with all dependencies mocked.
+    Verifies start/stop listening state machine works correctly.
     """
-    
-    # 1. Patch internal classes used by VoxInputApp
-    mocker.patch('src.audio.AudioCapture')
-    mocker.patch('src.recognizer.SpeechRecognizer')
-    mocker.patch('src.injection.TextInjector')
-    mocker.patch('src.ui.SystemTrayApp')
-    
-    # 2. Patch SettingsManager to load our temp file
-    # We mock the entire class for simplicity in this E2E test
-    mock_settings = mocker.patch('src.settings.SettingsManager')
-    mock_settings.return_value.get.return_value = 500 # Default return for any get()
-    
-    # 3. Import and Instantiate
+    # Patch SettingsManager to return predictable values
+    mock_sm = MagicMock()
+    mock_sm.return_value.get.return_value = 500
+    monkeypatch.setattr("src.settings.SettingsManager", mock_sm)
+
+    # Import and instantiate with all heavy deps already mocked by conftest + above
     from src.main import VoxInputApp
     app = VoxInputApp()
-    
-    # 4. Verify critical components were initialized
+
+    # Verify critical components initialized
     assert app.audio is not None
     assert app.recognizer is not None
     assert app.ui is not None
     assert app.is_listening is False
-    
-    # 5. Verify start/stop logic (state machine)
+
+    # Verify start/stop state machine
     app.start_listening()
     assert app.is_listening is True
-    # Verify processing thread started
     assert app.processing_thread is not None
-    
+
     app.stop_listening()
     assert app.is_listening is False
     assert app.processing_thread is None
