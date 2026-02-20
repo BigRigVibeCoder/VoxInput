@@ -230,16 +230,16 @@ class SettingsDialog(Gtk.Dialog):
         grid_model.attach(self.lbl_whisper_size, 0, 2, 1, 1)
 
         self.combo_whisper = Gtk.ComboBoxText()
-        for size in ["tiny", "base", "small", "medium", "large"]:
+        WHISPER_SIZES = ["tiny", "base", "small", "medium", "large",
+                         "large-v3-turbo", "distil-large-v3"]  # P2-04: SOTA models
+        for size in WHISPER_SIZES:
             self.combo_whisper.append_text(size)
-        
+
         saved_size = self.temp_settings.get("whisper_model_size", "base")
-        # Find index
-        sizes = ["tiny", "base", "small", "medium", "large"]
         try:
-            self.combo_whisper.set_active(sizes.index(saved_size))
+            self.combo_whisper.set_active(WHISPER_SIZES.index(saved_size))
         except ValueError:
-            self.combo_whisper.set_active(1) # default base
+            self.combo_whisper.set_active(1)  # default base
 
         self.combo_whisper.connect("changed", self._on_whisper_size_changed)
         grid_model.attach(self.combo_whisper, 1, 2, 1, 1)

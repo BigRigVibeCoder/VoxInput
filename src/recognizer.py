@@ -63,30 +63,45 @@ class SpeechRecognizer:
 
         # --- Whisper Setup ---
         elif self.engine_type == "Whisper":
-            if whisper is None:
-                logger.error("Whisper module not found.")
-                raise ImportError("openai-whisper not installed")
-            
             size = self.settings.get("whisper_model_size", "base")
             logger.info(f"Loading Whisper model: {size}")
+
+            # P2-01: Try faster-whisper first (4x faster, INT8, no CUDA required)
+            faster_loaded = False
             try:
-                self.model = whisper.load_model(size)
-                logger.info(f"Whisper model loaded successfully on device: {self.model.device}")
+                from faster_whisper import WhisperModel
+                compute = "int8"   # INT8 on CPU: fastest, minimal quality loss
+                device = "cpu"
+                try:
+                    import torch
+                    if torch.cuda.is_available():
+                        device, compute = "cuda", "float16"
+                except ImportError:
+                    pass
+                self.model = WhisperModel(size, device=device, compute_type=compute)
+                self.whisper_backend = "faster"
+                faster_loaded = True
+                logger.info(f"faster-whisper loaded: {size} on {device}/{compute}")
+            except ImportError:
+                logger.info("faster-whisper not installed — falling back to openai-whisper")
             except Exception as e:
-                error_msg = str(e)
-                if "CUDA error" in error_msg or "RuntimeError" in error_msg:
-                     logger.warning("CUDA/GPU not available or compatible. Falling back to CPU. (This may be slower)")
-                else:
-                     logger.warning(f"Failed to load Whisper with default device: {e}. Using CPU.")
-                
-                self.model = whisper.load_model(size, device="cpu")
-                logger.info("Whisper model loaded on CPU successfully.")
-            
+                logger.warning(f"faster-whisper failed ({e}) — falling back to openai-whisper")
+
+            if not faster_loaded:
+                # Fallback: legacy openai-whisper
+                if whisper is None:
+                    raise ImportError("Neither faster-whisper nor openai-whisper are installed")
+                try:
+                    self.model = whisper.load_model(size)
+                except Exception:
+                    self.model = whisper.load_model(size, device="cpu")
+                self.whisper_backend = "openai"
+                logger.info(f"openai-whisper loaded: {size} on {self.model.device}")
+
             self.whisper_buffer = b""
-            # Whisper Streaming State
             self.whisper_last_transcript = ""
             self.whisper_last_process_time = 0
-            self.whisper_process_interval = 0.5 # Run inference every 500ms
+            self.whisper_process_interval = 0.5
     
     def reset_state(self):
         """Reset streaming state (called on silence or manual stop)"""
@@ -170,34 +185,25 @@ class SpeechRecognizer:
             return None
 
         try:
-            # Transcribe current buffer
-            audio_np = np.frombuffer(self.whisper_buffer, dtype=np.int16).astype(np.float32) / 32768.0
-            
-            # Using beam_size=1 and fp16=False for speed
-            result = self.model.transcribe(audio_np, fp16=False, beam_size=1, language='en')
-            current_transcript = result.get('text', '').strip()
-            
-            # Normalization
-            # Whisper output can include punctuation. Vosk does not.
-            # We want to enable "streaming" feel.
-            
-            # Compare with last transcript to find stable prefix
-            # This is tricky because "The cat" vs "The car"
-            # We accept words that appear in BOTH the previous and current hypothesis?
-            # Or just output whatever exceeds committed length?
-            
-            # Better Strategy for Whisper:
-            # Just output the words that are new compared to committed_text.
-            # BUT: Whisper rewrites the whole sentence.
-            # If committed: "The quick"
-            # Current: "The quick brown" -> Inject "brown"
-            # Next: "The quick brown fox" -> Inject "fox"
-            # If Current: "The thick brown..." -> WE HAVE A PROBLEM. We already injected "quick".
-            # We cannot delete injection.
-            
-            # So we use a "Stability buffer" too.
-            # We only commit if the word is "far enough back" from the edge.
-            
+            # P2-02/03: Route to faster-whisper or openai-whisper backend
+            if getattr(self, "whisper_backend", "openai") == "faster":
+                # faster-whisper returns a generator of segments
+                silence_ms = int(self.settings.get("silence_duration", 0.6) * 1000)
+                segments, _ = self.model.transcribe(
+                    audio_np,
+                    beam_size=1,
+                    language="en",
+                    vad_filter=True,           # P2-05: built-in Silero VAD
+                    vad_parameters=dict(
+                        threshold=0.5,
+                        min_silence_duration_ms=silence_ms
+                    )
+                )
+                current_transcript = " ".join(s.text.strip() for s in segments)
+            else:
+                # Legacy openai-whisper path
+                result = self.model.transcribe(audio_np, fp16=False, beam_size=1, language="en")
+                current_transcript = result.get("text", "").strip()
             words = current_transcript.split()
             # P1-03: fast_mode=True → LAG=0 (inject every word immediately)
             # Higher lag for Whisper by default as it fluctuates more at the tail
