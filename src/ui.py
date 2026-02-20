@@ -236,8 +236,8 @@ class SystemTrayApp:
 
 # ─── CSS ───────────────────────────────────────────────────────────────────────
 
-_SETTINGS_CSS = b"""
-/* ── Base window ─────────────────────────────────────── */
+_SETTINGS_CSS = """
+/* Base window */
 window.settings-dialog,
 window.settings-dialog > *,
 window.settings-dialog box,
@@ -249,7 +249,7 @@ window.settings-dialog .tab-content {
     color: #c8d0e0;
 }
 
-/* ── Notebook tabs ───────────────────────────────────── */
+/* Notebook tabs */
 notebook { background-color: #1a1a2e; }
 notebook header { background-color: #16213e; border-bottom: 2px solid #0f3460; }
 notebook tab { padding: 10px 20px; color: #8892a4; font-weight: 600; font-size: 12px; }
@@ -257,15 +257,15 @@ notebook tab:checked { color: #e94560; border-bottom: 3px solid #e94560; backgro
 notebook tab label { color: inherit; }
 notebook stack { background-color: #1a1a2e; }
 
-/* ── Labels ──────────────────────────────────────────── */
+/* Labels */
 label { color: #c8d0e0; }
 .section-title { color: #e94560; font-weight: 700; font-size: 11px; letter-spacing: 1px; }
 .hint { color: #5a6478; font-size: 10px; font-style: italic; }
 
-/* ── Separators ──────────────────────────────────────── */
+/* Separators */
 separator { background-color: #1e2a45; min-height: 1px; }
 
-/* ── Entry / text fields ─────────────────────────────── */
+/* Entry / text fields */
 entry {
     background-color: #0f253e;
     color: #e0e6f0;
@@ -276,7 +276,7 @@ entry {
 }
 entry:focus { border-color: #e94560; box-shadow: 0 0 0 2px rgba(233,69,96,0.2); }
 
-/* ── SpinButton — must target the inner entry AND arrow buttons ── */
+/* SpinButton - inner entry AND arrow buttons */
 spinbutton {
     background-color: #0f253e;
     border: 1px solid #1a4a80;
@@ -305,7 +305,7 @@ spinbutton button:hover { background-color: #0f3460; }
 spinbutton button:first-child { border-left: none; border-right: 1px solid #1a4a80; border-radius: 6px 0 0 6px; }
 spinbutton button:last-child { border-radius: 0 6px 6px 0; }
 
-/* ── ComboBox ────────────────────────────────────────── */
+/* ComboBox */
 combobox button,
 combobox > button,
 combobox button.combo {
@@ -317,13 +317,11 @@ combobox button.combo {
 }
 combobox button:hover { border-color: #e94560; background-color: #16213e; }
 combobox arrow { color: #e94560; }
+popover { background-color: #16213e; }
+popover row { background-color: #16213e; color: #c8d0e0; }
+popover row:hover { background-color: #0f3460; }
 
-/* Dropdown list */
-.combo > window, popover { background-color: #16213e; }
-popover row, .combo row { background-color: #16213e; color: #c8d0e0; }
-popover row:hover, .combo row:hover { background-color: #0f3460; }
-
-/* ── FileChooserButton ───────────────────────────────── */
+/* FileChooserButton */
 filechooserbutton,
 filechooserbutton button {
     background-color: #0f253e;
@@ -334,7 +332,7 @@ filechooserbutton button {
 }
 filechooserbutton button:hover { border-color: #e94560; background-color: #16213e; }
 
-/* ── Checkbutton ─────────────────────────────────────── */
+/* Checkbutton */
 checkbutton { color: #c8d0e0; }
 checkbutton check {
     background-color: #0f253e;
@@ -345,7 +343,7 @@ checkbutton check {
 }
 checkbutton:checked check { background-color: #e94560; border-color: #e94560; }
 
-/* ── Buttons (generic) ───────────────────────────────── */
+/* Buttons */
 button, button.text-button {
     background-color: #0f3460;
     background-image: none;
@@ -379,20 +377,23 @@ button.cancel-btn, button.cancel-btn.text-button {
 }
 button.cancel-btn:hover { border-color: #e94560; color: #e94560; background-color: rgba(233,69,96,0.08); }
 
-/* ── Level bar ───────────────────────────────────────── */
+/* Level bar */
 levelbar trough { background-color: #0f253e; border: none; border-radius: 4px; }
 levelbar block.filled { background: linear-gradient(90deg, #00d4cc, #e94560); border-radius: 3px; }
 
-/* ── Scrollbar ───────────────────────────────────────── */
+/* Scrollbar */
 scrollbar trough { background-color: #16213e; }
 scrollbar slider { background-color: #1a4a80; border-radius: 4px; min-width: 6px; }
 scrollbar slider:hover { background-color: #e94560; }
 """
 
 
+
+
+
 def _apply_settings_css():
     provider = Gtk.CssProvider()
-    provider.load_from_data(_SETTINGS_CSS)
+    provider.load_from_data(_SETTINGS_CSS.encode('utf-8'))
     Gtk.StyleContext.add_provider_for_screen(
         Gdk.Screen.get_default(), provider,
         Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
