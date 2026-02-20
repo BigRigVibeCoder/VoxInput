@@ -99,6 +99,10 @@ pip install faster-whisper -q 2>/dev/null && echo "  ✓ faster-whisper installe
 echo "▶ Installing symspellpy (optional — Phase 3 spell correction)..."
 pip install symspellpy -q 2>/dev/null && echo "  ✓ symspellpy installed" || echo "  ⚠ symspellpy skipped"
 
+# ── 4b. Build C extensions (P8: ctypes RMS) ────────────────────────────────
+echo "▶ Building C extensions..."
+bash "$SCRIPT_DIR/src/c_ext/build.sh" || echo "  ⚠ C ext build skipped (gcc missing) — numpy fallback active"
+
 # ── 5. Download Vosk model ─────────────────────────────────────────────────
 if [ "$SKIP_MODEL" = false ]; then
     MODEL_DIR="model"
@@ -155,7 +159,17 @@ if [ "$AUTOSTART" = true ]; then
     echo "  ✓ Autostart configured: $AUTOSTART_DIR/voxinput.desktop"
 fi
 
-# ── 8. Validate installation ───────────────────────────────────────────────
+# ── 8. Write .env if not present ───────────────────────────────────────────
+if [ ! -f "$SCRIPT_DIR/.env" ]; then
+    echo "▶ Writing .env (TRACE log mode for UAT)..."
+    cp "$SCRIPT_DIR/.env.example" "$SCRIPT_DIR/.env"
+    sed -i 's/^LOG_LEVEL=.*/LOG_LEVEL=TRACE/' "$SCRIPT_DIR/.env"
+    echo "  ✓ .env written (LOG_LEVEL=TRACE — switch to WARNING post-UAT)"
+else
+    echo "  ✓ .env already present — not overwritten"
+fi
+
+# ── 9. Validate installation ───────────────────────────────────────────────
 echo ""
 echo "▶ Validating installation..."
 PYTHONPATH="$SCRIPT_DIR" python3 -c "
