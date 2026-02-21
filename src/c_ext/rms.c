@@ -34,3 +34,19 @@ double vox_rms_int16(const int16_t* samples, int n) {
     }
     return sqrt(sum / (double)n);
 }
+
+/*
+ * vox_pcm_to_float32 — convert int16 PCM directly to normalized float32.
+ * Eliminates python loop/numpy cast overhead for Whisper transcription.
+ *
+ * Args:
+ *   samples  — pointer to continuous int16 input array
+ *   out      — pointer to pre-allocated float32 output array
+ *   n        — number of samples to process
+ */
+void vox_pcm_to_float32(const int16_t* samples, float* out, int n) {
+    if (n <= 0) return;
+    for (int i = 0; i < n; i++) {
+        out[i] = (float)samples[i] / 32768.0f;
+    }
+}

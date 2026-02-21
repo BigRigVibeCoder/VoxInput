@@ -191,10 +191,10 @@ class SpeechRecognizer:
         if total_bytes < SAMPLE_RATE * 2 * 0.5:
             return None
 
-        # Concatenate chunks once into numpy array (O(N) single alloc)
-        audio_np = np.concatenate(
-            [np.frombuffer(c, dtype=np.int16) for c in self.whisper_chunks]
-        ).astype(np.float32) / 32768.0
+        # P10: Use C Extension (librms.so) for native PCM -> Normalized Float32 casting.
+        # Eliminates O(N) python numpy loops, GIL locking, and intermediate arrays.
+        from .c_ext import pcm_to_float32
+        audio_np = pcm_to_float32(self.whisper_chunks)
 
         try:
             # P2-02/03: Route to faster-whisper or openai-whisper backend

@@ -1024,11 +1024,10 @@ class SettingsDialog(Gtk.Window):
         if not self.is_testing or not self.test_stream:
             return False
         try:
-            import numpy as np
             data = self.test_stream.read(1024, exception_on_overflow=False)
             self.recorded_frames.append(data)
-            pcm = np.frombuffer(data, dtype=np.int16)
-            rms = float(np.sqrt(np.mean(pcm.astype(np.float32) ** 2)))
+            from src.c_ext import rms_int16
+            rms = rms_int16(data)
             self.level_bar.set_value(min(rms / 10000.0, 1.0))
         except Exception:
             pass
