@@ -978,9 +978,16 @@ class SettingsDialog(Gtk.Window):
         self.is_testing = True
         self.recorded_frames = []
         self.pa = pyaudio.PyAudio()
+        
+        def _audio_callback(in_data, frame_count, time_info, status):
+            if in_data:
+                self.recorded_frames.append(in_data)
+            return (None, pyaudio.paContinue)
+
         try:
             self.test_stream = self.pa.open(format=pyaudio.paInt16, channels=1,
-                                            rate=16000, input=True, frames_per_buffer=1024)
+                                            rate=16000, input=True, frames_per_buffer=1024,
+                                            stream_callback=_audio_callback)
             GLib.timeout_add(100, self._update_level)
         except Exception as e:
             logger.error(f"Failed to start test stream: {e}")
@@ -989,25 +996,30 @@ class SettingsDialog(Gtk.Window):
 
     def _stop_test(self):
         self.is_testing = False
-        if self.test_stream:
+        if getattr(self, "test_stream", None):
             self.test_stream.stop_stream()
             self.test_stream.close()
             self.test_stream = None
-        if hasattr(self, "recorded_frames") and self.recorded_frames and self.pa:
-            import threading
-            threading.Thread(target=self._play_playback, args=(self.recorded_frames, self.pa)).start()
-            self.pa = None
-            self.recorded_frames = []
-        elif self.pa:
+            
+        if getattr(self, "pa", None):
             self.pa.terminate()
             self.pa = None
+
+        if getattr(self, "recorded_frames", None):
+            import threading
+            frames = list(self.recorded_frames)
+            self.recorded_frames = []
+            threading.Thread(target=self._play_playback, args=(frames,)).start()
+        else:
             self.btn_test.set_label("▶  Test")
 
-    def _play_playback(self, frames, pa):
+    def _play_playback(self, frames):
         import pyaudio
         GLib.idle_add(self.btn_test.set_label, "🔊  Playing…")
         GLib.idle_add(self.btn_test.set_sensitive, False)
+        pa = None
         try:
+            pa = pyaudio.PyAudio()
             stream = pa.open(format=pyaudio.paInt16, channels=1, rate=16000, output=True)
             for fr in frames:
                 stream.write(fr)
@@ -1016,21 +1028,26 @@ class SettingsDialog(Gtk.Window):
         except Exception as e:
             logger.error(f"Playback error: {e}")
         finally:
-            pa.terminate()
+            if pa:
+                pa.terminate()
             GLib.idle_add(self.btn_test.set_label, "▶  Test")
             GLib.idle_add(self.btn_test.set_sensitive, True)
 
     def _update_level(self):
-        if not self.is_testing or not self.test_stream:
+        if not self.is_testing:
+            self.level_bar.set_value(0)
             return False
+            
         try:
-            data = self.test_stream.read(1024, exception_on_overflow=False)
-            self.recorded_frames.append(data)
-            from src.c_ext import rms_int16
-            rms = rms_int16(data)
-            self.level_bar.set_value(min(rms / 10000.0, 1.0))
+            if self.recorded_frames:
+                # Grab the most recent chunk for the visual meter
+                data = self.recorded_frames[-1]
+                from src.c_ext import rms_int16
+                rms = rms_int16(data)
+                self.level_bar.set_value(min(rms / 10000.0, 1.0))
         except Exception:
             pass
+            
         return True
 
     def _close(self, save: bool):
