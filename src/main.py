@@ -209,6 +209,13 @@ class VoxInputApp:
                             if final_text:
                                 logger.info(f"Finalized (Silence): {final_text}")
                                 self._enqueue_injection(final_text)
+                            # Flush any pending cross-batch number
+                            if self.spell:
+                                num_flush = self.spell.flush_pending_number()
+                                if num_flush:
+                                    punctuated = self._punct_buf.process(num_flush)
+                                    if punctuated:
+                                        self._injection_queue.put_nowait(punctuated)
                             # Flush any pending multi-word command prefix
                             flushed = self._punct_buf.flush()
                             if flushed:

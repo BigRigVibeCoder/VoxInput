@@ -34,6 +34,13 @@ def _make_corrector(enabled=True):
     settings.get = MagicMock(return_value=enabled)
     return SpellCorrector(settings)
 
+def _convert_and_flush(sc, text):
+    """Convert numbers and flush pending state (simulates single-batch + silence)."""
+    result = sc._convert_numbers(text)
+    flushed = sc.flush_pending_number()
+    parts = [p for p in [result, flushed] if p]
+    return " ".join(parts) if parts else ""
+
 
 # ─── 1. Number Conversion ────────────────────────────────────────────────────
 
@@ -42,76 +49,76 @@ class TestNumberConversion:
 
     def test_single_digits(self):
         sc = _make_corrector()
-        assert sc._convert_numbers("one two three") == "1 2 3"
+        assert _convert_and_flush(sc,"one two three") == "1 2 3"
 
     def test_teens(self):
         sc = _make_corrector()
         # Consecutive number words chain into compounds (dictation behavior)
-        result = sc._convert_numbers("eleven")
+        result = _convert_and_flush(sc,"eleven")
         assert result == "11"
-        result = sc._convert_numbers("thirteen")
+        result = _convert_and_flush(sc,"thirteen")
         assert result == "13"
 
     def test_tens(self):
         sc = _make_corrector()
         # Individual tens in isolation
-        assert sc._convert_numbers("twenty") == "20"
-        assert sc._convert_numbers("thirty") == "30"
-        assert sc._convert_numbers("forty") == "40"
+        assert _convert_and_flush(sc,"twenty") == "20"
+        assert _convert_and_flush(sc,"thirty") == "30"
+        assert _convert_and_flush(sc,"forty") == "40"
 
     def test_compound_tens(self):
         sc = _make_corrector()
-        assert sc._convert_numbers("twenty one") == "21"
-        assert sc._convert_numbers("forty five") == "45"
-        assert sc._convert_numbers("ninety nine") == "99"
+        assert _convert_and_flush(sc,"twenty one") == "21"
+        assert _convert_and_flush(sc,"forty five") == "45"
+        assert _convert_and_flush(sc,"ninety nine") == "99"
 
     def test_hundreds(self):
         sc = _make_corrector()
-        assert sc._convert_numbers("one hundred") == "100"
-        assert sc._convert_numbers("two hundred and fifteen") == "215"
-        assert sc._convert_numbers("three hundred forty five") == "345"
+        assert _convert_and_flush(sc,"one hundred") == "100"
+        assert _convert_and_flush(sc,"two hundred and fifteen") == "215"
+        assert _convert_and_flush(sc,"three hundred forty five") == "345"
 
     def test_thousands(self):
         sc = _make_corrector()
-        assert sc._convert_numbers("one thousand") == "1000"
-        assert sc._convert_numbers("five thousand two hundred") == "5200"
+        assert _convert_and_flush(sc,"one thousand") == "1000"
+        assert _convert_and_flush(sc,"five thousand two hundred") == "5200"
 
     def test_numbers_in_context(self):
         sc = _make_corrector()
-        result = sc._convert_numbers("i have forty seven errors")
+        result = _convert_and_flush(sc,"i have forty seven errors")
         assert "47" in result
         assert "errors" in result
 
     def test_phone_number_digits(self):
         sc = _make_corrector()
-        result = sc._convert_numbers("five five five one two three four")
+        result = _convert_and_flush(sc,"five five five one two three four")
         # Single digits should stay individual: 5 5 5 1 2 3 4
         digits = [d for d in result.split() if d.isdigit()]
         assert len(digits) == 7
 
     def test_non_number_passthrough(self):
         sc = _make_corrector()
-        assert sc._convert_numbers("hello world") == "hello world"
+        assert _convert_and_flush(sc,"hello world") == "hello world"
 
     def test_ordinal_first(self):
         sc = _make_corrector()
-        assert sc._convert_numbers("first") == "1st"
+        assert _convert_and_flush(sc,"first") == "1st"
 
     def test_ordinal_third(self):
         sc = _make_corrector()
-        assert sc._convert_numbers("third") == "3rd"
+        assert _convert_and_flush(sc,"third") == "3rd"
 
     def test_ordinal_twenty_first(self):
         sc = _make_corrector()
-        assert sc._convert_numbers("twenty first") == "21st"
+        assert _convert_and_flush(sc,"twenty first") == "21st"
 
     def test_ordinal_hundred_and_third(self):
         sc = _make_corrector()
-        assert sc._convert_numbers("one hundred and third") == "103rd"
+        assert _convert_and_flush(sc,"one hundred and third") == "103rd"
 
     def test_ordinal_in_context(self):
         sc = _make_corrector()
-        result = sc._convert_numbers("march twenty first")
+        result = _convert_and_flush(sc,"march twenty first")
         assert "21st" in result
         assert "march" in result
 

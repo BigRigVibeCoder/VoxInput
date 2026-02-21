@@ -84,6 +84,10 @@ class SpellCorrector:
         self._sym_spell = None
         self._Verbosity = None
         self._cap_next = True             # Start of dictation is capitalized
+        # Cross-batch number accumulator state
+        self._num_result = 0
+        self._num_current = 0
+        self._num_pending_words: list[str] = []  # original words held back
         self._load()
 
     # ── Setup ────────────────────────────────────────────────────────────────
@@ -132,6 +136,19 @@ class SpellCorrector:
     def reset_state(self):
         """Reset grammar state when a new dictation session starts."""
         self._cap_next = True
+        self._num_result = 0
+        self._num_current = 0
+        self._num_pending_words = []
+
+    def flush_pending_number(self) -> str:
+        """Flush any accumulated number from cross-batch buffering."""
+        if self._num_pending_words:
+            total = self._num_result + self._num_current
+            self._num_result = 0
+            self._num_current = 0
+            self._num_pending_words = []
+            return str(total)
+        return ""
 
     def correct(self, text: str) -> str:
         """
@@ -217,8 +234,9 @@ class SpellCorrector:
         return " ".join(ASR_CORRECTIONS.get(w.lower(), w) for w in words)
         
     def _convert_numbers(self, text: str) -> str:
-        current = result = 0
-        in_number = False
+        current = self._num_current
+        result = self._num_result
+        in_number = bool(self._num_pending_words)
         tokens = text.split()
         output = []
 
@@ -299,7 +317,16 @@ class SpellCorrector:
             i += 1
             
         if in_number:
-             output.append(str(result + current))
-             
+            # Don't emit yet — hold back for potential continuation
+            self._num_result = result
+            self._num_current = current
+            self._num_pending_words.extend(
+                t for t in tokens if t.lower() in NUM_DICT or t.lower() in ORDINAL_DICT or t.lower() == "and"
+            )
+        else:
+            self._num_result = 0
+            self._num_current = 0
+            self._num_pending_words = []
+
         return " ".join(output)
 

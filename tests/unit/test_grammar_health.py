@@ -26,6 +26,13 @@ def _sc():
     from src.settings import SettingsManager
     return SpellCorrector(SettingsManager())
 
+def _convert_and_flush(sc, text):
+    """Convert numbers and flush pending state (simulates single-batch + silence)."""
+    result = sc._convert_numbers(text)
+    flushed = sc.flush_pending_number()
+    parts = [p for p in [result, flushed] if p]
+    return " ".join(parts) if parts else ""
+
 
 # ─── 1. Engine Online ────────────────────────────────────────────────────────
 
@@ -47,7 +54,10 @@ class TestEngineOnline:
 
     def test_number_converter_works(self):
         sc = _sc()
-        assert "100" in sc.correct("one hundred")
+        result = sc.correct("one hundred")
+        flushed = sc.flush_pending_number()
+        combined = f"{result} {flushed}".strip()
+        assert "100" in combined
 
 
 # ─── 2. Capitalization Rules ─────────────────────────────────────────────────
@@ -96,47 +106,47 @@ class TestContextAwareNumbers:
 
     def test_two_apples_stays_words(self):
         sc = _sc()
-        result = sc._convert_numbers("two apples")
+        result = _convert_and_flush(sc,"two apples")
         assert "two" in result.lower(), f"'two apples' should stay as words, got: '{result}'"
 
     def test_three_errors_stays_words(self):
         sc = _sc()
-        result = sc._convert_numbers("three errors")
+        result = _convert_and_flush(sc,"three errors")
         assert "three" in result.lower(), f"'three errors' should stay as words, got: '{result}'"
 
     def test_eight_pieces_stays_words(self):
         sc = _sc()
-        result = sc._convert_numbers("eight pieces")
+        result = _convert_and_flush(sc,"eight pieces")
         assert "eight" in result.lower()
 
     def test_chapter_two_converts(self):
         sc = _sc()
-        result = sc._convert_numbers("chapter two")
+        result = _convert_and_flush(sc,"chapter two")
         assert "2" in result, f"'chapter two' should become 'chapter 2', got: '{result}'"
 
     def test_section_nine_converts(self):
         sc = _sc()
-        result = sc._convert_numbers("section nine")
+        result = _convert_and_flush(sc,"section nine")
         assert "9" in result, f"'section nine' should become 'section 9', got: '{result}'"
 
     def test_one_hundred_still_converts(self):
         sc = _sc()
-        result = sc._convert_numbers("one hundred")
+        result = _convert_and_flush(sc,"one hundred")
         assert "100" in result
 
     def test_twenty_one_still_converts(self):
         sc = _sc()
-        result = sc._convert_numbers("twenty one")
+        result = _convert_and_flush(sc,"twenty one")
         assert "21" in result
 
     def test_forty_seven_converts(self):
         sc = _sc()
-        result = sc._convert_numbers("forty seven")
+        result = _convert_and_flush(sc,"forty seven")
         assert "47" in result
 
     def test_ordinal_twenty_first(self):
         sc = _sc()
-        result = sc._convert_numbers("twenty first")
+        result = _convert_and_flush(sc,"twenty first")
         assert "21st" in result
 
 
