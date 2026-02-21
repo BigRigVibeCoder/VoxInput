@@ -22,9 +22,9 @@ class HardwareProfile:
 
     Usage:
         profile = HardwareProfile.detect()
-        print(profile.whisper_device)   # "cuda" or "cpu"
-        print(profile.whisper_compute)  # "float16", "int8", etc.
-        print(profile.summary())
+        logger.info(profile.whisper_device)   # "cuda" or "cpu"
+        logger.info(profile.whisper_compute)  # "float16", "int8", etc.
+        logger.info(profile.summary())
     """
 
     _instance: "HardwareProfile | None" = None

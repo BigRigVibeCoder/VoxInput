@@ -69,10 +69,6 @@ def _transcribe_vosk(raw_audio: bytes, model_path: str, lag: int = 0) -> str:
     Feed raw PCM bytes to a real Vosk model in streaming chunks.
     Returns full concatenated transcript.
     """
-    # Remove MagicMock if root conftest injected it
-    import sys
-    if "vosk" in sys.modules and type(sys.modules["vosk"]).__name__ == "MagicMock":
-        del sys.modules["vosk"]
     from vosk import KaldiRecognizer, Model
 
     model = Model(model_path)

@@ -183,21 +183,21 @@ if __name__ == "__main__":
     # Test the module
     logging.basicConfig(level=logging.DEBUG)
     
-    print("All PulseAudio Sources:")
-    print("=" * 80)
+    logging.info("All PulseAudio Sources:")
+    logging.info("=" * 80)
     sources = get_pulseaudio_sources()
     for s in sources:
-        print(f"  {s.name}")
-        print(f"    → {s.description}")
+        logging.info(f"  {s.name}")
+        logging.info(f"    → {s.description}")
     
-    print("\nFiltered Input Sources:")
-    print("=" * 80)
+    logging.info("\nFiltered Input Sources:")
+    logging.info("=" * 80)
     inputs = filter_input_sources(sources)
     for s in inputs:
-        print(f"  {s.name}")
-        print(f"    → {s.description}")
+        logging.info(f"  {s.name}")
+        logging.info(f"    → {s.description}")
     
-    print("\nCurrent Default Source:")
-    print("=" * 80)
+    logging.info("\nCurrent Default Source:")
+    logging.info("=" * 80)
     default = get_default_source()
-    print(f"  {default}")
+    logging.info(f"  {default}")

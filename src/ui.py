@@ -983,7 +983,7 @@ class SettingsDialog(Gtk.Window):
                                             rate=16000, input=True, frames_per_buffer=1024)
             GLib.timeout_add(100, self._update_level)
         except Exception as e:
-            print(f"Failed to start test stream: {e}")
+            logger.error(f"Failed to start test stream: {e}")
             self.is_testing = False
             self.btn_test.set_label("▶  Test")
 
@@ -1014,7 +1014,7 @@ class SettingsDialog(Gtk.Window):
             stream.stop_stream()
             stream.close()
         except Exception as e:
-            print(f"Playback error: {e}")
+            logger.error(f"Playback error: {e}")
         finally:
             pa.terminate()
             GLib.idle_add(self.btn_test.set_label, "▶  Test")

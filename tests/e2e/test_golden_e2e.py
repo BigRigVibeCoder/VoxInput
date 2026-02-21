@@ -28,6 +28,29 @@ from pathlib import Path
 
 import pytest
 
+@pytest.fixture(scope="module", autouse=True)
+def e2e_module_guard():
+    """Ensure real vosk is available or cleanly skip, restoring mocks afterwards."""
+    from unittest.mock import MagicMock
+    saved_mocks = {}
+    for _mod in ("vosk", "pyaudio", "whisper", "faster_whisper"):
+        if _mod in sys.modules and type(sys.modules[_mod]).__name__ == "MagicMock":
+            saved_mocks[_mod] = sys.modules[_mod]
+            del sys.modules[_mod]
+            
+    try:
+        import vosk
+    except ImportError:
+        for _mod, _mock in saved_mocks.items():
+            sys.modules[_mod] = _mock
+        pytest.skip("No real 'vosk' module available for E2E tests.")
+        
+    yield
+    
+    for _mod, _mock in saved_mocks.items():
+        sys.modules[_mod] = _mock
+
+
 ROOT = Path(__file__).parent.parent.parent
 FIXTURES = ROOT / "tests" / "fixtures" / "golden"
 RECORDINGS = FIXTURES / "recordings"
@@ -94,10 +117,6 @@ def word_error_rate(reference: str, hypothesis: str) -> float:
 
 def transcribe_wav(wav_path: Path) -> str:
     """Use Vosk to transcribe a .wav file. Returns full transcript."""
-    # Remove any MagicMock for vosk
-    if "vosk" in sys.modules and type(sys.modules["vosk"]).__name__ == "MagicMock":
-        del sys.modules["vosk"]
-
     from vosk import KaldiRecognizer, Model  # noqa: PLC0415
     import wave
 
