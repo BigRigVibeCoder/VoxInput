@@ -59,11 +59,17 @@ class SpeechRecognizer:
                 from .config import ROOT_DIR
                 model_path = os.path.join(ROOT_DIR, model_path)
                 
-            if not os.path.exists(model_path):
-                 if model_path != MODEL_PATH and os.path.exists(MODEL_PATH):
-                     model_path = MODEL_PATH
-                 else:
-                     raise FileNotFoundError(f"Model not found at {model_path}")
+            # Validate it's an actual Vosk directory (must contain 'am' or 'conf')
+            is_valid_vosk = os.path.isdir(model_path) and (
+                os.path.exists(os.path.join(model_path, "am")) or 
+                os.path.exists(os.path.join(model_path, "conf"))
+            )
+            
+            if not is_valid_vosk:
+                logger.warning(f"Invalid Vosk model path '{model_path}'. Falling back to default.")
+                model_path = MODEL_PATH
+                if not os.path.exists(model_path):
+                    raise FileNotFoundError(f"Default model not found at {model_path}")
             
             logger.info(f"Loading Vosk model from {model_path}")
             self.model = Model(model_path)
