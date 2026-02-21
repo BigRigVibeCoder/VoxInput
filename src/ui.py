@@ -643,16 +643,26 @@ class SettingsDialog(Gtk.Window):
         self.lbl_vosk_path.set_halign(Gtk.Align.START)
         self.lbl_vosk_path.set_width_chars(18)
         self.vosk_row.pack_start(self.lbl_vosk_path, False, False, 0)
-        self.file_chooser = Gtk.FileChooserButton(title="Select Model Folder", action=Gtk.FileChooserAction.SELECT_FOLDER)
-        saved_model = self.temp_settings.get("model_path")
-        if saved_model and os.path.exists(saved_model):
-            self.file_chooser.set_filename(saved_model)
-        else:
-            default_model = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "model"))
-            if os.path.exists(default_model):
-                self.file_chooser.set_current_folder(default_model)
-        self.file_chooser.connect("file-set", self._on_model_set)
-        self.vosk_row.pack_start(self.file_chooser, True, True, 0)
+        self.combo_vosk_model = Gtk.ComboBoxText()
+        model_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "model"))
+        models = []
+        if os.path.exists(model_dir):
+            models = [d for d in os.listdir(model_dir) if os.path.isdir(os.path.join(model_dir, d))]
+            
+        saved_model_path = self.temp_settings.get("model_path", "")
+        saved_model_name = os.path.basename(saved_model_path) if saved_model_path else "default_model"
+        
+        active_idx = 0
+        for i, m in enumerate(sorted(models)):
+            self.combo_vosk_model.append_text(m)
+            if m == saved_model_name:
+                active_idx = i
+                
+        if models:
+            self.combo_vosk_model.set_active(active_idx)
+            
+        self.combo_vosk_model.connect("changed", self._on_vosk_model_changed)
+        self.vosk_row.pack_start(self.combo_vosk_model, True, True, 0)
         vbox.pack_start(self.vosk_row, False, False, 4)
 
         # Whisper model size (shown for Whisper)
@@ -936,10 +946,11 @@ class SettingsDialog(Gtk.Window):
         if idx >= 0 and self.sources:
             self._set_temp("audio_device", self.sources[idx].name)
 
-    def _on_model_set(self, widget):
-        path = widget.get_filename()
-        if path:
-            self._set_temp("model_path", path)
+    def _on_vosk_model_changed(self, combo):
+        text = combo.get_active_text()
+        if text:
+            model_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "model"))
+            self._set_temp("model_path", os.path.join(model_dir, text))
 
     def _on_auto_calibrate(self, widget):
         self.lbl_cal_result.set_text("Calibrating… stay quiet for 3 seconds.")
