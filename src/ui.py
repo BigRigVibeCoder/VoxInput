@@ -202,10 +202,13 @@ class SystemTrayApp:
         self.toggle_callback()
         
     def _on_settings(self, _):
-        dialog = SettingsDialog(self.engine_change_callback)
-        # SettingsDialog is now a Gtk.Window — it manages its own lifecycle.
-        # Showing it is all we need; Save/Cancel are handled internally.
-        dialog.show()
+        # Singleton: only one Settings window at a time
+        if hasattr(self, '_settings_dialog') and self._settings_dialog is not None:
+            self._settings_dialog.present()  # raise existing window
+            return
+        self._settings_dialog = SettingsDialog(self.engine_change_callback)
+        self._settings_dialog.connect("destroy", lambda _: setattr(self, '_settings_dialog', None))
+        self._settings_dialog.show()
 
     def _on_quit(self, _):
         self.quit_callback()
