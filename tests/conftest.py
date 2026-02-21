@@ -5,8 +5,16 @@ import pytest
 
 # Mock pyaudio and vosk modules BEFORE they are imported by app code
 # This prevents "ModuleNotFoundError" or hardware initialization errors during tests
-sys.modules["pyaudio"] = MagicMock()
-sys.modules["vosk"] = MagicMock()
+try:
+    import pyaudio
+except ImportError:
+    sys.modules["pyaudio"] = MagicMock()
+
+try:
+    import vosk
+except ImportError:
+    sys.modules["vosk"] = MagicMock()
+
 sys.modules["gi"] = MagicMock()
 sys.modules["gi.repository"] = MagicMock()
 sys.modules["gi.repository.Gtk"] = MagicMock()

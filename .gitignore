@@ -89,3 +89,12 @@ htmlcov/
 src/c_ext/librms.so
 data/custom_words.db
 *.log
+
+# Raw PCM test recordings (generated from WAVs)
+tests/fixtures/golden/recordings/*.raw
+
+# Startup trace (runtime output)
+startup_trace.log
+
+# Stale patch files
+patch.diff

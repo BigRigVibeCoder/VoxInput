@@ -446,7 +446,7 @@ class SettingsDialog(Gtk.Window):
         self.settings = SettingsManager()
         self.temp_settings = self.settings.settings.copy()
 
-        self.set_default_size(560, 540)
+        self.set_default_size(672, 648)
         self.set_resizable(False)
         self.set_position(Gtk.WindowPosition.CENTER)
         self.set_decorated(True)
@@ -658,10 +658,11 @@ class SettingsDialog(Gtk.Window):
             if m == saved_model_name:
                 active_idx = i
                 
+        self.combo_vosk_model.connect("changed", self._on_vosk_model_changed)
+        
         if models:
             self.combo_vosk_model.set_active(active_idx)
-            
-        self.combo_vosk_model.connect("changed", self._on_vosk_model_changed)
+
         self.vosk_row.pack_start(self.combo_vosk_model, True, True, 0)
         vbox.pack_start(self.vosk_row, False, False, 4)
 

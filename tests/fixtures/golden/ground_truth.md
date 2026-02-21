@@ -35,6 +35,10 @@ She wore a blue dress to the gym where she blew out her knee doing squats.
 
 This is a continuous sentence designed to test how well the recognizer handles long uninterrupted speech without any natural pauses or sentence breaks because sometimes people talk in long run-on sentences when they are excited or in the middle of explaining something complex and the system needs to handle that gracefully without losing words or injecting garbage.
 
+## Paragraph E — Voice Punctuation, Numbers, and Corrections
+
+Dear mister Thompson comma I am writing to confirm your appointment on March twenty first at three forty five in the afternoon period new line The total cost is two hundred and fifteen dollars and sixty three cents semicolon please bring a valid photo ID period new line Can you meet me at twelve thirty question mark I need to discuss items one comma two comma and three before the deadline period new line Warning exclamation mark The system detected forty seven errors in section nine dash alpha colon please review immediately period new line He said quote I'll be there by five o'clock quote dash but honestly comma I wouldn't count on it period
+
 ---
 
 ## WER Acceptance Thresholds
@@ -53,9 +57,10 @@ This is a continuous sentence designed to test how well the recognizer handles l
 
 ## Testing Paragraphs to Use Per Gate
 
-| Gate   | Paragraphs    | Rationale                                         |
-|--------|---------------|---------------------------------------------------|
-| Gate 1 | A only        | Establish Vosk baseline before any engine changes |
-| Gate 2 | A + B         | Add numbers/proper nouns for Whisper accuracy     |
-| Gate 3 | A + B + C     | Full homophone coverage tests spell correction    |
-| Gate 4 | A + B + C + D | Continuous flow tests silence detection tuning    |
+| Gate   | Paragraphs        | Rationale                                         |
+|--------|-------------------|---------------------------------------------------|
+| Gate 1 | A only            | Establish Vosk baseline before any engine changes |
+| Gate 2 | A + B             | Add numbers/proper nouns for Whisper accuracy     |
+| Gate 3 | A + B + C         | Full homophone coverage tests spell correction    |
+| Gate 4 | A + B + C + D     | Continuous flow tests silence detection tuning    |
+| Gate 5 | A + B + C + D + E | Voice punctuation + number parsing + corrections  |

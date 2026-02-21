@@ -43,6 +43,27 @@ for idx, word in enumerate(NUMBER_TENS):
     if word: NUM_DICT[word] = (1, idx * 10)
 for idx, word in enumerate(NUMBER_SCALES):   NUM_DICT[word] = (10 ** (idx * 3 or 2), 0)
 
+# Ordinal number words → (numeric_value, suffix)
+ORDINAL_DICT = {
+    "first": (1, "st"), "second": (2, "nd"), "third": (3, "rd"),
+    "fourth": (4, "th"), "fifth": (5, "th"), "sixth": (6, "th"),
+    "seventh": (7, "th"), "eighth": (8, "th"), "ninth": (9, "th"),
+    "tenth": (10, "th"), "eleventh": (11, "th"), "twelfth": (12, "th"),
+    "thirteenth": (13, "th"), "fourteenth": (14, "th"), "fifteenth": (15, "th"),
+    "sixteenth": (16, "th"), "seventeenth": (17, "th"), "eighteenth": (18, "th"),
+    "nineteenth": (19, "th"), "twentieth": (20, "th"), "thirtieth": (30, "th"),
+    "fortieth": (40, "th"), "fiftieth": (50, "th"), "sixtieth": (60, "th"),
+    "seventieth": (70, "th"), "eightieth": (80, "th"), "ninetieth": (90, "th"),
+    "hundredth": (100, "th"), "thousandth": (1000, "th"),
+}
+
+
+def _ordinal_suffix(n: int) -> str:
+    """Return the English ordinal suffix for a number (1→st, 2→nd, 3→rd, etc.)."""
+    if 11 <= (n % 100) <= 13:
+        return "th"
+    return {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+
 
 class SpellCorrector:
     """
@@ -50,7 +71,7 @@ class SpellCorrector:
 
     Pipeline:
       1. ASR artifact substitution (gonna → going to)
-      2. Complex Number parsing (one hundred -> 100)
+      2. Complex Number parsing (one hundred -> 100, twenty first -> 21st)
       3. Voice Punctuation (period → .)
       4. Grammar & True Casing (Auto-capitalization & WordDB original case)
       5. SymSpell correction (for unknown typos)
@@ -124,7 +145,7 @@ class SpellCorrector:
         # Step 1: ASR artifact substitution (context-free, highest priority)
         text = self._apply_asr_rules(text)
         
-        # Step 2: Complex number conversion (hundreds, thousands, millions)
+        # Step 2: Complex number conversion (hundreds, thousands, millions, ordinals)
         text = self._convert_numbers(text)
 
         # Step 3: Voice Punctuation mapping
@@ -208,19 +229,29 @@ class SpellCorrector:
             word = tokens[i].lower()
             
             is_num = word in NUM_DICT
+            is_ordinal = word in ORDINAL_DICT
             is_and = word == "and"
             
             valid_and = False
             if is_and and in_number and i + 1 < len(tokens):
-                if tokens[i+1].lower() in NUM_DICT:
+                next_word = tokens[i+1].lower()
+                if next_word in NUM_DICT or next_word in ORDINAL_DICT:
                     valid_and = True
                     
-            if not is_num and not valid_and:
+            if not is_num and not is_ordinal and not valid_and:
                 if in_number:
                     output.append(str(result + current))
                     result = current = 0
                     in_number = False
                 output.append(tokens[i])
+            elif is_ordinal:
+                # Ordinal — finalize with suffix
+                ord_val, _ = ORDINAL_DICT[word]
+                total = result + current + ord_val
+                suffix = _ordinal_suffix(total)
+                output.append(f"{total}{suffix}")
+                result = current = 0
+                in_number = False
             else:
                 in_number = True
                 if not valid_and:
@@ -249,3 +280,4 @@ class SpellCorrector:
              output.append(str(result + current))
              
         return " ".join(output)
+

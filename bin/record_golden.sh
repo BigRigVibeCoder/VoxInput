@@ -80,13 +80,13 @@ countdown() {
 # ─────────────────────────────────────────────
 record_paragraph() {
     local label="$1"       # e.g. "A"
-    local duration="$2"    # seconds
+    local duration="$2"    # ignored — kept for backwards compat
     local output="$3"      # output .wav path
     local prompt="$4"      # text to display on screen
 
     echo ""
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-    echo -e "${BOLD}PARAGRAPH $label${RESET} (${duration}s)"
+    echo -e "${BOLD}PARAGRAPH $label${RESET}"
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
     echo ""
     # Display the paragraph text to read
@@ -94,33 +94,60 @@ record_paragraph() {
     echo ""
     echo -e "$prompt"
     echo ""
+
+    # ─── Auto-pause VoxInput so it doesn't intercept your speech ──
+    local vox_pid=""
+    if [ -f /tmp/voxinput.lock ]; then
+        vox_pid=$(cat /tmp/voxinput.lock 2>/dev/null)
+        if [ -n "$vox_pid" ] && kill -0 "$vox_pid" 2>/dev/null; then
+            echo -e "${YELLOW}⏸  Pausing VoxInput (PID $vox_pid) during recording...${RESET}"
+            kill -SIGUSR1 "$vox_pid" 2>/dev/null || true
+            sleep 0.3
+        else
+            vox_pid=""
+        fi
+    fi
+
     echo -e "${YELLOW}Press ENTER when you are ready to start recording...${RESET}"
     read -r
 
-    countdown "Paragraph $label"
+    echo -e "\n${RED}${BOLD}🔴 RECORDING — SPEAK NOW${RESET}"
+    echo -e "${YELLOW}   Press ENTER when you are done speaking.${RESET}\n"
 
-    # Record with progress indicator
-    arecord -d "$duration" \
-            -f S16_LE \
+    # Record indefinitely (no -d flag) — killed when user presses Enter
+    arecord -f S16_LE \
             -r 16000 \
             -c 1 \
             --quiet \
             "$output" &
     RECORD_PID=$!
 
-    # Live progress bar
-    local elapsed=0
-    while kill -0 "$RECORD_PID" 2>/dev/null; do
-        local pct=$(( elapsed * 100 / duration ))
-        local bar_len=$(( pct * 30 / 100 ))
-        local bar=$(printf '█%.0s' $(seq 1 $bar_len 2>/dev/null) || echo "")
-        printf "\r  [%-30s] %d%% (%ds/%ds)" "$bar" "$pct" "$elapsed" "$duration"
-        sleep 1
-        (( elapsed++ )) || true
-    done
-    printf "\r  [%-30s] 100%% (%ds/%ds)\n" "██████████████████████████████" "$duration" "$duration"
+    # Show elapsed time while recording
+    (
+        elapsed=0
+        while kill -0 "$RECORD_PID" 2>/dev/null; do
+            printf "\r  🔴 Recording... %ds " "$elapsed"
+            sleep 1
+            (( elapsed++ )) || true
+        done
+    ) &
+    TIMER_PID=$!
 
-    wait "$RECORD_PID" || true
+    # Wait for user to press Enter
+    read -r
+
+    # Stop recording
+    kill "$RECORD_PID" 2>/dev/null
+    wait "$RECORD_PID" 2>/dev/null || true
+    kill "$TIMER_PID" 2>/dev/null
+    wait "$TIMER_PID" 2>/dev/null || true
+    echo ""
+
+    # ─── Auto-resume VoxInput ──
+    if [ -n "$vox_pid" ] && kill -0 "$vox_pid" 2>/dev/null; then
+        echo -e "${GREEN}▶  Resuming VoxInput...${RESET}"
+        kill -SIGUSR1 "$vox_pid" 2>/dev/null || true
+    fi
 
     echo -e "\n${GREEN}✓ Recording saved: $output${RESET}"
 
@@ -197,6 +224,8 @@ She wore a blue dress to the gym where she blew out her knee doing squats."
 
 PARA_D="This is a continuous sentence designed to test how well the recognizer handles long uninterrupted speech without any natural pauses or sentence breaks because sometimes people talk in long run-on sentences when they are excited or in the middle of explaining something complex and the system needs to handle that gracefully without losing words or injecting garbage."
 
+PARA_E="Dear mister Thompson comma I am writing to confirm your appointment on March twenty first at three forty five in the afternoon period new line The total cost is two hundred and fifteen dollars and sixty three cents semicolon please bring a valid photo ID period new line Can you meet me at twelve thirty question mark I need to discuss items one comma two comma and three before the deadline period new line Warning exclamation mark The system detected forty seven errors in section nine dash alpha colon please review immediately period new line He said quote I'll be there by five o'clock quote dash but honestly comma I wouldn't count on it period"
+
 # ─────────────────────────────────────────────
 # Main
 # ─────────────────────────────────────────────
@@ -210,7 +239,7 @@ echo -e "${YELLOW}Press ENTER to begin, or Ctrl+C to cancel.${RESET}"
 read -r
 
 echo ""
-echo -e "${BOLD}Which paragraphs? [all / A / B / C / D]:${RESET}"
+echo -e "${BOLD}Which paragraphs? [all / A / B / C / D / E]:${RESET}"
 read -r PARAGRAPH
 PARAGRAPH="${PARAGRAPH:-all}"
 
@@ -221,13 +250,14 @@ run_paragraph() {
         B|b) record_paragraph "B" 45 "$OUTPUT_DIR/paragraph_b.wav" "$PARA_B" ;;
         C|c) record_paragraph "C" 50 "$OUTPUT_DIR/paragraph_c.wav" "$PARA_C" ;;
         D|d) record_paragraph "D" 60 "$OUTPUT_DIR/paragraph_d.wav" "$PARA_D" ;;
+        E|e) record_paragraph "E" 65 "$OUTPUT_DIR/paragraph_e.wav" "$PARA_E" ;;
         *) echo "Unknown paragraph: $p" ;;
     esac
 }
 
 case "${PARAGRAPH^^}" in
     ALL)
-        for p in A B C D; do run_paragraph "$p"; done
+        for p in A B C D E; do run_paragraph "$p"; done
         ;;
     *)
         run_paragraph "$PARAGRAPH"
