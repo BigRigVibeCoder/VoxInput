@@ -27,6 +27,16 @@ ASR_CORRECTIONS: dict[str, str] = {
 }
 
 
+# Spoken numbers to digits
+NUMBER_WORDS: dict[str, int] = {
+    "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
+    "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
+    "eleven": 11, "twelve": 12, "thirteen": 13, "fourteen": 14,
+    "fifteen": 15, "sixteen": 16, "seventeen": 17, "eighteen": 18, "nineteen": 19,
+    "twenty": 20, "thirty": 30, "forty": 40, "fifty": 50,
+    "sixty": 60, "seventy": 70, "eighty": 80, "ninety": 90,
+}
+
 class SpellCorrector:
     """
     Real-time spell correction for ASR output.
@@ -96,6 +106,9 @@ class SpellCorrector:
 
         # Step 1: ASR artifact substitution (context-free, highest priority)
         text = self._apply_asr_rules(text)
+        
+        # Step 1b: Number conversion (words to digits)
+        text = self._convert_numbers(text)
 
         # Step 2: SymSpell word-level correction
         if self._sym_spell is None:
@@ -161,3 +174,23 @@ class SpellCorrector:
     def _apply_asr_rules(self, text: str) -> str:
         words = text.split()
         return " ".join(ASR_CORRECTIONS.get(w.lower(), w) for w in words)
+        
+    def _convert_numbers(self, text: str) -> str:
+        words = text.split()
+        result = []
+        i = 0
+        while i < len(words):
+            w_lower = words[i].lower()
+            if w_lower in NUMBER_WORDS:
+                val = NUMBER_WORDS[w_lower]
+                # Combine tens + units (e.g. "twenty", "one" -> "21")
+                if 20 <= val <= 90 and i + 1 < len(words):
+                    next_w = words[i+1].lower()
+                    if next_w in NUMBER_WORDS and 1 <= NUMBER_WORDS[next_w] <= 9:
+                        val += NUMBER_WORDS[next_w]
+                        i += 1
+                result.append(str(val))
+            else:
+                result.append(words[i])
+            i += 1
+        return " ".join(result)
