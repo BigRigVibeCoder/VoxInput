@@ -3,7 +3,7 @@ import os
 # Paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR  = os.path.dirname(BASE_DIR)
-MODEL_PATH = os.path.join(ROOT_DIR, "model")
+MODEL_PATH = os.path.join(ROOT_DIR, "model", "default_model")
 LOGS_DIR   = os.path.join(ROOT_DIR, "logs")   # DB + rotating log file
 
 # Audio Settings
