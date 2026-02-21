@@ -137,7 +137,7 @@ class SpeechRecognizer:
         # fast_mode=True → LAG=0 (every word injected immediately, highest speed)
         # fast_mode=False → LAG=N (hold back N words until stable, higher accuracy)
         fast_mode = self.settings.get("fast_mode", False)
-        LAG = 0 if fast_mode else self.settings.get("stability_lag", 1)
+        LAG = 0 if fast_mode else self.settings.get("stability_lag", 2)
         new_words_to_inject = []
 
         if not data:
