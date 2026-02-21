@@ -27,15 +27,22 @@ ASR_CORRECTIONS: dict[str, str] = {
 }
 
 
-# Spoken numbers to digits
-NUMBER_WORDS: dict[str, int] = {
-    "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
-    "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
-    "eleven": 11, "twelve": 12, "thirteen": 13, "fourteen": 14,
-    "fifteen": 15, "sixteen": 16, "seventeen": 17, "eighteen": 18, "nineteen": 19,
-    "twenty": 20, "thirty": 30, "forty": 40, "fifty": 50,
-    "sixty": 60, "seventy": 70, "eighty": 80, "ninety": 90,
-}
+# Spoken numbers semantic tokens
+NUMBER_UNITS = [
+    "zero", "one", "two", "three", "four", "five", "six", "seven", "eight",
+    "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen",
+    "sixteen", "seventeen", "eighteen", "nineteen",
+]
+NUMBER_TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
+NUMBER_SCALES = ["hundred", "thousand", "million", "billion", "trillion"]
+
+# Build parsing map
+NUM_DICT = {}
+for idx, word in enumerate(NUMBER_UNITS):    NUM_DICT[word] = (1, idx)
+for idx, word in enumerate(NUMBER_TENS):
+    if word: NUM_DICT[word] = (1, idx * 10)
+for idx, word in enumerate(NUMBER_SCALES):   NUM_DICT[word] = (10 ** (idx * 3 or 2), 0)
+
 
 class SpellCorrector:
     """
@@ -43,7 +50,7 @@ class SpellCorrector:
 
     Pipeline:
       1. ASR artifact substitution (gonna → going to)
-      2. Number conversion (one → 1)
+      2. Complex Number parsing (one hundred -> 100)
       3. Voice Punctuation (period → .)
       4. Grammar & True Casing (Auto-capitalization & WordDB original case)
       5. SymSpell correction (for unknown typos)
@@ -91,7 +98,7 @@ class SpellCorrector:
                 if os.path.exists(user_dict):
                     self._sym_spell.load_dictionary(user_dict, term_index=0, count_index=1)
 
-            logger.info("SpellCorrector initialized (SymSpellPy + WordDatabase + Grammar)")
+            logger.info("SpellCorrector initialized (SymSpellPy + WordDatabase + Grammar + ParseNum)")
 
         except ImportError:
             logger.info("symspellpy not installed — spell correction disabled")
@@ -117,7 +124,7 @@ class SpellCorrector:
         # Step 1: ASR artifact substitution (context-free, highest priority)
         text = self._apply_asr_rules(text)
         
-        # Step 2: Number conversion (words to digits)
+        # Step 2: Complex number conversion (hundreds, thousands, millions)
         text = self._convert_numbers(text)
 
         # Step 3: Voice Punctuation mapping
@@ -191,21 +198,54 @@ class SpellCorrector:
         return " ".join(ASR_CORRECTIONS.get(w.lower(), w) for w in words)
         
     def _convert_numbers(self, text: str) -> str:
-        words = text.split()
-        result = []
+        current = result = 0
+        in_number = False
+        tokens = text.split()
+        output = []
+        
         i = 0
-        while i < len(words):
-            w_lower = words[i].lower()
-            if w_lower in NUMBER_WORDS:
-                val = NUMBER_WORDS[w_lower]
-                # Combine tens + units (e.g. "twenty", "one" -> "21")
-                if 20 <= val <= 90 and i + 1 < len(words):
-                    next_w = words[i+1].lower()
-                    if next_w in NUMBER_WORDS and 1 <= NUMBER_WORDS[next_w] <= 9:
-                        val += NUMBER_WORDS[next_w]
-                        i += 1
-                result.append(str(val))
+        while i < len(tokens):
+            word = tokens[i].lower()
+            
+            is_num = word in NUM_DICT
+            is_and = word == "and"
+            
+            valid_and = False
+            if is_and and in_number and i + 1 < len(tokens):
+                if tokens[i+1].lower() in NUM_DICT:
+                    valid_and = True
+                    
+            if not is_num and not valid_and:
+                if in_number:
+                    output.append(str(result + current))
+                    result = current = 0
+                    in_number = False
+                output.append(tokens[i])
             else:
-                result.append(words[i])
+                in_number = True
+                if not valid_and:
+                    scale, increment = NUM_DICT[word]
+                    
+                    # Check for strings of single digits (one two three -> 1 2 3) and years (19 99)
+                    if scale == 1 and current > 0 and current < 100 and increment < 100:
+                        if current < 100 and increment >= 10 and current >= 10:
+                            current = current * 100 + increment
+                        elif current < 10 and increment < 10:
+                            output.append(str(result + current))
+                            result = 0
+                            current = increment
+                        else:
+                            current += increment
+                    elif scale == 100:
+                        current = max(1, current) * scale
+                    elif scale > 100:
+                        result += max(1, current) * scale
+                        current = 0
+                    else:
+                        current += increment
             i += 1
-        return " ".join(result)
+            
+        if in_number:
+             output.append(str(result + current))
+             
+        return " ".join(output)
