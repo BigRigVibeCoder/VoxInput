@@ -139,8 +139,7 @@ class SpellCorrector:
         Called on every finalized word batch before injection.
         """
         if not self.enabled:
-            from .injection import apply_voice_punctuation
-            return apply_voice_punctuation(text)
+            return text
 
         # Step 1: ASR artifact substitution (context-free, highest priority)
         text = self._apply_asr_rules(text)
@@ -148,18 +147,17 @@ class SpellCorrector:
         # Step 2: Complex number conversion (hundreds, thousands, millions, ordinals)
         text = self._convert_numbers(text)
 
-        # Step 3: Voice Punctuation mapping
-        from .injection import apply_voice_punctuation
-        text = apply_voice_punctuation(text)
-
-        # Step 4: Grammar, True Casing, and Spell Correction
+        # Step 3: Grammar, True Casing, and Spell Correction
         words = text.split()
         corrected = []
         for word in words:
             lower = word.lower()
             
             # Punctuation boundaries trigger next-word capitalization
-            if lower in {".", "?", "!", "\n", "\n\n"}:
+            # Includes both actual chars AND voice command words (punctuation
+            # is now applied downstream by VoicePunctuationBuffer)
+            if lower in {".", "?", "!", "\n", "\n\n",
+                          "period", "full stop", "question", "exclamation"}:
                 self._cap_next = True
                 corrected.append(word)
                 continue

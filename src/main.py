@@ -9,7 +9,7 @@ from pynput import keyboard
 
 from .audio import AudioCapture
 from .config import HOTKEY
-from .injection import TextInjector
+from .injection import TextInjector, VoicePunctuationBuffer
 from .logger import init_logging, get_logger         # P7: enterprise logging
 from .mic_enhancer import MicEnhancer
 from .recognizer import SpeechRecognizer
@@ -44,6 +44,7 @@ class VoxInputApp:
         self.injector   = None
         self.spell      = None
         self.word_db    = None
+        self._punct_buf = VoicePunctuationBuffer()  # P4-02: cross-batch voice cmds
 
         # Injection queue + thread (safe to start early; drains empty queue)
         self._injection_queue: _queue.Queue = _queue.Queue(maxsize=100)
@@ -208,6 +209,10 @@ class VoxInputApp:
                             if final_text:
                                 logger.info(f"Finalized (Silence): {final_text}")
                                 self._enqueue_injection(final_text)
+                            # Flush any pending multi-word command prefix
+                            flushed = self._punct_buf.flush()
+                            if flushed:
+                                self._injection_queue.put_nowait(flushed)
                                 osd_words.clear()
                         except Exception as e:
                             logger.error(f"Error finalizing: {e}")
@@ -233,7 +238,9 @@ class VoxInputApp:
             return  # models not ready yet
         try:
             corrected = self.spell.correct(text)  # P3: SymSpellPy + ASR rules
-            self._injection_queue.put_nowait(corrected)
+            punctuated = self._punct_buf.process(corrected)  # P4-02: voice punctuation
+            if punctuated:
+                self._injection_queue.put_nowait(punctuated)
         except _queue.Full:
             logger.warning("Injection queue full — dropping word batch (engine too slow?)")
 

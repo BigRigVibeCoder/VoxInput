@@ -60,6 +60,13 @@ _PUNCT_PATTERN = re.compile(
 )
 _PUNCT_MAP = {phrase.lower(): sym for phrase, sym in PUNCT_COMMANDS}
 
+# First words of multi-word commands — these need cross-batch buffering
+_MULTI_WORD_PREFIXES = set()
+for phrase, _ in PUNCT_COMMANDS:
+    words = phrase.lower().split()
+    if len(words) > 1:
+        _MULTI_WORD_PREFIXES.add(words[0])
+
 
 def apply_voice_punctuation(text: str) -> str:
     """
@@ -72,6 +79,48 @@ def apply_voice_punctuation(text: str) -> str:
     def _replace(m: re.Match) -> str:
         return _PUNCT_MAP.get(m.group(0).lower(), m.group(0))
     return _PUNCT_PATTERN.sub(_replace, text)
+
+
+class VoicePunctuationBuffer:
+    """Handles multi-word voice commands split across Vosk streaming batches.
+
+    Vosk's lag-N strategy delivers words in small batches. Multi-word commands
+    like "question mark" may arrive as "question" in one batch and "mark" in
+    the next. This buffer holds back trailing words that could be the start
+    of a multi-word command, and prepends them to the next batch.
+
+    Usage:
+        buf = VoicePunctuationBuffer()
+        # Each call returns text ready for injection (may be empty if buffering)
+        ready = buf.process("are you there question")   # → "are you there"
+        ready = buf.process("mark thank you")            # → "? thank you"
+        ready = buf.flush()                               # → any remaining
+    """
+
+    def __init__(self):
+        self._pending: str = ""  # word(s) held back from last batch
+
+    def process(self, text: str) -> str:
+        """Process a batch, returning text ready for punctuation + injection."""
+        if self._pending:
+            text = self._pending + " " + text
+            self._pending = ""
+
+        # Check if the last word is a multi-word command prefix
+        words = text.split()
+        if words and words[-1].lower() in _MULTI_WORD_PREFIXES:
+            self._pending = words[-1]
+            text = " ".join(words[:-1])
+
+        return apply_voice_punctuation(text)
+
+    def flush(self) -> str:
+        """Flush any pending word (e.g., on silence/finalize)."""
+        if self._pending:
+            text = apply_voice_punctuation(self._pending)
+            self._pending = ""
+            return text
+        return ""
 
 
 class TextInjector:

@@ -23,7 +23,7 @@ from unittest.mock import MagicMock
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from src.spell_corrector import SpellCorrector
-from src.injection import apply_voice_punctuation
+from src.injection import apply_voice_punctuation, VoicePunctuationBuffer
 
 
 # ─── Fixtures ────────────────────────────────────────────────────────────────
@@ -174,7 +174,9 @@ class TestFullPipeline:
 
     def test_numbers_and_punctuation_together(self):
         sc = _make_corrector()
-        result = sc.correct("i have forty seven errors period")
+        buf = VoicePunctuationBuffer()
+        corrected = sc.correct("i have forty seven errors period")
+        result = buf.process(corrected)
         assert "47" in result
         assert "." in result
 
@@ -189,7 +191,9 @@ class TestFullPipeline:
 
     def test_cap_after_period(self):
         sc = _make_corrector()
-        result = sc.correct("hello period the next word")
+        buf = VoicePunctuationBuffer()
+        corrected = sc.correct("hello period the next word")
+        result = buf.process(corrected)
         # After ., the next alphabetic word should be capitalized
         parts = result.split(".")
         if len(parts) > 1:
@@ -210,10 +214,12 @@ class TestFullPipeline:
     def test_complex_dictation(self):
         """Simulate a real dictation with numbers, punctuation, and grammar."""
         sc = _make_corrector()
-        result = sc.correct(
+        buf = VoicePunctuationBuffer()
+        corrected = sc.correct(
             "dear mr thompson comma i am writing to confirm "
             "your appointment on march twenty first period"
         )
+        result = buf.process(corrected)
         # 'twenty first' → '21st' (ordinal support)
         assert "21st" in result  # number + ordinal conversion
         assert "," in result       # comma punctuation
