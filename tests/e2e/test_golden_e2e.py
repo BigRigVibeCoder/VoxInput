@@ -92,10 +92,91 @@ def parse_ground_truth() -> dict[str, str]:
     return paragraphs
 
 
+# ── WER normalization: strip to content words only ───────────────────────────
+# Both Vosk (raw words) and Whisper (smart-formatted) get reduced to just
+# lowercase alphabetic words, so WER measures recognition not formatting.
+
+# Words to strip — these are voice commands / formatting artifacts, not content
+_STRIP_WORDS = {
+    "period", "comma", "colon", "semicolon", "dash",
+    "exclamation", "mark", "point", "question",
+    "quote", "new", "line", "paragraph",
+}
+
+# Common abbreviation expansions
+_ABBREV = {
+    "mr": "mister", "mrs": "missus", "ms": "miss",
+    "dr": "doctor", "st": "saint", "vs": "versus",
+}
+
+# Ordinal suffixes
+_ORDINAL_RE = re.compile(r'(\d+)(st|nd|rd|th)\b')
+
+# Digits to words
+_DIGIT_WORDS = ["zero", "one", "two", "three", "four", "five",
+                "six", "seven", "eight", "nine"]
+
+
+def _num_to_words(n: int) -> str:
+    """Convert integer to spoken words."""
+    TEENS = {10: "ten", 11: "eleven", 12: "twelve", 13: "thirteen",
+             14: "fourteen", 15: "fifteen", 16: "sixteen", 17: "seventeen",
+             18: "eighteen", 19: "nineteen"}
+    TENS = {2: "twenty", 3: "thirty", 4: "forty", 5: "fifty",
+            6: "sixty", 7: "seventy", 8: "eighty", 9: "ninety"}
+    if n < 10:
+        return _DIGIT_WORDS[n]
+    if n < 20:
+        return TEENS[n]
+    if n < 100:
+        t, u = divmod(n, 10)
+        return TENS[t] + (" " + _DIGIT_WORDS[u] if u else "")
+    if n < 1000:
+        h, rest = divmod(n, 100)
+        parts = [_DIGIT_WORDS[h], "hundred"]
+        if rest:
+            parts.append(_num_to_words(rest))
+        return " ".join(parts)
+    if n < 10000:
+        th, rest = divmod(n, 1000)
+        parts = [_num_to_words(th), "thousand"]
+        if rest:
+            parts.append(_num_to_words(rest))
+        return " ".join(parts)
+    return " ".join(_DIGIT_WORDS[int(d)] for d in str(n))
+
+
 def normalize(text: str) -> str:
+    """Normalize text for fair WER comparison across all engines.
+
+    Reduces both raw ASR output (Vosk) and smart-formatted output (Whisper)
+    to a common form by:
+      1. Lowercasing
+      2. Stripping ordinal suffixes (21st → 21)
+      3. Converting digits to spoken words (21 → twenty one)
+      4. Expanding abbreviations (Mr → mister)
+      5. Removing all non-alpha characters (punctuation, digits already converted)
+      6. Stripping voice command words (period, comma, etc.)
+    """
     text = text.lower()
-    text = re.sub(r"[^a-z0-9\s']", ' ', text)
-    return ' '.join(text.split())
+
+    # Strip ordinal suffixes: 21st → 21
+    text = _ORDINAL_RE.sub(r'\1', text)
+
+    # Convert digit sequences to spoken words
+    text = re.sub(r'\b\d+\b', lambda m: _num_to_words(int(m.group())), text)
+
+    # Strip all non-alpha characters (punctuation, remaining digits)
+    text = re.sub(r"[^a-z\s]", ' ', text)
+
+    # Expand abbreviations
+    words = text.split()
+    words = [_ABBREV.get(w, w) for w in words]
+
+    # Remove voice command words (formatting artifacts)
+    words = [w for w in words if w not in _STRIP_WORDS]
+
+    return ' '.join(words)
 
 
 def word_error_rate(reference: str, hypothesis: str) -> float:
