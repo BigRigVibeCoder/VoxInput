@@ -547,9 +547,9 @@ class SettingsDialog(Gtk.Window):
             self.combo.set_sensitive(False)
             self.sources = []
 
-        # ── Mic test ────────────────────────────────────────────
+        # ── Audio Test Bed ──────────────────────────────────────
         vbox.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL), False, False, 6)
-        vbox.pack_start(_section_label("Microphone Test"), False, False, 0)
+        vbox.pack_start(_section_label("🎙️  Audio Test Bed"), False, False, 0)
 
         test_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         lbl_level = Gtk.Label(label="Input level:")
@@ -563,30 +563,58 @@ class SettingsDialog(Gtk.Window):
         self.level_bar.set_size_request(200, 12)
         test_row.pack_start(self.level_bar, True, True, 0)
 
-        self.btn_test = Gtk.Button(label="▶  Test")
+        self.btn_test = Gtk.Button(label="▶  Test (5s)")
         self.btn_test.connect("clicked", self._on_toggle_test)
         test_row.pack_start(self.btn_test, False, False, 0)
         vbox.pack_start(test_row, False, False, 4)
 
+        # ── Volume Controls ─────────────────────────────────────
+        vbox.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL), False, False, 6)
+        vbox.pack_start(_section_label("🔊  Volume Controls"), False, False, 0)
+
+        # Mic input volume (0–100%)
+        mic_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        lbl_mic = Gtk.Label(label="🎤 Mic Input:")
+        lbl_mic.set_halign(Gtk.Align.START)
+        lbl_mic.set_width_chars(16)
+        mic_row.pack_start(lbl_mic, False, False, 0)
+        self.scale_mic = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 100, 1)
+        self.scale_mic.set_value(self.temp_settings.get("mic_volume", 100))
+        self.scale_mic.set_draw_value(True)
+        self.scale_mic.set_value_pos(Gtk.PositionType.RIGHT)
+        self.scale_mic.connect("value-changed", self._on_mic_volume_changed)
+        mic_row.pack_start(self.scale_mic, True, True, 0)
+        mic_row.pack_start(Gtk.Label(label="%"), False, False, 0)
+        vbox.pack_start(mic_row, False, False, 4)
+
+        # Speaker output volume (0–100%)
+        spk_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        lbl_spk = Gtk.Label(label="🔈 Speaker:")
+        lbl_spk.set_halign(Gtk.Align.START)
+        lbl_spk.set_width_chars(16)
+        spk_row.pack_start(lbl_spk, False, False, 0)
+        self.scale_spk = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 100, 1)
+        # Read current system speaker volume
+        try:
+            from .mic_enhancer import MicEnhancer
+            _tmp = MicEnhancer(self.settings)
+            self.scale_spk.set_value(_tmp.get_output_volume())
+        except Exception:
+            self.scale_spk.set_value(50)
+        self.scale_spk.set_draw_value(True)
+        self.scale_spk.set_value_pos(Gtk.PositionType.RIGHT)
+        self.scale_spk.connect("value-changed", self._on_spk_volume_changed)
+        spk_row.pack_start(self.scale_spk, True, True, 0)
+        spk_row.pack_start(Gtk.Label(label="%"), False, False, 0)
+        vbox.pack_start(spk_row, False, False, 4)
+
         # ── Enhancement ─────────────────────────────────────────
         vbox.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL), False, False, 6)
-        vbox.pack_start(_section_label("🎤  Microphone Enhancement"), False, False, 0)
-
-        vol_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        lbl_vol = Gtk.Label(label="Input Volume:")
-        lbl_vol.set_halign(Gtk.Align.START)
-        lbl_vol.set_width_chars(16)
-        vol_row.pack_start(lbl_vol, False, False, 0)
-        self.spin_volume = Gtk.SpinButton.new_with_range(50, 150, 5)
-        self.spin_volume.set_value(self.temp_settings.get("mic_volume", 100))
-        self.spin_volume.connect("value-changed", lambda w: self._set_temp("mic_volume", int(w.get_value())))
-        vol_row.pack_start(self.spin_volume, False, False, 0)
-        vol_row.pack_start(Gtk.Label(label="%"), False, False, 0)
-        vbox.pack_start(vol_row, False, False, 4)
+        vbox.pack_start(_section_label("🛠️  Microphone Enhancement"), False, False, 0)
 
         self.check_noise = Gtk.CheckButton(label="🔇  WebRTC Noise Suppression")
         self.check_noise.set_active(self.temp_settings.get("noise_suppression", False))
-        self.check_noise.connect("toggled", lambda w: self._set_temp("noise_suppression", w.get_active()))
+        self.check_noise.connect("toggled", self._on_webrtc_toggled)
         vbox.pack_start(self.check_noise, False, False, 2)
 
         boost_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
@@ -986,14 +1014,15 @@ class SettingsDialog(Gtk.Window):
             self._stop_test()
         else:
             self._start_test()
-            widget.set_label("⏹  Stop")
 
     def _start_test(self):
+        """Record for 5 seconds with countdown, then auto-play back."""
         import pyaudio
         self.is_testing = True
         self.recorded_frames = []
+        self._test_countdown = 5
         self.pa = pyaudio.PyAudio()
-        
+
         def _audio_callback(in_data, frame_count, time_info, status):
             if in_data:
                 self.recorded_frames.append(in_data)
@@ -1003,11 +1032,26 @@ class SettingsDialog(Gtk.Window):
             self.test_stream = self.pa.open(format=pyaudio.paInt16, channels=1,
                                             rate=16000, input=True, frames_per_buffer=1024,
                                             stream_callback=_audio_callback)
+            self.btn_test.set_label(f"🔴  Recording {self._test_countdown}s…")
+            self.btn_test.set_sensitive(False)
             GLib.timeout_add(100, self._update_level)
+            GLib.timeout_add(1000, self._test_countdown_tick)
         except Exception as e:
             logger.error(f"Failed to start test stream: {e}")
             self.is_testing = False
-            self.btn_test.set_label("▶  Test")
+            self.btn_test.set_label("▶  Test (5s)")
+            self.btn_test.set_sensitive(True)
+
+    def _test_countdown_tick(self):
+        """Called every second during recording to update countdown."""
+        if not self.is_testing:
+            return False
+        self._test_countdown -= 1
+        if self._test_countdown <= 0:
+            self._stop_test()
+            return False
+        self.btn_test.set_label(f"🔴  Recording {self._test_countdown}s…")
+        return True
 
     def _stop_test(self):
         self.is_testing = False
@@ -1015,18 +1059,19 @@ class SettingsDialog(Gtk.Window):
             self.test_stream.stop_stream()
             self.test_stream.close()
             self.test_stream = None
-            
+
         if getattr(self, "pa", None):
             self.pa.terminate()
             self.pa = None
 
-        if getattr(self, "recorded_frames", None):
+        if getattr(self, "recorded_frames", None) and self.recorded_frames:
             import threading
             frames = list(self.recorded_frames)
             self.recorded_frames = []
             threading.Thread(target=self._play_playback, args=(frames,)).start()
         else:
-            self.btn_test.set_label("▶  Test")
+            self.btn_test.set_label("▶  Test (5s)")
+            self.btn_test.set_sensitive(True)
 
     def _play_playback(self, frames):
         import pyaudio
@@ -1045,25 +1090,62 @@ class SettingsDialog(Gtk.Window):
         finally:
             if pa:
                 pa.terminate()
-            GLib.idle_add(self.btn_test.set_label, "▶  Test")
+            GLib.idle_add(self.btn_test.set_label, "▶  Test (5s)")
             GLib.idle_add(self.btn_test.set_sensitive, True)
 
     def _update_level(self):
         if not self.is_testing:
             self.level_bar.set_value(0)
             return False
-            
+
         try:
             if self.recorded_frames:
-                # Grab the most recent chunk for the visual meter
                 data = self.recorded_frames[-1]
                 from src.c_ext import rms_int16
                 rms = rms_int16(data)
                 self.level_bar.set_value(min(rms / 10000.0, 1.0))
         except Exception:
             pass
-            
+
         return True
+
+    # ── Live volume + enhancement handlers ──────────────────────────────
+
+    def _on_mic_volume_changed(self, widget):
+        """Apply mic volume change immediately via pactl."""
+        val = int(widget.get_value())
+        self._set_temp("mic_volume", val)
+        try:
+            from .mic_enhancer import MicEnhancer
+            enhancer = MicEnhancer(self.settings)
+            enhancer.set_input_volume(val)
+        except Exception as e:
+            logger.warning(f"Live mic volume apply: {e}")
+
+    def _on_spk_volume_changed(self, widget):
+        """Apply speaker volume change immediately via pactl."""
+        val = int(widget.get_value())
+        self._set_temp("speaker_volume", val)
+        try:
+            from .mic_enhancer import MicEnhancer
+            enhancer = MicEnhancer(self.settings)
+            enhancer.set_output_volume(val)
+        except Exception as e:
+            logger.warning(f"Live speaker volume apply: {e}")
+
+    def _on_webrtc_toggled(self, widget):
+        """Apply WebRTC noise suppression change immediately."""
+        active = widget.get_active()
+        self._set_temp("noise_suppression", active)
+        try:
+            from .mic_enhancer import MicEnhancer
+            enhancer = MicEnhancer(self.settings)
+            if active:
+                enhancer.enable_noise_suppression()
+            else:
+                enhancer.disable_noise_suppression()
+        except Exception as e:
+            logger.warning(f"Live WebRTC toggle: {e}")
 
     def _close(self, save: bool):
         if save:

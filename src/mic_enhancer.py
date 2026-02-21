@@ -47,8 +47,8 @@ class MicEnhancer:
             return 100
 
     def set_input_volume(self, percent: int):
-        """Set input volume 0–150%. Values >100 apply software boost."""
-        percent = max(0, min(150, int(percent)))
+        """Set input volume 0–100%."""
+        percent = max(0, min(100, int(percent)))
         try:
             subprocess.run(
                 ["pactl", "set-source-volume", self._source(), f"{percent}%"],
@@ -58,6 +58,33 @@ class MicEnhancer:
             logger.info(f"Mic volume → {percent}%")
         except Exception as e:
             logger.error(f"set_input_volume({percent}): {e}")
+
+    # ── Output Volume ────────────────────────────────────────────────────
+
+    def get_output_volume(self) -> int:
+        """Return current speaker output volume as 0–100."""
+        try:
+            out = subprocess.check_output(
+                ["pactl", "get-sink-volume", "@DEFAULT_SINK@"], text=True, timeout=3
+            )
+            m = re.search(r"(\d+)%", out)
+            return min(int(m.group(1)), 100) if m else 50
+        except Exception as e:
+            logger.warning(f"get_output_volume: {e}")
+            return 50
+
+    def set_output_volume(self, percent: int):
+        """Set speaker output volume 0–100%."""
+        percent = max(0, min(100, int(percent)))
+        try:
+            subprocess.run(
+                ["pactl", "set-sink-volume", "@DEFAULT_SINK@", f"{percent}%"],
+                check=True, timeout=3, capture_output=True
+            )
+            self.settings.set("speaker_volume", percent)
+            logger.info(f"Speaker volume → {percent}%")
+        except Exception as e:
+            logger.error(f"set_output_volume({percent}): {e}")
 
     # ─── Noise Suppression ──────────────────────────────────────────────
 

@@ -221,20 +221,44 @@ class SpellCorrector:
         in_number = False
         tokens = text.split()
         output = []
-        
+
+        # Words that signal the following number should stay as digits
+        _ORDINAL_TRIGGERS = {"chapter", "section", "item", "page", "step",
+                             "number", "no", "version", "level", "grade",
+                             "type", "phase", "part", "option", "rule"}
+
         i = 0
         while i < len(tokens):
             word = tokens[i].lower()
-            
+
             is_num = word in NUM_DICT
             is_ordinal = word in ORDINAL_DICT
             is_and = word == "and"
-            
+
             valid_and = False
             if is_and and in_number and i + 1 < len(tokens):
                 next_word = tokens[i+1].lower()
                 if next_word in NUM_DICT or next_word in ORDINAL_DICT:
                     valid_and = True
+
+            # Context-aware: small numbers (one–ten) before a non-number
+            # word are likely quantity adjectives ("two apples"), keep as words.
+            # BUT convert if preceded by trigger words ("chapter two" → 2)
+            # or followed by another number word ("one hundred" → 100).
+            if is_num and not in_number:
+                scale, increment = NUM_DICT[word]
+                # Only applies to units (one–nineteen, scale==1)
+                if scale == 1 and increment <= 19:
+                    next_word = tokens[i+1].lower() if i + 1 < len(tokens) else ""
+                    prev_word = output[-1].lower() if output else ""
+                    next_is_number = next_word in NUM_DICT or next_word in ORDINAL_DICT or next_word == "and"
+                    prev_is_trigger = prev_word in _ORDINAL_TRIGGERS
+                    has_follower = i + 1 < len(tokens)
+                    if has_follower and not next_is_number and not prev_is_trigger:
+                        # Keep as a word — it's a quantity adjective (e.g., "two apples")
+                        output.append(tokens[i])
+                        i += 1
+                        continue
                     
             if not is_num and not is_ordinal and not valid_and:
                 if in_number:
