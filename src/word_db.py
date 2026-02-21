@@ -28,9 +28,10 @@ class WordDatabase:
     """
     Manages the protected-words list.
 
-    All lookups use an in-memory set — zero DB hits during dictation.
-    Writes go to SQLite and update the set atomically.
-    Thread-safe: write lock guards DB + set updates.
+    All lookups use an in-memory dict — zero DB hits during dictation.
+    Maps lowercase word -> original case word.
+    Writes go to SQLite and update the dict atomically.
+    Thread-safe: write lock guards DB + dict updates.
     """
 
     def __init__(self, db_path: str | Path):
@@ -42,30 +43,35 @@ class WordDatabase:
         self._conn.execute("PRAGMA synchronous=NORMAL")
         self._conn.executescript(_SCHEMA)
         self._conn.commit()
-        self._set: set[str] = set()
+        self._dict: dict[str, str] = {}
         self._load_into_memory()
         logger.info("WordDatabase loaded: %d protected words from %s",
-                    len(self._set), self._path)
+                    len(self._dict), self._path)
 
     # ── Public API ───────────────────────────────────────────────────────────
 
+    def get_original_case(self, word: str) -> str | None:
+        """O(1) in-memory lookup. Returns True-cased word if protected, else None."""
+        return self._dict.get(word.lower())
+
     def is_protected(self, word: str) -> bool:
-        """O(1) in-memory lookup. Called on every word during dictation."""
-        return word.lower() in self._set
+        """Legacy helper for UI."""
+        return word.lower() in self._dict
 
     def add_word(self, word: str, category: str = "custom") -> bool:
         """Add a word. Returns True if newly added, False if already exists."""
-        w = word.strip().lower()
-        if not w:
+        w_strip = word.strip()
+        w_lower = w_strip.lower()
+        if not w_strip:
             return False
         with self._lock:
             try:
                 self._conn.execute(
-                    "INSERT INTO words(word, category) VALUES(?, ?)", (w, category)
+                    "INSERT INTO words(word, category) VALUES(?, ?)", (w_strip, category)
                 )
                 self._conn.commit()
-                self._set.add(w)
-                logger.debug("WordDB: added '%s' (%s)", w, category)
+                self._dict[w_lower] = w_strip
+                logger.debug("WordDB: added '%s' (%s)", w_strip, category)
                 return True
             except sqlite3.IntegrityError:
                 return False  # already exists
@@ -76,7 +82,7 @@ class WordDatabase:
         with self._lock:
             cur = self._conn.execute("DELETE FROM words WHERE word=? COLLATE NOCASE", (w,))
             self._conn.commit()
-            self._set.discard(w)
+            self._dict.pop(w, None)
             return cur.rowcount > 0
 
     def get_all(self, filter_text: str = "") -> list[tuple]:
@@ -94,13 +100,13 @@ class WordDatabase:
         ).fetchall()
 
     def count(self) -> int:
-        return len(self._set)
+        return len(self._dict)
 
     def reload(self):
         """Re-read DB into memory (e.g. after bulk import)."""
         with self._lock:
             self._load_into_memory()
-        logger.info("WordDB reloaded: %d words", len(self._set))
+        logger.info("WordDB reloaded: %d words", len(self._dict))
 
     def seed(self, words: list[tuple[str, str]]):
         """
@@ -118,13 +124,13 @@ class WordDatabase:
             self._conn.commit()
             self._load_into_memory()
         logger.info("WordDB: seed complete in %.1fms — %d words",
-                    (time.monotonic() - t0) * 1000, len(self._set))
+                    (time.monotonic() - t0) * 1000, len(self._dict))
 
     # ── Internal ─────────────────────────────────────────────────────────────
 
     def _load_into_memory(self):
         rows = self._conn.execute("SELECT word FROM words").fetchall()
-        self._set = {r[0].lower() for r in rows}
+        self._dict = {r[0].lower(): r[0] for r in rows}
 
     def close(self):
         self._conn.close()

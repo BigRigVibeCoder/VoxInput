@@ -39,10 +39,14 @@ NUMBER_WORDS: dict[str, int] = {
 
 class SpellCorrector:
     """
-    Real-time spell correction for ASR output.
+    Real-time spell correction and grammar engine for ASR output.
 
-    If symspellpy is not installed, silently passes text through.
-    If word_db is provided, words in the database are never corrected.
+    Pipeline:
+      1. ASR artifact substitution (gonna → going to)
+      2. Number conversion (one → 1)
+      3. Voice Punctuation (period → .)
+      4. Grammar & True Casing (Auto-capitalization & WordDB original case)
+      5. SymSpell correction (for unknown typos)
     """
 
     def __init__(self, settings, word_db=None):
@@ -51,6 +55,7 @@ class SpellCorrector:
         self.enabled: bool = settings.get("spell_correction", True)
         self._sym_spell = None
         self._Verbosity = None
+        self._cap_next = True             # Start of dictation is capitalized
         self._load()
 
     # ── Setup ────────────────────────────────────────────────────────────────
@@ -86,7 +91,7 @@ class SpellCorrector:
                 if os.path.exists(user_dict):
                     self._sym_spell.load_dictionary(user_dict, term_index=0, count_index=1)
 
-            logger.info("SpellCorrector initialized (SymSpellPy + WordDatabase)")
+            logger.info("SpellCorrector initialized (SymSpellPy + WordDatabase + Grammar)")
 
         except ImportError:
             logger.info("symspellpy not installed — spell correction disabled")
@@ -95,6 +100,10 @@ class SpellCorrector:
             self._sym_spell = None
 
     # ── Public API ───────────────────────────────────────────────────────────
+    
+    def reset_state(self):
+        """Reset grammar state when a new dictation session starts."""
+        self._cap_next = True
 
     def correct(self, text: str) -> str:
         """
@@ -102,61 +111,67 @@ class SpellCorrector:
         Called on every finalized word batch before injection.
         """
         if not self.enabled:
-            return text
+            from .injection import apply_voice_punctuation
+            return apply_voice_punctuation(text)
 
         # Step 1: ASR artifact substitution (context-free, highest priority)
         text = self._apply_asr_rules(text)
         
-        # Step 1b: Number conversion (words to digits)
+        # Step 2: Number conversion (words to digits)
         text = self._convert_numbers(text)
 
-        # Step 2: SymSpell word-level correction
-        if self._sym_spell is None:
-            return text
+        # Step 3: Voice Punctuation mapping
+        from .injection import apply_voice_punctuation
+        text = apply_voice_punctuation(text)
 
+        # Step 4: Grammar, True Casing, and Spell Correction
         words = text.split()
         corrected = []
         for word in words:
             lower = word.lower()
-
-            # Skip ALL-CAPS and capitalized words (proper nouns / acronyms)
-            if not word.isalpha() or word[0].isupper() or word.isupper():
+            
+            # Punctuation boundaries trigger next-word capitalization
+            if lower in {".", "?", "!", "\n", "\n\n"}:
+                self._cap_next = True
                 corrected.append(word)
                 continue
-
-            # Skip words in the protected WordDatabase
-            if self._word_db and self._word_db.is_protected(lower):
-                corrected.append(word)
+                
+            # Grammar rule: Stand-alone 'I' variations
+            if lower in {"i", "i'm", "i've", "i'll", "i'd"}:
+                final_word = word.capitalize()
+                self._cap_next = False
+                corrected.append(final_word)
                 continue
 
-            suggestions = self._sym_spell.lookup(
-                lower, self._Verbosity.CLOSEST, max_edit_distance=2
-            )
+            # Resolve the actual word (WordDB True Casing or SymSpell)
+            final_word = word
+            resolved = False
+            
+            if self._word_db:
+                orig_case = self._word_db.get_original_case(lower)
+                if orig_case:
+                    final_word = orig_case
+                    resolved = True
+            
+            if not resolved and self._sym_spell and word.isalpha() and not word[0].isupper() and not word.isupper():
+                suggestions = self._sym_spell.lookup(lower, self._Verbosity.CLOSEST, max_edit_distance=2)
+                if suggestions and suggestions[0].term != lower:
+                    best = suggestions[0]
+                    # Short word guard (preserve valid short words like 'is', 'to')
+                    if len(lower) <= 3:
+                        in_dict = self._sym_spell.lookup(lower, self._Verbosity.ALL, max_edit_distance=0)
+                        if not in_dict and best.count > 100:
+                            final_word = best.term
+                    elif best.count > 100:
+                        logger.debug(f"SpellCorrector: '{word}' -> '{best.term}'")
+                        final_word = best.term
 
-            # No suggestion or suggestion is identical → keep as-is
-            if not suggestions or suggestions[0].term == lower:
-                corrected.append(word)
-                continue
+            # Apply Auto-Capitalization 
+            if self._cap_next and len(final_word) > 0 and final_word[0].isalpha():
+                final_word = final_word[0].upper() + final_word[1:]
+                self._cap_next = False
 
-            best = suggestions[0]
-
-            # For short words (≤3 chars): only correct if the word is NOT in
-            # the SymSpell dictionary at edit_distance=0. Real words like
-            # 'is','to','an' exist there; typos like 'teh','adn' do not.
-            if len(lower) <= 3:
-                in_dict = self._sym_spell.lookup(
-                    lower, self._Verbosity.ALL, max_edit_distance=0
-                )
-                if in_dict:
-                    corrected.append(word)
-                    continue
-
-            # Apply if suggestion has meaningful frequency (avoids obscure replacements)
-            if best.count > 100:
-                logger.debug(f"SpellCorrector: '{word}' -> '{best.term}'")
-                corrected.append(best.term)
-            else:
-                corrected.append(word)
+            corrected.append(final_word)
 
         return " ".join(corrected)
 
