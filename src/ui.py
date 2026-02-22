@@ -452,7 +452,7 @@ class SettingsDialog(Gtk.Window):
         self.settings = SettingsManager()
         self.temp_settings = self.settings.settings.copy()
 
-        self.set_default_size(672, 648)
+        self.set_default_size(672, 820)
         self.set_resizable(False)
         self.set_position(Gtk.WindowPosition.CENTER)
         self.set_decorated(True)
