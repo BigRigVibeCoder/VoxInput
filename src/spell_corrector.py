@@ -204,7 +204,8 @@ class SpellCorrector:
             if not resolved and self._sym_spell and word.isalpha() and not word[0].isupper() and not word.isupper():
                 # Protect common abbreviations from being "corrected"
                 _PROTECTED = {"mr", "mrs", "ms", "dr", "sr", "jr", "vs", "st",
-                              "ft", "mt", "id", "ok", "pm", "am", "tv", "uk", "us"}
+                              "ft", "mt", "id", "ok", "pm", "am", "tv", "uk", "us",
+                              "hundred", "thousand", "million", "billion", "trillion"}
                 if lower not in _PROTECTED:
                     suggestions = self._sym_spell.lookup(lower, self._Verbosity.CLOSEST, max_edit_distance=2)
                     if suggestions and suggestions[0].term != lower:
@@ -230,7 +231,15 @@ class SpellCorrector:
         # P9-C: Phrase-level correction (2-word compound lookup)
         # Preserves original capitalization since lookup_compound lowercases
         # Skip if text contains abbreviations that lookup_compound would corrupt
-        _COMPOUND_SKIP = {"mr", "mrs", "ms", "dr", "sr", "jr", "vs", "st", "ft", "mt", "id", "ok"}
+        _COMPOUND_SKIP = {
+            "mr", "mrs", "ms", "dr", "sr", "jr", "vs", "st", "ft", "mt", "id", "ok",
+            # Number words — lookup_compound corrupts these (e.g. "hundred" → "a of")
+            "hundred", "thousand", "million", "billion", "trillion",
+            "zero", "one", "two", "three", "four", "five", "six", "seven", "eight",
+            "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen",
+            "sixteen", "seventeen", "eighteen", "nineteen",
+            "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety",
+        }
         has_abbrev = any(w.lower().rstrip('.,;:!?') in _COMPOUND_SKIP for w in corrected)
         if self._sym_spell and len(corrected) >= 2 and not has_abbrev:
             try:
