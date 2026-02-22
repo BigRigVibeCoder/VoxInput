@@ -643,8 +643,11 @@ class SettingsDialog(Gtk.Window):
 
         # Show/hide sub-features based on main toggle
         self._webrtc_sub_box = webrtc_sub_box
+        webrtc_sub_box.set_no_show_all(True)  # prevent dialog show_all() from overriding
         vbox.pack_start(webrtc_sub_box, False, False, 2)
-        if not self.temp_settings.get("noise_suppression", False):
+        if self.temp_settings.get("noise_suppression", False):
+            webrtc_sub_box.show_all()
+        else:
             webrtc_sub_box.hide()
 
         boost_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
