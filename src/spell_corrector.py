@@ -241,7 +241,8 @@ class SpellCorrector:
             "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety",
         }
         has_abbrev = any(w.lower().rstrip('.,;:!?') in _COMPOUND_SKIP for w in corrected)
-        if self._sym_spell and len(corrected) >= 2 and not has_abbrev:
+        has_digits = any(any(c.isdigit() for c in w) for w in corrected)
+        if self._sym_spell and len(corrected) >= 2 and not has_abbrev and not has_digits:
             try:
                 compound = self._sym_spell.lookup_compound(result, max_edit_distance=2)
                 if compound and compound[0].distance > 0 and compound[0].count > 0:
