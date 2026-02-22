@@ -1,4 +1,7 @@
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 import gi
 
@@ -1056,27 +1059,37 @@ class SettingsDialog(Gtk.Window):
 
     def _start_test(self):
         """Start recording — user pushes button again to stop."""
-        import pyaudio
         self.is_testing = True
         self.recorded_frames = []
-        self.pa = pyaudio.PyAudio()
+        self.btn_test.set_label("⏳  Starting…")
+        self.btn_test.set_sensitive(False)
 
-        def _audio_callback(in_data, frame_count, time_info, status):
-            if in_data:
-                self.recorded_frames.append(in_data)
-            return (None, pyaudio.paContinue)
+        import threading
+        threading.Thread(target=self._start_test_bg, daemon=True).start()
 
+    def _start_test_bg(self):
+        """Background thread: init PyAudio + open stream (ALSA probe is slow)."""
+        import pyaudio
         try:
+            self.pa = pyaudio.PyAudio()
+
+            def _audio_callback(in_data, frame_count, time_info, status):
+                if in_data:
+                    self.recorded_frames.append(in_data)
+                return (None, pyaudio.paContinue)
+
             self.test_stream = self.pa.open(format=pyaudio.paInt16, channels=1,
                                             rate=16000, input=True, frames_per_buffer=1024,
                                             stream_callback=_audio_callback)
-            self.btn_test.set_label("⏹  Stop")
-            self._test_level_timer = GLib.timeout_add(100, self._update_level)
+            GLib.idle_add(self.btn_test.set_label, "⏹  Stop")
+            GLib.idle_add(self.btn_test.set_sensitive, True)
+            GLib.idle_add(lambda: GLib.timeout_add(100, self._update_level))
             logger.info("Test recording started")
         except Exception as e:
             logger.error(f"Failed to start test stream: {e}")
             self.is_testing = False
-            self.btn_test.set_label(f"▶  Record (err)")
+            GLib.idle_add(self.btn_test.set_label, "▶  Record")
+            GLib.idle_add(self.btn_test.set_sensitive, True)
 
     def _stop_test(self):
         self.is_testing = False
