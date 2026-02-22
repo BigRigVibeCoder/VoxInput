@@ -617,6 +617,36 @@ class SettingsDialog(Gtk.Window):
         self.check_noise.connect("toggled", self._on_webrtc_toggled)
         vbox.pack_start(self.check_noise, False, False, 2)
 
+        # Sub-feature checkboxes (indented under main toggle)
+        webrtc_sub_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        webrtc_sub_box.set_margin_start(24)
+
+        self.check_hpf = Gtk.CheckButton(label="High-Pass Filter (cuts rumble < 80Hz)")
+        self.check_hpf.set_active(self.temp_settings.get("webrtc_high_pass_filter", True))
+        self.check_hpf.connect("toggled", lambda w: self._on_webrtc_sub_toggled("webrtc_high_pass_filter", w))
+        webrtc_sub_box.pack_start(self.check_hpf, False, False, 0)
+
+        self.check_vad = Gtk.CheckButton(label="Voice Activity Detection")
+        self.check_vad.set_active(self.temp_settings.get("webrtc_voice_detection", True))
+        self.check_vad.connect("toggled", lambda w: self._on_webrtc_sub_toggled("webrtc_voice_detection", w))
+        webrtc_sub_box.pack_start(self.check_vad, False, False, 0)
+
+        self.check_dgc = Gtk.CheckButton(label="Digital Gain Control (software normalization)")
+        self.check_dgc.set_active(self.temp_settings.get("webrtc_digital_gain", True))
+        self.check_dgc.connect("toggled", lambda w: self._on_webrtc_sub_toggled("webrtc_digital_gain", w))
+        webrtc_sub_box.pack_start(self.check_dgc, False, False, 0)
+
+        self.check_agc = Gtk.CheckButton(label="Analog Gain Control (hardware auto-adjust)")
+        self.check_agc.set_active(self.temp_settings.get("webrtc_analog_gain", False))
+        self.check_agc.connect("toggled", lambda w: self._on_webrtc_sub_toggled("webrtc_analog_gain", w))
+        webrtc_sub_box.pack_start(self.check_agc, False, False, 0)
+
+        # Enable/disable sub-features based on main toggle
+        noise_active = self.temp_settings.get("noise_suppression", False)
+        webrtc_sub_box.set_sensitive(noise_active)
+        self._webrtc_sub_box = webrtc_sub_box
+        vbox.pack_start(webrtc_sub_box, False, False, 2)
+
         boost_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         lbl_boost = Gtk.Label(label="ALSA Mic Boost:")
         lbl_boost.set_halign(Gtk.Align.START)
@@ -1127,6 +1157,9 @@ class SettingsDialog(Gtk.Window):
         """Apply WebRTC noise suppression change immediately."""
         active = widget.get_active()
         self._set_temp("noise_suppression", active)
+        # Enable/disable sub-feature checkboxes
+        if hasattr(self, '_webrtc_sub_box'):
+            self._webrtc_sub_box.set_sensitive(active)
         try:
             from .mic_enhancer import MicEnhancer
             enhancer = MicEnhancer(self.settings)
@@ -1136,6 +1169,20 @@ class SettingsDialog(Gtk.Window):
                 enhancer.disable_noise_suppression()
         except Exception as e:
             logger.warning(f"Live WebRTC toggle: {e}")
+
+    def _on_webrtc_sub_toggled(self, key, widget):
+        """Apply a WebRTC sub-feature change — save and reload module."""
+        active = widget.get_active()
+        self._set_temp(key, active)
+        self.settings.set(key, active)
+        # Reload module with new args if noise suppression is active
+        if self.temp_settings.get("noise_suppression", False):
+            try:
+                from .mic_enhancer import MicEnhancer
+                enhancer = MicEnhancer(self.settings)
+                enhancer.enable_noise_suppression()
+            except Exception as e:
+                logger.warning(f"WebRTC sub-feature reload: {e}")
 
     def _close(self, save: bool):
         if save:

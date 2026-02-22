@@ -89,23 +89,45 @@ class MicEnhancer:
     # ─── Noise Suppression ──────────────────────────────────────────────
 
     def enable_noise_suppression(self):
-        """Load PulseAudio module-echo-cancel with WebRTC AEC."""
+        """Load PulseAudio module-echo-cancel with WebRTC AEC.
+
+        Reads individual feature toggles from settings:
+          - webrtc_noise_suppression (default True)
+          - webrtc_high_pass_filter  (default True)
+          - webrtc_voice_detection   (default True)
+          - webrtc_digital_gain      (default True)
+          - webrtc_analog_gain       (default False)
+        """
         if self._noise_module_id:
-            logger.debug("Noise suppression already active")
-            return
+            # Already loaded — unload first so we can reload with new args
+            self.disable_noise_suppression()
+
         source = self._source()
+
+        # Build aec_args from individual feature settings
+        ns = "1" if self.settings.get("webrtc_noise_suppression", True) else "0"
+        hpf = "1" if self.settings.get("webrtc_high_pass_filter", True) else "0"
+        vd = "1" if self.settings.get("webrtc_voice_detection", True) else "0"
+        dgc = "1" if self.settings.get("webrtc_digital_gain", True) else "0"
+        agc = "1" if self.settings.get("webrtc_analog_gain", False) else "0"
+        aec_args = (
+            f"analog_gain_control={agc} digital_gain_control={dgc} "
+            f"noise_suppression={ns} high_pass_filter={hpf} voice_detection={vd}"
+        )
+
         try:
             result = subprocess.check_output([
                 "pactl", "load-module", "module-echo-cancel",
                 f"source_master={source}",
                 "source_name=VoxInputDenoised",
                 "aec_method=webrtc",
-                "source_properties=device.description='VoxInput Denoised Mic'"
+                f"aec_args={aec_args}",
+                "source_properties=device.description='VoxInput'"
             ], text=True, timeout=8)
             self._noise_module_id = result.strip()
             self.settings.set("noise_suppression", True)
             self.settings.set("_noise_module_id", self._noise_module_id)
-            logger.info(f"Noise suppression enabled (module {self._noise_module_id})")
+            logger.info(f"Noise suppression enabled (module {self._noise_module_id}) args: {aec_args}")
         except subprocess.CalledProcessError as e:
             logger.error(f"enable_noise_suppression: pactl error — {e.stderr}")
         except Exception as e:
