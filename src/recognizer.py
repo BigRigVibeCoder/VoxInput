@@ -118,6 +118,7 @@ class SpeechRecognizer:
     def reset_state(self):
         """Reset streaming state (called on silence or manual stop)"""
         self.committed_text = []
+        self._last_partial_count = 0   # P9-06: cached partial word count
         if self.engine_type == "Whisper":
             self.whisper_chunks.clear()
             self.whisper_last_transcript = ""
@@ -150,6 +151,16 @@ class SpeechRecognizer:
                 text = result.get('text', '')
                 words = text.split()
 
+                # P9-02: Confidence filtering — drop low-confidence words
+                # Vosk's "result" array contains per-word confidence scores
+                conf_threshold = self.settings.get("confidence_threshold", 0.3)
+                word_results = result.get('result', [])
+                if word_results:
+                    words = [
+                        wr['word'] for wr in word_results
+                        if wr.get('conf', 1.0) >= conf_threshold
+                    ]
+
                 # P1-02: Full result = sentence confirmed final by Vosk.
                 # Inject ALL uncommitted words with zero lag — no reason to hold back.
                 new_words_to_inject = words[len(self.committed_text):]
@@ -162,6 +173,11 @@ class SpeechRecognizer:
                 partial = json.loads(self.recognizer.PartialResult())
                 text = partial.get('partial', '')
                 words = text.split()
+
+                # P9-06: skip processing if partial hasn't grown
+                if len(words) == self._last_partial_count:
+                    return None
+                self._last_partial_count = len(words)
                 
                 # Vosk Lag Strategy
                 stable_len = max(0, len(words) - LAG)

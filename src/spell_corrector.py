@@ -88,7 +88,7 @@ class SpellCorrector:
         self._num_result = 0
         self._num_current = 0
         self._num_pending_words: list[str] = []  # original words held back
-        self._load()
+        self._loaded = False               # P9-05: lazy load gate
 
     # ── Setup ────────────────────────────────────────────────────────────────
 
@@ -158,6 +158,11 @@ class SpellCorrector:
         if not self.enabled:
             return text
 
+        # P9-05: lazy-load SymSpell on first correction (saves ~2s startup)
+        if not self._loaded:
+            self._load()
+            self._loaded = True
+
         # Step 1: ASR artifact substitution (context-free, highest priority)
         text = self._apply_asr_rules(text)
         
@@ -216,7 +221,27 @@ class SpellCorrector:
 
             corrected.append(final_word)
 
-        return " ".join(corrected)
+        result = " ".join(corrected)
+
+        # P9-C: Phrase-level correction (2-word compound lookup)
+        # Preserves original capitalization since lookup_compound lowercases
+        if self._sym_spell and len(corrected) >= 2:
+            try:
+                compound = self._sym_spell.lookup_compound(result, max_edit_distance=2)
+                if compound and compound[0].distance > 0 and compound[0].count > 0:
+                    new_words = compound[0].term.split()
+                    old_words = result.split()
+                    # Re-apply original capitalization
+                    restored = []
+                    for i, nw in enumerate(new_words):
+                        if i < len(old_words) and old_words[i][0].isupper():
+                            nw = nw[0].upper() + nw[1:]
+                        restored.append(nw)
+                    result = " ".join(restored)
+            except Exception:
+                pass  # lookup_compound can fail on edge cases
+
+        return result
 
     def set_word_db(self, word_db):
         """Hot-swap the WordDatabase (called after lazy load in main.py)."""

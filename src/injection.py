@@ -238,12 +238,19 @@ class TextInjector:
             self._inject_pynput(text)
 
     def _inject_xdotool(self, text: str):
-        """X11 injection via xdotool (also works on XWayland)."""
+        """X11 injection via xdotool (also works on XWayland).
+        P9-01: Uses bare Popen with no capture to minimize fork overhead.
+        """
         try:
-            subprocess.run(
+            proc = subprocess.Popen(
                 ["xdotool", "type", "--clearmodifiers", "--delay", "0", text],
-                check=True, timeout=10, capture_output=True
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
             )
+            proc.wait(timeout=10)
+            if proc.returncode != 0:
+                raise subprocess.CalledProcessError(proc.returncode, "xdotool")
         except (subprocess.CalledProcessError, FileNotFoundError):
             logger.warning("xdotool failed — falling back to pynput")
             self._inject_pynput(text)

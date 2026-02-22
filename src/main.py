@@ -10,6 +10,7 @@ from pynput import keyboard
 from .audio import AudioCapture
 from .config import HOTKEY
 from .injection import TextInjector, VoicePunctuationBuffer
+from .homophones import fix_homophones                     # P9-D: homophone correction
 from .logger import init_logging, get_logger         # P7: enterprise logging
 from .mic_enhancer import MicEnhancer
 from .recognizer import SpeechRecognizer
@@ -143,6 +144,10 @@ class VoxInputApp:
         # P8-02: cache hot-path settings so _process_loop never calls settings.get() per-chunk
         self._sil_threshold: int = int(self.settings.get("silence_threshold", 500))
         self._sil_duration:  float = float(self.settings.get("silence_duration", 0.6))
+        # P9-B: Adaptive silence — EMA noise floor tracking
+        self._adaptive_silence = self.settings.get("adaptive_silence", True)
+        self._noise_floor_ema: float = float(self._sil_threshold)  # seed with manual threshold
+        self._ema_alpha: float = 0.05  # smoothing factor (lower = slower adaptation)
 
         self.processing_thread = threading.Thread(target=self._process_loop)
         self.processing_thread.start()
@@ -185,6 +190,15 @@ class VoxInputApp:
         while self.is_listening and not self.should_quit:
             data = self.audio.get_data()
             if data:
+                # P9-04: drain backlog — if >3 chunks queued, concatenate to
+                # prevent drops under CPU load (still one RMS + one Vosk call)
+                backlog = len(self.audio._buf)
+                if backlog > 3:
+                    extra = []
+                    while self.audio._buf:
+                        extra.append(self.audio._buf.popleft())
+                    data = data + b"".join(extra)
+                    logger.debug(f"Drained {backlog} backlogged chunks")
                 # P8-01: C extension RMS (single-pass, no float64 array alloc).
                 # Falls back to numpy if librms.so not present.
                 rms = int(rms_int16(data))
@@ -198,6 +212,17 @@ class VoxInputApp:
                     self.ui.update_osd(osd_str, level)
                     _last_osd_words  = osd_str
                     _last_osd_level  = level
+
+                # P9-B: Adaptive silence — update noise floor EMA
+                if self._adaptive_silence:
+                    if rms < self._sil_threshold:
+                        # Update EMA when in "silence" range
+                        self._noise_floor_ema = (
+                            self._ema_alpha * rms +
+                            (1 - self._ema_alpha) * self._noise_floor_ema
+                        )
+                        # Set threshold at 2.5× noise floor (with a minimum)
+                        self._sil_threshold = max(200, int(self._noise_floor_ema * 2.5))
 
                 # P8-02: use cached threshold/duration (no settings.get per chunk)
                 if rms < self._sil_threshold:
@@ -245,6 +270,7 @@ class VoxInputApp:
             return  # models not ready yet
         try:
             corrected = self.spell.correct(text)  # P3: SymSpellPy + ASR rules
+            corrected = fix_homophones(corrected)  # P9-D: homophone correction
             punctuated = self._punct_buf.process(corrected)  # P4-02: voice punctuation
             if punctuated:
                 self._injection_queue.put_nowait(punctuated)

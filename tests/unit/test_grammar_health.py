@@ -46,6 +46,7 @@ class TestEngineOnline:
 
     def test_symspell_loaded(self):
         sc = _sc()
+        sc.correct("test")  # P9-05: trigger lazy load
         assert sc._sym_spell is not None, "SymSpell dictionary failed to load"
 
     def test_asr_rules_apply(self):
