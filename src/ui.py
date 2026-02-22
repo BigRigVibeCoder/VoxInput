@@ -636,6 +636,12 @@ class SettingsDialog(Gtk.Window):
         self.lbl_cal_result = Gtk.Label(label="")
         self.lbl_cal_result.set_halign(Gtk.Align.START)
         self.lbl_cal_result.get_style_context().add_class("hint")
+        # Show existing calibration if saved
+        saved_thresh = self.temp_settings.get("silence_threshold", 500)
+        if saved_thresh != 500:
+            self.lbl_cal_result.set_text(f"✅ Calibrated — threshold: {saved_thresh}")
+        else:
+            self.lbl_cal_result.set_text("⚠️ Not calibrated — recommended for best results")
         vbox.pack_start(self.lbl_cal_result, False, False, 0)
 
         return scroll
@@ -995,7 +1001,7 @@ class SettingsDialog(Gtk.Window):
                 result = enh.auto_calibrate()
                 recommended = result.get("recommended_threshold", 500)
                 GLib.idle_add(self.lbl_cal_result.set_text,
-                              f"✅ Noise floor: {result.get('noise_floor_rms', 0):.0f} RMS → threshold: {recommended}")
+                              f"✅ Noise floor: {result.get('noise_floor', 0):.0f} RMS → threshold: {recommended}")
                 GLib.idle_add(self.spin_thresh.set_value, float(recommended))
                 GLib.idle_add(self._set_temp, "silence_threshold", recommended)
                 GLib.idle_add(self.settings.set, "silence_threshold", recommended)

@@ -47,7 +47,7 @@ class TestGate1Speed:
     def test_xdotool_popen_no_capture(self):
         """P9-01: Popen without capture_output works correctly."""
         proc = subprocess.Popen(
-            ["xdotool", "getactivewindow"],
+            ["xdotool", "version"],
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
