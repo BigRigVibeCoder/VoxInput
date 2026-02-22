@@ -641,11 +641,11 @@ class SettingsDialog(Gtk.Window):
         self.check_agc.connect("toggled", lambda w: self._on_webrtc_sub_toggled("webrtc_analog_gain", w))
         webrtc_sub_box.pack_start(self.check_agc, False, False, 0)
 
-        # Enable/disable sub-features based on main toggle
-        noise_active = self.temp_settings.get("noise_suppression", False)
-        webrtc_sub_box.set_sensitive(noise_active)
+        # Show/hide sub-features based on main toggle
         self._webrtc_sub_box = webrtc_sub_box
         vbox.pack_start(webrtc_sub_box, False, False, 2)
+        if not self.temp_settings.get("noise_suppression", False):
+            webrtc_sub_box.hide()
 
         boost_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         lbl_boost = Gtk.Label(label="ALSA Mic Boost:")
@@ -1158,9 +1158,12 @@ class SettingsDialog(Gtk.Window):
         """Apply WebRTC noise suppression change immediately."""
         active = widget.get_active()
         self._set_temp("noise_suppression", active)
-        # Enable/disable sub-feature checkboxes
+        # Show/hide sub-feature checkboxes
         if hasattr(self, '_webrtc_sub_box'):
-            self._webrtc_sub_box.set_sensitive(active)
+            if active:
+                self._webrtc_sub_box.show_all()
+            else:
+                self._webrtc_sub_box.hide()
         try:
             from .mic_enhancer import MicEnhancer
             enhancer = MicEnhancer(self.settings)
