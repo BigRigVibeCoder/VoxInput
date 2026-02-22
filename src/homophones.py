@@ -31,7 +31,12 @@ HOMOPHONE_RULES: list[tuple[re.Pattern, str]] = [
     (re.compile(r"\b(there|they're)\s+(house|car|things?|stuff|way|place|name|family|friend|home|work|own|new|old|big|little|first|last)\b", re.I),
      lambda m: "their " + m.group(2)),
 
-    # to/too/two — "two" handled by number converter, focus on to/too
+    # to/too/two — context-aware disambiguation
+    #  "two" when followed by words that are clearly countable nouns
+    #  Uses the number system: "to" → "two" only before obvious plural nouns
+    (re.compile(r"\bto\s+(robots?|databases?|servers?|hundred|thousand|million|billion|trillion|people|things?|times?|ways?|days?|years?|hours?|minutes?|seconds?|months?|weeks?|items?|files?|pages?|lines?|words?|parts?|steps?|points?|types?|nodes?|sets?|pairs?|more|or\s+three|or\s+more|of\s+them)\b", re.I),
+     lambda m: "two " + m.group(1)),
+    #  "too" before degree adjectives
     (re.compile(r"\b(to)\s+(much|many|late|early|fast|slow|long|short|big|small|hard|easy|hot|cold|far|close|bad|good|often|little)\b", re.I),
      lambda m: "too " + m.group(2)),
     (re.compile(r"\bme (too|two)\b", re.I), "me too"),
