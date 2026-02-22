@@ -202,17 +202,21 @@ class SpellCorrector:
                     resolved = True
             
             if not resolved and self._sym_spell and word.isalpha() and not word[0].isupper() and not word.isupper():
-                suggestions = self._sym_spell.lookup(lower, self._Verbosity.CLOSEST, max_edit_distance=2)
-                if suggestions and suggestions[0].term != lower:
-                    best = suggestions[0]
-                    # Short word guard (preserve valid short words like 'is', 'to')
-                    if len(lower) <= 3:
-                        in_dict = self._sym_spell.lookup(lower, self._Verbosity.ALL, max_edit_distance=0)
-                        if not in_dict and best.count > 100:
+                # Protect common abbreviations from being "corrected"
+                _PROTECTED = {"mr", "mrs", "ms", "dr", "sr", "jr", "vs", "st",
+                              "ft", "mt", "id", "ok", "pm", "am", "tv", "uk", "us"}
+                if lower not in _PROTECTED:
+                    suggestions = self._sym_spell.lookup(lower, self._Verbosity.CLOSEST, max_edit_distance=2)
+                    if suggestions and suggestions[0].term != lower:
+                        best = suggestions[0]
+                        # Short word guard (preserve valid short words like 'is', 'to')
+                        if len(lower) <= 3:
+                            in_dict = self._sym_spell.lookup(lower, self._Verbosity.ALL, max_edit_distance=0)
+                            if not in_dict and best.count > 100:
+                                final_word = best.term
+                        elif best.count > 100:
+                            logger.debug(f"SpellCorrector: '{word}' -> '{best.term}'")
                             final_word = best.term
-                    elif best.count > 100:
-                        logger.debug(f"SpellCorrector: '{word}' -> '{best.term}'")
-                        final_word = best.term
 
             # Apply Auto-Capitalization 
             if self._cap_next and len(final_word) > 0 and final_word[0].isalpha():
@@ -225,7 +229,10 @@ class SpellCorrector:
 
         # P9-C: Phrase-level correction (2-word compound lookup)
         # Preserves original capitalization since lookup_compound lowercases
-        if self._sym_spell and len(corrected) >= 2:
+        # Skip if text contains abbreviations that lookup_compound would corrupt
+        _COMPOUND_SKIP = {"mr", "mrs", "ms", "dr", "sr", "jr", "vs", "st", "ft", "mt", "id", "ok"}
+        has_abbrev = any(w.lower().rstrip('.,;:!?') in _COMPOUND_SKIP for w in corrected)
+        if self._sym_spell and len(corrected) >= 2 and not has_abbrev:
             try:
                 compound = self._sym_spell.lookup_compound(result, max_edit_distance=2)
                 if compound and compound[0].distance > 0 and compound[0].count > 0:
@@ -327,6 +334,11 @@ class SpellCorrector:
                         if current < 100 and increment >= 10 and current >= 10:
                             current = current * 100 + increment
                         elif current < 10 and increment < 10:
+                            output.append(str(result + current))
+                            result = 0
+                            current = increment
+                        elif current < 10 and increment >= 20:
+                            # "three forty" = separate numbers (time), not 43
                             output.append(str(result + current))
                             result = 0
                             current = increment
