@@ -563,7 +563,7 @@ class SettingsDialog(Gtk.Window):
         self.level_bar.set_size_request(200, 12)
         test_row.pack_start(self.level_bar, True, True, 0)
 
-        self.btn_test = Gtk.Button(label="▶  Test (5s)")
+        self.btn_test = Gtk.Button(label="▶  Record")
         self.btn_test.connect("clicked", self._on_toggle_test)
         test_row.pack_start(self.btn_test, False, False, 0)
         vbox.pack_start(test_row, False, False, 4)
@@ -1022,11 +1022,10 @@ class SettingsDialog(Gtk.Window):
             self._start_test()
 
     def _start_test(self):
-        """Record for 5 seconds with countdown, then auto-play back."""
+        """Start recording — user pushes button again to stop."""
         import pyaudio
         self.is_testing = True
         self.recorded_frames = []
-        self._test_countdown = 5
         self.pa = pyaudio.PyAudio()
 
         def _audio_callback(in_data, frame_count, time_info, status):
@@ -1038,26 +1037,12 @@ class SettingsDialog(Gtk.Window):
             self.test_stream = self.pa.open(format=pyaudio.paInt16, channels=1,
                                             rate=16000, input=True, frames_per_buffer=1024,
                                             stream_callback=_audio_callback)
-            self.btn_test.set_label(f"🔴  Recording {self._test_countdown}s…")
-            self.btn_test.set_sensitive(False)
+            self.btn_test.set_label("⏹  Stop")
             GLib.timeout_add(100, self._update_level)
-            GLib.timeout_add(1000, self._test_countdown_tick)
         except Exception as e:
             logger.error(f"Failed to start test stream: {e}")
             self.is_testing = False
-            self.btn_test.set_label("▶  Test (5s)")
-            self.btn_test.set_sensitive(True)
-
-    def _test_countdown_tick(self):
-        """Called every second during recording to update countdown."""
-        if not self.is_testing:
-            return False
-        self._test_countdown -= 1
-        if self._test_countdown <= 0:
-            self._stop_test()
-            return False
-        self.btn_test.set_label(f"🔴  Recording {self._test_countdown}s…")
-        return True
+            self.btn_test.set_label("▶  Record")
 
     def _stop_test(self):
         self.is_testing = False
@@ -1076,8 +1061,7 @@ class SettingsDialog(Gtk.Window):
             self.recorded_frames = []
             threading.Thread(target=self._play_playback, args=(frames,)).start()
         else:
-            self.btn_test.set_label("▶  Test (5s)")
-            self.btn_test.set_sensitive(True)
+            self.btn_test.set_label("▶  Record")
 
     def _play_playback(self, frames):
         import pyaudio
@@ -1096,7 +1080,7 @@ class SettingsDialog(Gtk.Window):
         finally:
             if pa:
                 pa.terminate()
-            GLib.idle_add(self.btn_test.set_label, "▶  Test (5s)")
+            GLib.idle_add(self.btn_test.set_label, "▶  Record")
             GLib.idle_add(self.btn_test.set_sensitive, True)
 
     def _update_level(self):
