@@ -1068,11 +1068,12 @@ class SettingsDialog(Gtk.Window):
                                             rate=16000, input=True, frames_per_buffer=1024,
                                             stream_callback=_audio_callback)
             self.btn_test.set_label("⏹  Stop")
-            GLib.timeout_add(100, self._update_level)
+            self._test_level_timer = GLib.timeout_add(100, self._update_level)
+            logger.info("Test recording started")
         except Exception as e:
             logger.error(f"Failed to start test stream: {e}")
             self.is_testing = False
-            self.btn_test.set_label("▶  Record")
+            self.btn_test.set_label(f"▶  Record (err)")
 
     def _stop_test(self):
         self.is_testing = False
