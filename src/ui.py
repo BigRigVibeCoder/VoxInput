@@ -655,6 +655,51 @@ class SettingsDialog(Gtk.Window):
             self.check_agc.set_active(False)
         vbox.pack_start(webrtc_sub_box, False, False, 2)
 
+        # ── RNNoise AI Denoiser ─────────────────────────────────
+        from .mic_enhancer import MicEnhancer
+        _enhancer_probe = MicEnhancer(self.settings)
+        rnnoise_available = _enhancer_probe.is_rnnoise_available()
+
+        if rnnoise_available:
+            rnnoise_label = "🧠  RNNoise AI Denoiser (neural network — better quality, more CPU)"
+        else:
+            rnnoise_label = "🧠  RNNoise AI Denoiser (not installed)"
+
+        self.check_rnnoise = Gtk.CheckButton(label=rnnoise_label)
+        self.check_rnnoise.set_active(self.temp_settings.get("rnnoise_enabled", False))
+        self.check_rnnoise.set_sensitive(rnnoise_available)
+        self.check_rnnoise.connect("toggled", self._on_rnnoise_toggled)
+        vbox.pack_start(self.check_rnnoise, False, False, 2)
+
+        # Mutual exclusion hints
+        rnnoise_hint = Gtk.Label(label="")
+        rnnoise_hint.set_halign(Gtk.Align.START)
+        rnnoise_hint.set_margin_start(24)
+        rnnoise_hint.get_style_context().add_class("hint")
+        if not rnnoise_available:
+            rnnoise_hint.set_text("Install: sudo apt install ladspa-sdk && download librnnoise_ladspa.so")
+        else:
+            rnnoise_hint.set_text("⚡ Alternative to WebRTC — can't run both at once")
+        self._rnnoise_hint = rnnoise_hint
+        vbox.pack_start(rnnoise_hint, False, False, 0)
+
+        # ── EasyEffects Integration ─────────────────────────────
+        ee_installed = MicEnhancer.is_easyeffects_installed()
+        ee_running = MicEnhancer.is_easyeffects_running() if ee_installed else False
+
+        if not ee_installed:
+            ee_label = "🎛️  Install EasyEffects (full audio EQ/compressor)"
+        elif ee_running:
+            ee_label = "🎛️  EasyEffects — Running ✅"
+        else:
+            ee_label = "🎛️  Launch EasyEffects (EQ, compressor, gate, de-esser)"
+
+        self.btn_easyeffects = Gtk.Button(label=ee_label)
+        self.btn_easyeffects.connect("clicked", self._on_easyeffects_clicked)
+        vbox.pack_start(self.btn_easyeffects, False, False, 4)
+
+        vbox.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL), False, False, 6)
+
         boost_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         lbl_boost = Gtk.Label(label="ALSA Mic Boost:")
         lbl_boost.set_halign(Gtk.Align.START)
@@ -1213,6 +1258,10 @@ class SettingsDialog(Gtk.Window):
             from .mic_enhancer import MicEnhancer
             enhancer = MicEnhancer(self.settings)
             if active:
+                # Mutual exclusion: disable RNNoise if it's on
+                if hasattr(self, 'check_rnnoise') and self.check_rnnoise.get_active():
+                    enhancer.disable_rnnoise()
+                    self.check_rnnoise.set_active(False)
                 enhancer.enable_noise_suppression()
             else:
                 enhancer.disable_noise_suppression()
@@ -1232,6 +1281,48 @@ class SettingsDialog(Gtk.Window):
                 enhancer.enable_noise_suppression()
             except Exception as e:
                 logger.warning(f"WebRTC sub-feature reload: {e}")
+
+    def _on_rnnoise_toggled(self, widget):
+        """Toggle RNNoise AI denoiser — mutually exclusive with WebRTC."""
+        active = widget.get_active()
+        self._set_temp("rnnoise_enabled", active)
+        try:
+            from .mic_enhancer import MicEnhancer
+            enhancer = MicEnhancer(self.settings)
+            if active:
+                # Disable WebRTC first (mutual exclusion)
+                if self.temp_settings.get("noise_suppression", False):
+                    enhancer.disable_noise_suppression()
+                    self._set_temp("noise_suppression", False)
+                    self.check_noise.set_active(False)
+                enhancer.enable_rnnoise()
+            else:
+                enhancer.disable_rnnoise()
+        except Exception as e:
+            logger.warning(f"RNNoise toggle: {e}")
+
+    def _on_easyeffects_clicked(self, widget):
+        """Launch EasyEffects or show install instructions."""
+        from .mic_enhancer import MicEnhancer
+        if not MicEnhancer.is_easyeffects_installed():
+            # Show install dialog
+            dialog = Gtk.MessageDialog(
+                transient_for=self, modal=True,
+                message_type=Gtk.MessageType.INFO,
+                buttons=Gtk.ButtonsType.OK,
+                text="EasyEffects Not Installed"
+            )
+            dialog.format_secondary_text(
+                "Install via terminal:\n\n"
+                "  sudo apt install easyeffects\n\n"
+                "EasyEffects provides parametric EQ, compressor,\n"
+                "noise gate, and de-esser for your microphone."
+            )
+            dialog.run()
+            dialog.destroy()
+        else:
+            MicEnhancer.launch_easyeffects()
+            widget.set_label("🎛️  EasyEffects — Running ✅")
 
     def _close(self, save: bool):
         if save:

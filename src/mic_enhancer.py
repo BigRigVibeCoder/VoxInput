@@ -259,3 +259,122 @@ class MicEnhancer:
     def _source(self) -> str:
         """Return the PulseAudio source to operate on."""
         return self.settings.get("audio_device", "@DEFAULT_SOURCE@")
+
+    # ─── RNNoise AI Denoiser (LADSPA) ────────────────────────────────────
+
+    _RNNOISE_LIB_PATHS = [
+        "/usr/lib/ladspa/librnnoise_ladspa.so",
+        "/usr/local/lib/ladspa/librnnoise_ladspa.so",
+        "/usr/lib/x86_64-linux-gnu/ladspa/librnnoise_ladspa.so",
+    ]
+
+    def is_rnnoise_available(self) -> bool:
+        """Check if RNNoise LADSPA plugin is installed."""
+        import os
+        return any(os.path.isfile(p) for p in self._RNNOISE_LIB_PATHS)
+
+    def _rnnoise_lib_path(self) -> str | None:
+        """Return the path to the RNNoise LADSPA .so file."""
+        import os
+        for p in self._RNNOISE_LIB_PATHS:
+            if os.path.isfile(p):
+                return p
+        return None
+
+    def enable_rnnoise(self):
+        """Load PulseAudio module-ladspa-source with RNNoise plugin."""
+        rnnoise_module = self.settings.get("_rnnoise_module_id")
+        if rnnoise_module:
+            self.disable_rnnoise()
+
+        lib = self._rnnoise_lib_path()
+        if not lib:
+            logger.error("RNNoise LADSPA plugin not found")
+            return False
+
+        source = self._source()
+        try:
+            result = subprocess.check_output([
+                "pactl", "load-module", "module-ladspa-source",
+                f"source_master={source}",
+                "source_name=VoxInputRNNoise",
+                f"plugin={lib}",
+                "label=noise_suppressor_mono",
+                "control=50",  # VAD threshold (0-95, 50 = balanced)
+                "source_properties=device.description='VoxInput RNNoise Denoised'"
+            ], text=True, timeout=8)
+            mod_id = result.strip()
+            self.settings.set("_rnnoise_module_id", mod_id)
+            self.settings.set("rnnoise_enabled", True)
+            logger.info(f"RNNoise enabled (module {mod_id})")
+            return True
+        except subprocess.CalledProcessError as e:
+            logger.error(f"enable_rnnoise: pactl error — {e}")
+            return False
+        except Exception as e:
+            logger.error(f"enable_rnnoise: {e}")
+            return False
+
+    def disable_rnnoise(self):
+        """Unload the RNNoise LADSPA module."""
+        mod_id = self.settings.get("_rnnoise_module_id")
+        if not mod_id:
+            return
+        try:
+            subprocess.run(
+                ["pactl", "unload-module", str(mod_id)],
+                check=True, timeout=5, capture_output=True
+            )
+            self.settings.set("_rnnoise_module_id", None)
+            self.settings.set("rnnoise_enabled", False)
+            logger.info("RNNoise disabled")
+        except Exception as e:
+            logger.error(f"disable_rnnoise: {e}")
+
+    def is_rnnoise_active(self) -> bool:
+        """Check if RNNoise module is currently loaded."""
+        return bool(self.settings.get("_rnnoise_module_id"))
+
+    # ─── EasyEffects Integration ─────────────────────────────────────────
+
+    @staticmethod
+    def is_easyeffects_installed() -> bool:
+        """Check if EasyEffects is installed."""
+        try:
+            subprocess.run(
+                ["which", "easyeffects"], check=True,
+                capture_output=True, timeout=3
+            )
+            return True
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            return False
+
+    @staticmethod
+    def is_easyeffects_running() -> bool:
+        """Check if EasyEffects is currently running."""
+        try:
+            result = subprocess.run(
+                ["pgrep", "-x", "easyeffects"],
+                capture_output=True, timeout=3
+            )
+            return result.returncode == 0
+        except Exception:
+            return False
+
+    @staticmethod
+    def launch_easyeffects():
+        """Launch EasyEffects in the background."""
+        try:
+            subprocess.Popen(
+                ["easyeffects"],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                start_new_session=True
+            )
+            logger.info("EasyEffects launched")
+            return True
+        except FileNotFoundError:
+            logger.error("EasyEffects not found — install via: sudo apt install easyeffects")
+            return False
+        except Exception as e:
+            logger.error(f"launch_easyeffects: {e}")
+            return False
