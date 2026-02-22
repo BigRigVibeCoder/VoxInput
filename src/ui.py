@@ -644,14 +644,16 @@ class SettingsDialog(Gtk.Window):
         self.check_agc.connect("toggled", lambda w: self._on_webrtc_sub_toggled("webrtc_analog_gain", w))
         webrtc_sub_box.pack_start(self.check_agc, False, False, 0)
 
-        # Show/hide sub-features based on main toggle
+        # Sub-features: always visible, greyed out when parent is off
         self._webrtc_sub_box = webrtc_sub_box
-        webrtc_sub_box.set_no_show_all(True)  # prevent dialog show_all() from overriding
+        noise_on = self.temp_settings.get("noise_suppression", False)
+        webrtc_sub_box.set_sensitive(noise_on)
+        if not noise_on:
+            self.check_hpf.set_active(False)
+            self.check_vad.set_active(False)
+            self.check_dgc.set_active(False)
+            self.check_agc.set_active(False)
         vbox.pack_start(webrtc_sub_box, False, False, 2)
-        if self.temp_settings.get("noise_suppression", False):
-            webrtc_sub_box.show_all()
-        else:
-            webrtc_sub_box.hide()
 
         boost_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         lbl_boost = Gtk.Label(label="ALSA Mic Boost:")
@@ -830,6 +832,26 @@ class SettingsDialog(Gtk.Window):
         self.check_voice_punct.set_active(self.temp_settings.get("voice_punctuation", True))
         self.check_voice_punct.connect("toggled", lambda w: self._set_temp("voice_punctuation", w.get_active()))
         inner.pack_start(self.check_voice_punct, False, False, 4)
+
+        self.check_autocap = Gtk.CheckButton(label="Aa  Auto-Capitalization (capitalize after sentence-end)")
+        self.check_autocap.set_active(self.temp_settings.get("auto_capitalization", True))
+        self.check_autocap.connect("toggled", lambda w: self._set_temp("auto_capitalization", w.get_active()))
+        inner.pack_start(self.check_autocap, False, False, 4)
+
+        self.check_numbers = Gtk.CheckButton(label="🔢  Number Conversion ('twenty one' → 21)")
+        self.check_numbers.set_active(self.temp_settings.get("number_conversion", True))
+        self.check_numbers.connect("toggled", lambda w: self._set_temp("number_conversion", w.get_active()))
+        inner.pack_start(self.check_numbers, False, False, 4)
+
+        self.check_homophones = Gtk.CheckButton(label="🔄  Homophone Fixer (their/there/they're)")
+        self.check_homophones.set_active(self.temp_settings.get("homophones", True))
+        self.check_homophones.connect("toggled", lambda w: self._set_temp("homophones", w.get_active()))
+        inner.pack_start(self.check_homophones, False, False, 4)
+
+        self.check_confidence = Gtk.CheckButton(label="🎯  Confidence Filter (drop low-confidence ASR words)")
+        self.check_confidence.set_active(self.temp_settings.get("confidence_filter", True))
+        self.check_confidence.connect("toggled", lambda w: self._set_temp("confidence_filter", w.get_active()))
+        inner.pack_start(self.check_confidence, False, False, 4)
 
         inner.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL), False, False, 8)
         inner.pack_start(_section_label("📋  Diagnostics"), False, False, 0)
@@ -1174,12 +1196,19 @@ class SettingsDialog(Gtk.Window):
         """Apply WebRTC noise suppression change immediately."""
         active = widget.get_active()
         self._set_temp("noise_suppression", active)
-        # Show/hide sub-feature checkboxes
+        # Grey out + uncheck sub-features when off, restore when on
         if hasattr(self, '_webrtc_sub_box'):
+            self._webrtc_sub_box.set_sensitive(active)
             if active:
-                self._webrtc_sub_box.show_all()
+                self.check_hpf.set_active(self.settings.get("webrtc_high_pass_filter", True))
+                self.check_vad.set_active(self.settings.get("webrtc_voice_detection", True))
+                self.check_dgc.set_active(self.settings.get("webrtc_digital_gain", True))
+                self.check_agc.set_active(self.settings.get("webrtc_analog_gain", False))
             else:
-                self._webrtc_sub_box.hide()
+                self.check_hpf.set_active(False)
+                self.check_vad.set_active(False)
+                self.check_dgc.set_active(False)
+                self.check_agc.set_active(False)
         try:
             from .mic_enhancer import MicEnhancer
             enhancer = MicEnhancer(self.settings)
