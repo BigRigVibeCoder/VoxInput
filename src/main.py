@@ -353,7 +353,11 @@ class VoxInputApp:
             return
 
         try:
-            # 2. Get the complete transcript (safe — audio stream is stopped)
+            # 2. Reset committed_text so finalize() returns ALL words
+            #    (during streaming, process_audio commits words progressively;
+            #     finalize() subtracts committed words and only returns the tail)
+            if self.recognizer:
+                self.recognizer.committed_text = []
             final_text = self.recognizer.finalize()
 
             # 3. Flush any pending number from spell corrector
