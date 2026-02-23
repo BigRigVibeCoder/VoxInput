@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 # Add project root to path
-ROOT = Path("/home/bdavidriggins/Documents/VoxInput")
+ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
 from tests.e2e.test_golden_e2e import transcribe_wav, parse_ground_truth, word_error_rate, normalize

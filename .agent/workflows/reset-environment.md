@@ -39,8 +39,9 @@ Expected: 0 python processes, 15+ GB available memory, minimal swap usage.
 ## 4. Clear Stale Lock Files
 // turbo
 ```bash
+PROJ_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 rm -f /tmp/voxinput.lock 2>/dev/null
-rm -f /home/bdavidriggins/Documents/VoxInput/*.log 2>/dev/null
+rm -f "$PROJ_DIR"/*.log 2>/dev/null
 echo "Lock files and logs cleared"
 ```
 
@@ -57,24 +58,25 @@ At this point the environment is clean. Choose one:
 
 ### Run Unit Tests (fast, no model load)
 ```bash
-cd /home/bdavidriggins/Documents/VoxInput && source venv/bin/activate && python -m pytest tests/unit -q --tb=short
+cd "$(git rev-parse --show-toplevel)" && source venv/bin/activate && python -m pytest tests/unit -q --tb=short
 ```
 
 ### Run Unit Tests with Coverage
 ```bash
-cd /home/bdavidriggins/Documents/VoxInput && source venv/bin/activate && python -m pytest tests/unit -q --tb=short --cov=src --cov-report=term-missing
+cd "$(git rev-parse --show-toplevel)" && source venv/bin/activate && python -m pytest tests/unit -q --tb=short --cov=src --cov-report=term-missing
 ```
 
 ### Restart VoxInput (after testing)
 ```bash
-source /home/bdavidriggins/Documents/VoxInput/venv/bin/activate && nohup python /home/bdavidriggins/Documents/VoxInput/run.py > /home/bdavidriggins/Documents/VoxInput/startup_trace.log 2>&1 & disown
+PROJ_DIR="$(git rev-parse --show-toplevel)"
+source "$PROJ_DIR/venv/bin/activate" && nohup python "$PROJ_DIR/run.py" > "$PROJ_DIR/startup_trace.log" 2>&1 & disown
 sleep 3 && pgrep -af "VoxInput/run.py"
 ```
 
 ### WER Test (requires ~4GB free RAM for gigaspeech model)
 **IMPORTANT**: Do NOT run WER tests while VoxInput is running — the gigaspeech model needs ~2.3GB RAM and loading two copies will hang the system.
 ```bash
-cd /home/bdavidriggins/Documents/VoxInput && source venv/bin/activate
+cd "$(git rev-parse --show-toplevel)" && source venv/bin/activate
 # Stop VoxInput FIRST, then:
 timeout 120 python -u tools/wer_paragraph.py
 # Restart VoxInput AFTER

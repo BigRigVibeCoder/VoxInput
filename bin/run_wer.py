@@ -12,7 +12,7 @@ from vosk import KaldiRecognizer, Model
 
 RECORDINGS = os.path.join(os.path.dirname(__file__), "..", "tests", "fixtures", "golden", "recordings")
 GROUND_TRUTH_FILE = os.path.join(os.path.dirname(__file__), "..", "tests", "fixtures", "golden", "ground_truth.md")
-MODEL_PATH = "/home/bdavidriggins/Documents/VoxInput/model/gigaspeech"
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "..", "model", "gigaspeech")
 CHUNK = 3200 * 2  # 200ms @ 16kHz × 2 bytes/sample int16
 
 # ─── Ground Truth Parser ───────────────────────────────────────────────────────
