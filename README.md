@@ -13,7 +13,7 @@
 
 *Dictate text into any application using your voice. 100% offline. 100% private.*
 
-[**Quick Start**](#-quick-start) • [**Features**](#-features) • [**Architecture**](#-architecture) • [**Settings**](#-settings-reference) • [**Contributing**](#-contributing)
+[**Quick Start**](#-quick-start) • [**Features**](#-features) • [**Tech Stack**](#-technology-stack) • [**Architecture**](#-architecture) • [**Settings**](#-settings-reference) • [**Contributing**](#-contributing)
 
 </div>
 
@@ -24,15 +24,20 @@
 | Feature | Description |
 |---------|-------------|
 | 🔒 **Privacy-First** | All processing happens locally. No internet required. No data leaves your machine. |
-| ⚡ **Real-Time** | Text appears as you speak via the Vosk streaming engine |
-| 🎯 **Universal** | Works in any text field — browsers, terminals, editors, chat apps |
-| ⌨️ **Global Hotkey** | Toggle with `Super+Shift+V` from anywhere |
-| 🔄 **Dual Engines** | Vosk (fast, streaming) or Whisper (accurate, punctuated) |
-| ✨ **Smart Correction** | SymSpell post-processing fixes ASR errors (`teh→the`, `adn→and`) |
+| ⚡ **Real-Time Streaming** | Text appears as you speak — Vosk delivers partial results with sub-200ms latency |
+| 🎯 **Universal Injection** | Works in any text field — browsers, terminals, editors, chat apps, IDEs |
+| ⌨️ **Global Hotkey** | Toggle with `Super+Shift+V` from anywhere via `pynput` |
+| 🔄 **Dual ASR Engines** | Vosk (fast, streaming) or OpenAI Whisper (accurate, GPU-accelerated) |
+| 🧠 **Smart NLP Pipeline** | SymSpell + ASR rules + number parsing + grammar engine + homophone resolver |
 | 📖 **Protected Words** | SQLite database of 1,400+ tech/AI/Linux terms that are never corrected |
-| 🎙️ **Mic Enhancement** | Noise suppression, gain control, auto-calibration |
-| 📊 **Live OSD** | Floating waveform overlay shows dictation in real-time |
-| 🔍 **Trace Logging** | Full SQLite black-box log of every recognition event |
+| 🎙️ **Three Noise Engines** | WebRTC AEC, RNNoise AI denoiser, or EasyEffects — pick your fighter |
+| 🔊 **Voice Punctuation** | Say "period", "comma", "new paragraph" — supports cross-batch buffering |
+| 🔢 **Number Intelligence** | "one hundred twenty three" → `123`, "twenty first" → `21st` |
+| 📊 **Live OSD** | Floating waveform overlay shows dictation state in real-time |
+| 🏎️ **C Extension** | Native `librms.so` — zero-Python-overhead RMS + PCM→float32 conversion |
+| 🖥️ **Hardware Auto-Tune** | Detects CPU/RAM/GPU at startup and auto-selects optimal engine settings |
+| 🔍 **Flight Recorder** | Enterprise SQLite black-box logger with TRACE level + crash artifacts |
+| 🖱️ **Tray App + Desktop** | GTK3 system tray with full settings dialog, mic test, and desktop icon |
 
 ---
 
@@ -41,10 +46,17 @@
 ### Prerequisites
 
 ```bash
-# Required system packages
+# Ubuntu/Debian — required system packages
 sudo apt install python3-venv python3-gi python3-gi-cairo \
                  gir1.2-gtk-3.0 gir1.2-appindicator3-0.1 \
-                 portaudio19-dev xdotool ydotool
+                 portaudio19-dev xdotool
+
+# Optional (for Wayland-native injection)
+sudo apt install ydotool
+
+# Optional (for RNNoise AI denoiser)
+sudo apt install libladspa-ocaml-dev
+# or install noise-suppression-for-voice from GitHub
 ```
 
 ### Install
@@ -56,69 +68,170 @@ bash install.sh
 ```
 
 The installer:
-1. Creates a Python virtualenv and installs all dependencies
-2. Downloads the Vosk English model (~50MB)
-3. Seeds the protected-words database with 1,400+ tech/AI/developer terms
-4. Installs a desktop entry and tray icon
-5. Auto-starts VoxInput on login (optional)
+1. Creates a Python virtualenv and installs all dependencies (~50 packages)
+2. Compiles the C RMS extension (`librms.so`) with `-O3 -march=native`
+3. Downloads the Vosk English model (~50MB)
+4. Seeds the protected-words database with 1,400+ tech/AI/developer terms
+5. Installs a `.desktop` entry and tray icon system-wide
+6. Configures optional auto-start on login
 
 ### Launch
 
 ```bash
-python3 run.py        # CLI
-# OR click the VoxInput icon in your app launcher
+python3 run.py                   # CLI
+# OR click the VoxInput icon in your app launcher / desktop
+# OR toggle with Super+Shift+V
 ```
+
+### Verify Installation
+
+```bash
+# Run the unit test suite
+source venv/bin/activate
+pytest tests/unit/ -v
+```
+
+---
+
+## 🔧 Technology Stack
+
+### Core Speech Engines
+
+| Technology | Role | Details |
+|-----------|------|---------|
+| **[Vosk](https://alphacephei.com/vosk/)** | Primary ASR engine | Offline Kaldi-based, real-time streaming, ~50MB model |
+| **[OpenAI Whisper](https://github.com/openai/whisper)** | Alternate ASR engine | GPU-accelerated (CUDA float16/int8), auto-punctuation |
+| **[SymSpell](https://github.com/wolfgarbe/SymSpell)** | Spell correction | 1M+ words/sec edit-distance lookup, frequency-ranked |
+
+### Audio Pipeline
+
+| Technology | Role | Details |
+|-----------|------|---------|
+| **[PyAudio](https://people.csail.mit.edu/hubert/pyaudio/)** | Audio capture | 16kHz mono, int16 PCM via PortAudio bindings |
+| **librms.so** (C) | RMS + PCM conversion | Custom ctypes extension — zero Python overhead |
+| **[PulseAudio](https://www.freedesktop.org/wiki/Software/PulseAudio/)** / **PipeWire** | Device management | `pactl` for source enumeration, volume, default device |
+| **WebRTC AEC** | Noise suppression | PulseAudio `module-echo-cancel` with 5 tunable sub-features |
+| **[RNNoise](https://jmvalin.ca/demo/rnnoise/)** | AI denoiser | LADSPA plugin via `module-ladspa-source` |
+| **[EasyEffects](https://github.com/wwmm/easyeffects)** | Advanced audio DSP | Optional GUI-based effects chain launcher |
+
+### Text Processing
+
+| Technology | Role | Details |
+|-----------|------|---------|
+| **ASR Rules Engine** | Artifact correction | `gonna→going to`, `woulda→would have`, 20+ substitution rules |
+| **Number Parser** | Spoken→numeric | Handles cardinals, ordinals, scales (`one hundred→100`, `twenty first→21st`) |
+| **Homophone Resolver** | Context-aware fixes | Regex-based: `their/there/they're`, `to/too/two`, `its/it's`, `your/you're`, `then/than`, `affect/effect` |
+| **Grammar Engine** | Sentence structure | Auto-capitalization, cross-batch state tracking |
+| **[SQLite](https://sqlite.org/)** | Protected words DB | In-memory `set[str]` for O(1) lookups, WAL mode, 1,400+ seed terms |
+
+### Desktop Integration
+
+| Technology | Role | Details |
+|-----------|------|---------|
+| **[GTK3](https://docs.gtk.org/gtk3/)** (`gi`) | UI framework | System tray, settings dialog, OSD waveform overlay |
+| **[AppIndicator3](https://lazka.github.io/pgi-docs/AppIndicator3-0.1/)** | Tray icon | Idle/active SVG state icons |
+| **[pynput](https://pynput.readthedocs.io/)** | Global hotkey | `Super+Shift+V` keyboard listener |
+| **xdotool** / **ydotool** | Text injection | X11 and Wayland-native keystroke simulation |
+| **pynput** (fallback) | Text injection | Pure-Python X11 fallback when neither tool is available |
+| **fcntl** | Singleton lock | `/tmp/voxinput.lock` — prevents duplicate instances |
+
+### Observability
+
+| Technology | Role | Details |
+|-----------|------|---------|
+| **SQLite** | Flight recorder | `logs/voxinput_logging.db` — every event, batched writes, auto-trim |
+| **TRACE level** (5) | High-frequency logging | Custom level below DEBUG for audio loop events |
+| **Crash artifacts** | Post-mortem | `crash_artifacts` table with stack traces + system state snapshots |
+| **`sys.excepthook`** | Root handler | Catches all unhandled exceptions, writes crash artifact before exit |
+
+### Hardware Intelligence
+
+| Component | Detection | Impact |
+|-----------|-----------|--------|
+| **CPU cores** | `psutil` / `os.cpu_count()` | Vosk chunk size: 100ms (8+ cores), 150ms (4+), 200ms (2) |
+| **RAM** | `psutil` / `/proc/meminfo` | Memory-aware model selection |
+| **GPU (CUDA)** | `torch.cuda` / `nvidia-smi` | Whisper backend: `cuda/float16` (≥4GB), `cuda/int8` (≥2GB), `cpu/int8` (fallback) |
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-VoxInput
-├── run.py                  # Entry point + singleton lock
+VoxInput/
+├── run.py                      # Entry point, singleton lock, stale-process cleanup
 ├── src/
-│   ├── main.py             # VoxInputApp orchestrator
-│   ├── audio.py            # PyAudio capture (16kHz mono)
-│   ├── recognizer.py       # Vosk / Whisper engine abstraction
-│   ├── spell_corrector.py  # SymSpell + ASR rules + WordDB passthrough
-│   ├── word_db.py          # SQLite protected-words DB (in-memory set)
-│   ├── injection.py        # xdotool / ydotool text injection
-│   ├── mic_enhancer.py     # Noise gate, AGC, calibration
-│   ├── ui.py               # GTK3 tray app + Settings dialog + OSD
-│   ├── logger.py           # Enterprise SQLite trace logger
-│   └── settings.py         # JSON settings manager
+│   ├── main.py                 # VoxInputApp orchestrator (4 threads)
+│   ├── audio.py                # PyAudio capture (16kHz mono int16)
+│   ├── recognizer.py           # Vosk / Whisper engine abstraction
+│   ├── spell_corrector.py      # SymSpell + ASR rules + numbers + grammar
+│   ├── homophones.py           # Context-aware homophone resolver (regex-based)
+│   ├── word_db.py              # SQLite protected-words DB (in-memory set)
+│   ├── injection.py            # xdotool / ydotool / pynput text injection
+│   ├── mic_enhancer.py         # WebRTC / RNNoise / EasyEffects / auto-calibrate
+│   ├── pulseaudio_helper.py    # PulseAudio/PipeWire source enumeration
+│   ├── hardware_profile.py     # CPU / RAM / GPU auto-detection (singleton)
+│   ├── ui.py                   # GTK3 tray + settings dialog + OSD overlay
+│   ├── config.py               # App constants (paths, hotkey, sample rate)
+│   ├── settings.py             # JSON settings manager
+│   ├── logger.py               # Enterprise SQLite flight recorder
+│   └── c_ext/
+│       ├── rms.c               # Fast RMS + PCM→float32 (gcc -O3)
+│       ├── librms.so           # Compiled shared library
+│       └── __init__.py         # ctypes bindings
 ├── data/
-│   ├── seed_words.py       # 1,400+ initial protected-word seed dataset
-│   └── custom_words.db     # SQLite protected words (auto-created, gitignored)
+│   ├── seed_words.py           # 1,400+ initial protected-word seed dataset
+│   └── custom_words.db         # SQLite protected words (auto-created, gitignored)
 ├── assets/
-│   ├── icon_idle.svg
-│   └── icon_active.svg
-├── docs/
-│   ├── CONTRIBUTING.md
-│   ├── PHANTOM.md          # Feature spec: Phantom Signal v2
-│   └── VX-FED-001.md       # Feature spec: Federated dictation
-└── tests/
+│   ├── icon_idle.svg           # Tray icon: idle state
+│   └── icon_active.svg         # Tray icon: listening state
+├── bin/
+│   ├── toggle.sh               # SIGUSR1 toggle script for hotkey binding
+│   ├── gate_check.sh           # Pre-commit quality gate
+│   └── ...                     # Benchmarking and packaging tools
+├── tests/                      # Unit, integration, and E2E test suite
+├── docs/                       # CONTRIBUTING.md, feature specs
+└── logs/                       # SQLite flight recorder database
 ```
 
 ### Speech Pipeline
 
 ```
 Microphone
-    ↓ PyAudio (16kHz, mono, float32)
-    ↓ RMS level meter (C extension)
-MicEnhancer (noise gate + AGC)
+    ↓ PyAudio (16kHz, mono, int16)
+    ↓ librms.so — C native RMS level measurement
+MicEnhancer
+    ├── WebRTC AEC (noise gate + AGC + VAD + high-pass)
+    ├── RNNoise AI denoiser (LADSPA plugin)
+    └── EasyEffects (external DSP chain)
     ↓
-SpeechRecognizer (Vosk streaming OR Whisper batch)
-    ↓ raw text
+SpeechRecognizer
+    ├── Vosk: real-time streaming, partial results every 100–200ms
+    └── Whisper: batch mode, GPU-accelerated (CUDA float16/int8)
+    ↓ raw words
+VoicePunctuationBuffer
+    ↓ cross-batch command assembly ("new" + "line" → "\n")
 SpellCorrector
-    ├── ASR artifact rules  (gonna→going\ to,  woulda→would\ have…)
-    ├── WordDatabase check  (O(1) set lookup — never correct protected words)
-    └── SymSpell lookup     (edit-distance ≤ 2, frequency-ranked)
+    ├── 1. ASR artifact rules  (gonna→going to, woulda→would have…)
+    ├── 2. Number parser       (one hundred twenty three → 123)
+    ├── 3. WordDatabase check  (O(1) set lookup — never correct protected words)
+    ├── 4. SymSpell lookup     (edit-distance ≤ 2, frequency-ranked)
+    └── 5. Grammar engine      (auto-capitalize, sentence tracking)
     ↓ corrected text
-TextInjector (xdotool type / ydotool type)
+HomophoneResolver
+    ↓ context-aware fixes (their/there/they're, to/too/two…)
+TextInjector (ydotool → xdotool → pynput)
     ↓
 Active window receives text ✓
 ```
+
+### Threading Model
+
+| Thread | Responsibility |
+|--------|---------------|
+| **GTK Main** | UI rendering, tray icon, settings dialog, OSD |
+| **Audio Capture** | PyAudio callback → queue (real-time priority) |
+| **Process Loop** | Recognizer → SpellCorrector → homophone → injection queue |
+| **Injection Loop** | Drains queue → xdotool/ydotool keystroke simulation |
 
 ---
 
@@ -129,18 +242,20 @@ Open with `Super+Shift+V` → tray icon → **Settings**, or right-click the tra
 ### 🎤 Audio Tab
 | Setting | Description |
 |---------|-------------|
-| Input Device | Microphone selection |
-| Mic Test | Record + playback to verify input |
-| Noise Suppression | WebRTC-style noise gate |
+| Input Device | PulseAudio/PipeWire source selection |
+| Mic Test | Record + playback to verify input quality |
+| Noise Suppression | WebRTC AEC with 5 sub-toggles (noise gate, HF filter, VAD, analog/digital gain) |
+| RNNoise | AI-powered noise suppression via LADSPA plugin |
+| EasyEffects | Launch external DSP effects chain |
 | Gain | Input amplification (0.5–4.0×) |
-| Auto-Calibrate | Set noise floor from ambient sample |
+| Auto-Calibrate | Sample ambient noise floor → set threshold + volume automatically |
 
 ### 🧠 Engine Tab
 | Setting | Description |
 |---------|-------------|
-| Engine | `vosk` (real-time) or `whisper` (accurate) |
+| Engine | `Vosk` (real-time streaming) or `Whisper` (accurate, GPU) |
+| Vosk Model | Dropdown model selector with validation |
 | Whisper Model | tiny / base / small / medium / large |
-| Vosk Model Path | Path to unpacked Vosk model directory |
 | Silence Threshold | Seconds of silence before finalizing phrase |
 | Speed Mode | `fast` skips spell correction for lowest latency |
 
@@ -149,8 +264,10 @@ Open with `Super+Shift+V` → tray icon → **Settings**, or right-click the tra
 |---------|-------------|
 | Spell Correction | Enable/disable SymSpell post-processing |
 | Voice Punctuation | Say "period", "comma", "new line" to insert punctuation |
+| Homophone Correction | Context-aware their/there/they're, to/too/two fixes |
+| Number Parsing | Convert spoken numbers to digits (one hundred → 100) |
 
-### 📖 Words Tab *(new)*
+### 📖 Words Tab
 Browse, search, add, and remove entries in the **Protected Words** database.
 
 - Words in this list are **never spell-corrected** — passed through exactly as spoken
@@ -165,10 +282,13 @@ Browse, search, add, and remove entries in the **Protected Words** database.
 
 ## 📖 Protected Words Database
 
-The spell corrector uses a two-pass approach:
+The spell corrector uses a multi-pass approach:
 
-1. **SymSpell** — ultra-fast edit-distance dictionary lookup (1M+ words/sec)
-2. **WordDatabase** — SQLite-backed exclusion list loaded into a `set[str]` at startup
+1. **ASR Rules** — substitution table for common speech-to-text artifacts
+2. **Number Parser** — converts spoken numbers to digits with ordinal support
+3. **WordDatabase** — SQLite-backed exclusion list loaded into a `set[str]` at startup
+4. **SymSpell** — ultra-fast edit-distance dictionary lookup (1M+ words/sec)
+5. **Grammar** — auto-capitalization and sentence state tracking
 
 Words in the database are never corrected, regardless of what SymSpell suggests.
 
@@ -209,11 +329,29 @@ print(db.count(), 'words protected')
 ## 🔧 Singleton & Desktop Integration
 
 VoxInput uses `fcntl.flock()` on `/tmp/voxinput.lock` to prevent duplicate instances.
-Clicking the desktop icon while VoxInput is already running shows a notification instead of launching again.
+On launch, stale processes are detected via `pgrep` and cleaned up automatically.
+A poll-wait mechanism ensures clean handoff when GNOME fires a double-launch from the desktop icon.
 
 The desktop entry is installed to:
 - `~/.local/share/applications/voxinput.desktop`
 - `~/Desktop/voxinput.desktop`
+
+---
+
+## 📋 Recent Upgrades
+
+| Version | Change |
+|---------|--------|
+| **Feb 23** | Fix GNOME desktop-icon race condition in singleton lock |
+| **Feb 22** | RNNoise AI denoiser + EasyEffects launcher + Processing toggles |
+| **Feb 22** | Homophone resolver: `their/there/they're`, `to/too/two`, `its/it's`, `your/you're` |
+| **Feb 21** | WebRTC sub-feature toggles (5 individual controls) |
+| **Feb 20** | Enterprise SQLite flight recorder with TRACE level + crash artifacts |
+| **Feb 20** | Performance Overhaul v2.0 — 10 improvements across speed, memory, quality |
+| **Feb 19** | Number intelligence: spoken→numeric conversion with ordinals |
+| **Feb 19** | Cross-batch voice punctuation buffering |
+| **Feb 18** | C extension `librms.so` for zero-overhead RMS computation |
+| **Feb 18** | Hardware auto-detection (CPU/RAM/CUDA) with engine tuning |
 
 ---
 
@@ -238,7 +376,7 @@ pip install -r requirements.txt -r requirements-dev.txt
 pytest tests/unit/ -v
 ```
 
-**Good first issues:** additional seed words, new ASR correction rules, Wayland injection improvements, Whisper VAD integration.
+**Good first issues:** additional seed words, new ASR correction rules, Wayland injection improvements, Whisper VAD integration, new homophone groups.
 
 ---
 
