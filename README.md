@@ -27,9 +27,11 @@
 | ⚡ **Real-Time Streaming** | Text appears as you speak — Vosk delivers partial results with sub-200ms latency |
 | 🎯 **Universal Injection** | Works in any text field — browsers, terminals, editors, chat apps, IDEs |
 | ⌨️ **Global Hotkey** | Toggle with `Super+Shift+V` from anywhere via `pynput` |
+| 🎙️ **Push-to-Talk** | Hold a configurable key (default: Right Ctrl) — speak — release to inject. Full utterance captured. |
 | 🔄 **Dual ASR Engines** | Vosk (fast, streaming) or OpenAI Whisper (accurate, GPU-accelerated) |
-| 🧠 **Smart NLP Pipeline** | SymSpell + ASR rules + number parsing + grammar engine + homophone resolver |
-| 📖 **Protected Words** | SQLite database of 1,400+ tech/AI/Linux terms that are never corrected |
+| 🧠 **Smart NLP Pipeline** | Compound corrections + SymSpell + ASR rules + numbers + grammar + homophones |
+| 📖 **Custom Dictionary** | SQLite DB of 1,400+ tech/AI/Linux terms — injected into SymSpell as correction *targets* |
+| 🔗 **Compound Corrections** | DB-driven multi-word ASR correction: `"pie torch"→PyTorch`, `"engine next"→nginx` (35 defaults, user-extensible) |
 | 🎙️ **Three Noise Engines** | WebRTC AEC, RNNoise AI denoiser, or EasyEffects — pick your fighter |
 | 🔊 **Voice Punctuation** | Say "period", "comma", "new paragraph" — supports cross-batch buffering |
 | 🔢 **Number Intelligence** | "one hundred twenty three" → `123`, "twenty first" → `21st` |
@@ -38,6 +40,7 @@
 | 🖥️ **Hardware Auto-Tune** | Detects CPU/RAM/GPU at startup and auto-selects optimal engine settings |
 | 🔍 **Flight Recorder** | Enterprise SQLite black-box logger with TRACE level + crash artifacts |
 | 🖱️ **Tray App + Desktop** | GTK3 system tray with full settings dialog, mic test, and desktop icon |
+| 🎯 **Golden Test Suite** | Record once, test forever — WER accuracy regression testing with 6 test paragraphs |
 
 ---
 
@@ -207,14 +210,15 @@ MicEnhancer
 SpeechRecognizer
     ├── Vosk: real-time streaming, partial results every 100–200ms
     └── Whisper: batch mode, GPU-accelerated (CUDA float16/int8)
-    ↓ raw words
+    ↓ raw words  (PTT mode: buffered until key release)
 VoicePunctuationBuffer
     ↓ cross-batch command assembly ("new" + "line" → "\n")
 SpellCorrector
+    ├── 0. Compound corrections (DB: "pie torch"→PyTorch, "engine next"→nginx)
     ├── 1. ASR artifact rules  (gonna→going to, woulda→would have…)
     ├── 2. Number parser       (one hundred twenty three → 123)
     ├── 3. WordDatabase check  (O(1) set lookup — never correct protected words)
-    ├── 4. SymSpell lookup     (edit-distance ≤ 2, frequency-ranked)
+    ├── 4. SymSpell lookup     (edit-distance ≤ 2, custom words injected at 1M frequency)
     └── 5. Grammar engine      (auto-capitalize, sentence tracking)
     ↓ corrected text
 HomophoneResolver
@@ -238,6 +242,13 @@ Active window receives text ✓
 ## ⚙️ Settings Reference
 
 Open with `Super+Shift+V` → tray icon → **Settings**, or right-click the tray icon.
+
+### 🎤 Dictation Mode Tab
+| Setting | Description |
+|---------|-------------|
+| Mode | **Always On** (toggle with hotkey) or **Push-to-Talk** (hold key to speak) |
+| PTT Key | Configurable keybind — click "Record Key" and press any key/combo |
+| PTT Behavior | Hold to record → release to process full utterance → inject text |
 
 ### 🎤 Audio Tab
 | Setting | Description |
@@ -271,6 +282,7 @@ Open with `Super+Shift+V` → tray icon → **Settings**, or right-click the tra
 Browse, search, add, and remove entries in the **Protected Words** database.
 
 - Words in this list are **never spell-corrected** — passed through exactly as spoken
+- Custom words are **injected into SymSpell** as high-frequency correction targets (1M)
 - Ships with **1,400+ seed words**: tech abbreviations, AI/ML terms, Linux distros & tools, developer frameworks, brands, US places & names, Agile/Scrum vocabulary, futurist/emerging tech
 - **Search** the list by word or category
 - **Add** a word → choose category → Enter or click ➕ Add
@@ -284,13 +296,40 @@ Browse, search, add, and remove entries in the **Protected Words** database.
 
 The spell corrector uses a multi-pass approach:
 
-1. **ASR Rules** — substitution table for common speech-to-text artifacts
-2. **Number Parser** — converts spoken numbers to digits with ordinal support
-3. **WordDatabase** — SQLite-backed exclusion list loaded into a `set[str]` at startup
-4. **SymSpell** — ultra-fast edit-distance dictionary lookup (1M+ words/sec)
-5. **Grammar** — auto-capitalization and sentence state tracking
+1. **Compound Corrections** — DB-driven multi-word ASR correction (35 defaults, user-extensible)
+2. **ASR Rules** — substitution table for common speech-to-text artifacts
+3. **Number Parser** — converts spoken numbers to digits with ordinal support
+4. **WordDatabase** — SQLite-backed exclusion list loaded into a `set[str]` at startup
+5. **SymSpell** — ultra-fast edit-distance dictionary lookup (custom words injected at 1M frequency)
+6. **Grammar** — auto-capitalization and sentence state tracking
 
 Words in the database are never corrected, regardless of what SymSpell suggests.
+Custom words are also *injected* into SymSpell so misspellings correct *toward* your dictionary terms.
+
+### Compound Corrections
+
+Vosk often splits unknown tech terms into phonetically similar English words:
+
+| Vosk Hears | Corrected To |
+|---|---|
+| `cooper eighties` | `kubernetes` |
+| `pie torch` | `PyTorch` |
+| `engine next` | `nginx` |
+| `tail scale` | `Tailscale` |
+| `rough fauna` | `Grafana` |
+| `pincer flow` | `TensorFlow` |
+| `and symbol` | `Ansible` |
+| `a p i` | `API` |
+
+These are stored in the `compound_corrections` table in `custom_words.db`.
+Add your own via terminal:
+```bash
+python3 -c "
+from src.word_db import WordDatabase
+db = WordDatabase('data/custom_words.db')
+db.add_compound_correction('my misheard phrase', 'CorrectWord')
+"
+```
 
 ### Seed Categories
 
@@ -342,6 +381,10 @@ The desktop entry is installed to:
 
 | Version | Change |
 |---------|--------|
+| **Feb 23** | 🎙️ **Push-to-Talk mode** — hold key to record, release to inject. Full utterance buffering. |
+| **Feb 23** | 🔗 **DB-driven compound corrections** — 35 multi-word ASR correction rules in SQLite |
+| **Feb 23** | 📊 **SymSpell dictionary injection** — 1,437 custom words as correction *targets* |
+| **Feb 23** | 🎯 **Golden Paragraph F** — dictionary test recording + WER regression testing |
 | **Feb 23** | Fix GNOME desktop-icon race condition in singleton lock |
 | **Feb 22** | RNNoise AI denoiser + EasyEffects launcher + Processing toggles |
 | **Feb 22** | Homophone resolver: `their/there/they're`, `to/too/two`, `its/it's`, `your/you're` |
