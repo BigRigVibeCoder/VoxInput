@@ -204,8 +204,12 @@ class SpeechRecognizer:
                     
         except Exception as e:
             logger.error(f"Vosk processing error: {e}")
-            # In case of error, just reset stream state to avoid loop
-            self.committed_text = [] 
+            # Auto-recover: reset recognizer to prevent C-level abort on next call
+            try:
+                self.reset_recognizer()
+                logger.info("Auto-recovered from Vosk error (recognizer reset)")
+            except Exception:
+                pass
             return None
 
         if new_words_to_inject:

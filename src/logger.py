@@ -417,7 +417,79 @@ def set_log_level(level_name: str) -> None:
 # ─── Root exception hook ──────────────────────────────────────────────────────
 
 def _install_excepthook(component: str) -> None:
-    """Install sys.excepthook to catch all unhandled exceptions."""
+    """Install sys.excepthook to catch all unhandled exceptions.
+
+    Enterprise behavior: log to SQLite crash_artifacts, show a GTK error
+    dialog with copyable stack trace, but do NOT kill the application.
+    """
+
+    def _show_error_dialog(error_id: str, trace: str) -> None:
+        """Show a GTK error dialog on the main thread (non-blocking)."""
+        try:
+            import gi
+            gi.require_version('Gtk', '3.0')
+            from gi.repository import Gtk, GLib, Pango
+
+            def _build_dialog():
+                dialog = Gtk.Dialog(
+                    title=f"VoxInput Error — {error_id}",
+                    modal=False,
+                )
+                dialog.set_default_size(700, 400)
+                dialog.add_button("_Close", Gtk.ResponseType.CLOSE)
+                dialog.add_button("_Copy to Clipboard", Gtk.ResponseType.APPLY)
+
+                box = dialog.get_content_area()
+                box.set_spacing(8)
+                box.set_margin_start(12)
+                box.set_margin_end(12)
+                box.set_margin_top(12)
+
+                label = Gtk.Label()
+                label.set_markup(
+                    f'<span weight="bold" size="large">⚠️ An error occurred</span>\n'
+                    f'<span size="small">Error ID: {error_id}</span>'
+                )
+                label.set_halign(Gtk.Align.START)
+                box.pack_start(label, False, False, 0)
+
+                scroll = Gtk.ScrolledWindow()
+                scroll.set_vexpand(True)
+                scroll.set_hexpand(True)
+
+                text_view = Gtk.TextView()
+                text_view.set_editable(False)
+                text_view.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+                text_view.override_font(Pango.FontDescription("monospace 9"))
+                text_view.get_buffer().set_text(trace)
+                scroll.add(text_view)
+                box.pack_start(scroll, True, True, 0)
+
+                hint = Gtk.Label()
+                hint.set_markup(
+                    '<span size="small"><i>This error has been saved to the trace database. '
+                    'The application will continue running.</i></span>'
+                )
+                hint.set_halign(Gtk.Align.START)
+                box.pack_start(hint, False, False, 0)
+
+                box.show_all()
+
+                def _on_response(dlg, response_id):
+                    if response_id == Gtk.ResponseType.APPLY:
+                        clipboard = Gtk.Clipboard.get_default(dlg.get_display())
+                        clipboard.set_text(trace, -1)
+                        clipboard.store()
+                        return  # keep dialog open
+                    dlg.destroy()
+
+                dialog.connect("response", _on_response)
+                dialog.show()
+                return False  # one-shot GLib idle
+
+            GLib.idle_add(_build_dialog)
+        except Exception:
+            pass  # If GTK isn't available, we already logged to stderr + SQLite
 
     def _hook(exctype: type, value: BaseException, tb: Any) -> None:
         # Don't trap KeyboardInterrupt — let it exit cleanly
@@ -434,18 +506,22 @@ def _install_excepthook(component: str) -> None:
             "argv": sys.argv,
             "pid": os.getpid(),
         }
-        sys.stderr.write(f"\n[FATAL] {error_id}\n{trace}\n")
+        sys.stderr.write(f"\n[ERROR] {error_id}\n{trace}\n")
 
         # Write crash artifact to SQLite
         handler = get_sqlite_handler()
         if handler:
-            handler.write_crash_artifact(error_id, str(value), trace, state)
-            handler.close()  # Flush before exit
+            try:
+                handler.write_crash_artifact(error_id, str(value), trace, state)
+            except Exception:
+                pass
 
-        # Log to root logger too
+        # Log to root logger
         logging.getLogger(component).critical(
             "UNHANDLED EXCEPTION error_id=%s exc=%s", error_id, str(value)
         )
-        sys.exit(1)
+
+        # Show GTK error dialog (non-blocking, app continues)
+        _show_error_dialog(error_id, trace)
 
     sys.excepthook = _hook

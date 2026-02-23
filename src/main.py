@@ -338,30 +338,36 @@ class VoxInputApp:
             pass
 
     def _ptt_finalize(self):
-        """Full-context PTT pipeline: finalize → correct → inject entire sentence."""
+        """Full-context PTT pipeline: stop audio → finalize → correct → inject.
+
+        CRITICAL: stop_listening MUST be called BEFORE finalize() to prevent
+        the process loop from feeding audio to a dead KaldiRecognizer.
+        FinalResult() calls InputFinished() in C, making AcceptWaveform() abort.
+        """
+        # 1. FIRST: Stop audio stream to prevent race condition
+        self.stop_listening()
+
         if not self.recognizer or not self.spell:
-            self.stop_listening()
+            if self.settings.get("ptt_audio_feedback", True):
+                self._audio_fb.play_release()
             return
 
         try:
-            # 1. Get the complete transcript
+            # 2. Get the complete transcript (safe — audio stream is stopped)
             final_text = self.recognizer.finalize()
 
-            # 2. Also flush any pending number from spell corrector
+            # 3. Flush any pending number from spell corrector
             num_flush = ""
             if self.spell:
                 num_flush = self.spell.flush_pending_number() or ""
 
-            # 3. Combine and run full-context correction pipeline
+            # 4. Combine and run full-context correction pipeline
             full_text = ((final_text or "") + " " + num_flush).strip()
 
             if full_text:
                 logger.info(f"PTT full-context raw: {full_text}")
-                # Full-sentence spell correction (much better with context)
                 corrected = self.spell.correct(full_text)
-                # Full-sentence homophone resolution
                 corrected = fix_homophones(corrected)
-                # Voice punctuation
                 from .injection import apply_voice_punctuation
                 corrected = apply_voice_punctuation(corrected)
 
@@ -372,11 +378,10 @@ class VoxInputApp:
         except Exception as e:
             logger.error(f"PTT finalize error: {e}", exc_info=True)
         finally:
-            # Reset Vosk recognizer for next PTT session (FinalResult kills it)
+            # 5. Reset recognizer for next PTT session
             if self.recognizer:
                 self.recognizer.reset_recognizer()
-            # Always stop listening and play release beep
-            self.stop_listening()
+            # 6. Play release beep
             if self.settings.get("ptt_audio_feedback", True):
                 self._audio_fb.play_release()
 
