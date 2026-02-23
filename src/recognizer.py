@@ -123,6 +123,20 @@ class SpeechRecognizer:
             self.whisper_chunks.clear()
             self.whisper_last_transcript = ""
 
+    def reset_recognizer(self):
+        """Recreate the KaldiRecognizer after FinalResult() (PTT sessions).
+
+        FinalResult() calls InputFinished() internally, putting the C-level
+        recognizer in a terminal state. Subsequent AcceptWaveform() calls
+        will crash with ASSERTION_FAILED. This method creates a fresh
+        KaldiRecognizer from the existing model.
+        """
+        if self.engine_type != "Whisper" and self.model and KaldiRecognizer:
+            self.recognizer = KaldiRecognizer(self.model, SAMPLE_RATE)
+            self.recognizer.SetWords(True)
+            logger.info("Vosk recognizer reset (fresh KaldiRecognizer)")
+        self.reset_state()
+
     def process_audio(self, data):
         """
         Process audio chunk and return NEW words to inject.

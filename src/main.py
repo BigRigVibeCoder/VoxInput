@@ -369,6 +369,9 @@ class VoxInputApp:
         except Exception as e:
             logger.error(f"PTT finalize error: {e}", exc_info=True)
         finally:
+            # Reset Vosk recognizer for next PTT session (FinalResult kills it)
+            if self.recognizer:
+                self.recognizer.reset_recognizer()
             # Always stop listening and play release beep
             self.stop_listening()
             if self.settings.get("ptt_audio_feedback", True):
