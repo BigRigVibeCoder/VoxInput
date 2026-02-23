@@ -238,8 +238,11 @@ class VoxInputApp:
                         self._sil_threshold = max(200, int(self._noise_floor_ema * 2.5))
 
                 # P8-02: use cached threshold/duration (no settings.get per chunk)
+                # Skip silence-triggered finalize during PTT — only key release finalizes
                 if rms < self._sil_threshold:
-                    if silence_start_time is None:
+                    if self._ptt_active:
+                        silence_start_time = None  # don't accumulate silence during PTT
+                    elif silence_start_time is None:
                         silence_start_time = time.time()
                     elif time.time() - silence_start_time > self._sil_duration:
                         try:
