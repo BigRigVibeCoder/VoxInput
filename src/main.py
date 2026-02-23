@@ -41,6 +41,7 @@ class VoxInputApp:
         self.should_quit  = False
         self.processing_thread = None
         self._ptt_active = False  # True while PTT key is physically held
+        self._ptt_buffer = []     # Accumulates all words during PTT hold
         self._audio_fb = AudioFeedback()  # PTT beep sounds
 
         # Stubs — replaced by background thread when ready
@@ -273,9 +274,10 @@ class VoxInputApp:
                     text = self.recognizer.process_audio(data)
                     if text:
                         logger.info(f"Recognized: {text}")
-                        # PTT mode: display on OSD but don't inject yet
-                        # (full-context injection happens on key release)
+                        # PTT mode: accumulate in buffer for full-context finalize
+                        # (Vosk consumes words at sentence boundaries via Result())
                         if self._ptt_active:
+                            self._ptt_buffer.extend(text.split())
                             osd_words.extend(text.split())
                         else:
                             self._enqueue_injection(text)
@@ -320,6 +322,7 @@ class VoxInputApp:
         try:
             if str(key) == self._get_ptt_key() and self._model_ready:
                 self._ptt_active = True
+                self._ptt_buffer = []  # fresh buffer for this PTT session
                 if self.settings.get("ptt_audio_feedback", True):
                     self._audio_fb.play_press()
                 GLib.idle_add(self.start_listening)
@@ -353,20 +356,38 @@ class VoxInputApp:
             return
 
         try:
-            # 2. Reset committed_text so finalize() returns ALL words
-            #    (during streaming, process_audio commits words progressively;
-            #     finalize() subtracts committed words and only returns the tail)
+            # 2. Get buffered words + any remaining uncommitted from FinalResult
             if self.recognizer:
                 self.recognizer.committed_text = []
-            final_text = self.recognizer.finalize()
+            final_tail = self.recognizer.finalize() or ""
+
+            # Combine: buffer has all streamed words, final_tail has uncommitted remainder
+            buffered = " ".join(self._ptt_buffer) if self._ptt_buffer else ""
+            # Avoid duplicating the tail (it may overlap with buffer end)
+            if buffered and final_tail:
+                full_text = buffered
+                # Append tail words that aren't already at the end of the buffer
+                tail_words = final_tail.split()
+                buf_words = buffered.split()
+                # Find how many tail words overlap with buffer end
+                overlap = 0
+                for i in range(min(len(tail_words), len(buf_words)), 0, -1):
+                    if buf_words[-i:] == tail_words[:i]:
+                        overlap = i
+                        break
+                if overlap < len(tail_words):
+                    full_text += " " + " ".join(tail_words[overlap:])
+            else:
+                full_text = buffered or final_tail
 
             # 3. Flush any pending number from spell corrector
             num_flush = ""
             if self.spell:
                 num_flush = self.spell.flush_pending_number() or ""
 
-            # 4. Combine and run full-context correction pipeline
-            full_text = ((final_text or "") + " " + num_flush).strip()
+            # 4. Append any flushed number and run full-context correction
+            if num_flush:
+                full_text = (full_text + " " + num_flush).strip()
 
             if full_text:
                 logger.info(f"PTT full-context raw: {full_text}")
