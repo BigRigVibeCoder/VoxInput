@@ -15,6 +15,7 @@ CHUNK_SIZE = 1600  # 100ms @ 16kHz — optimal for real-time feel (P1-01)
 
 # Hotkey
 HOTKEY = '<cmd>+<shift>+v'  # Super+Shift+V
+PTT_KEY = 'Key.ctrl_r'     # Right Ctrl — push-to-talk trigger
 
 # Logging — see src/logger.py for full configuration (P7)
 # Level / DB path / console are controlled via .env file or LOG_LEVEL env var.

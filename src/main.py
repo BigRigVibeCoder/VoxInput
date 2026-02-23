@@ -8,7 +8,7 @@ from gi.repository import GLib
 from pynput import keyboard
 
 from .audio import AudioCapture
-from .config import HOTKEY
+from .config import HOTKEY, PTT_KEY
 from .injection import TextInjector, VoicePunctuationBuffer
 from .homophones import fix_homophones                     # P9-D: homophone correction
 from .logger import init_logging, get_logger         # P7: enterprise logging
@@ -39,6 +39,7 @@ class VoxInputApp:
         self.is_listening = False
         self.should_quit  = False
         self.processing_thread = None
+        self._ptt_active = False  # True while PTT key is physically held
 
         # Stubs — replaced by background thread when ready
         self.recognizer = None
@@ -60,8 +61,8 @@ class VoxInputApp:
             quit_callback=self.quit_app,
             engine_change_callback=self.reload_engine
         )
-        # Show loading state in tray tooltip immediately
-        self.ui.icon.set_tooltip_text("VoxInput — Loading model…")
+        # Show loading state in tray
+        self.ui.indicator.set_title("VoxInput — Loading model…")
 
         # ── Background: load heavy components then auto-listen ──
         threading.Thread(target=self._load_models, daemon=True, name="model-load").start()
@@ -92,11 +93,11 @@ class VoxInputApp:
             GLib.idle_add(self._on_models_ready)
         except Exception as e:
             logger.critical(f"Model load failed: {e}", exc_info=True)
-            GLib.idle_add(self.ui.icon.set_tooltip_text, f"VoxInput — Load failed: {e}")
+            GLib.idle_add(self.ui.indicator.set_title, f"VoxInput — Load failed: {e}")
 
     def _on_models_ready(self):
         """Called on GTK main thread once models are loaded."""
-        self.ui.icon.set_tooltip_text("VoxInput (Idle)")
+        self.ui.indicator.set_title("VoxInput (Idle)")
         self.start_listening()   # auto-start listening
         return False             # one-shot GLib idle
 
@@ -122,8 +123,8 @@ class VoxInputApp:
 
     def toggle_listening(self):
         if not self._model_ready:
-            self.ui.icon.set_tooltip_text("VoxInput — Still loading model, please wait…")
-            GLib.timeout_add(2000, lambda: self.ui.icon.set_tooltip_text("VoxInput — Loading model…"))
+            self.ui.indicator.set_title("VoxInput — Still loading model, please wait…")
+            GLib.timeout_add(2000, lambda: self.ui.indicator.set_title("VoxInput — Loading model…"))
             return
         if self.is_listening:
             self.stop_listening()
@@ -284,19 +285,45 @@ class VoxInputApp:
         Gtk.main_quit()
         sys.exit(0)
 
+    # ── Push-to-Talk ──────────────────────────────────────────────
+
+    def _on_ptt_press(self, key):
+        """pynput callback: key pressed."""
+        if self._ptt_active:
+            return  # already held — ignore repeat events
+        if not self.settings.get("push_to_talk", False):
+            return  # PTT mode not enabled
+        try:
+            if str(key) == PTT_KEY and self._model_ready:
+                self._ptt_active = True
+                GLib.idle_add(self.start_listening)
+        except Exception:
+            pass
+
+    def _on_ptt_release(self, key):
+        """pynput callback: key released."""
+        if not self._ptt_active:
+            return
+        try:
+            if str(key) == PTT_KEY:
+                self._ptt_active = False
+                GLib.idle_add(self.stop_listening)
+        except Exception:
+            pass
+
     def run(self):
         # Setup signal handlers
         signal.signal(signal.SIGINT, lambda s, f: self.quit_app())
         signal.signal(signal.SIGUSR1, lambda s, f: self.toggle_listening())
-        
-        # Start global hotkey listener
-        # Note: Global hotkeys with pynput on Linux can be tricky and might block.
-        # We are now using system-level shortcuts via SIGUSR1, so we disable this internal listener
-        # to prevent double-triggering (System Shortcut + Internal Pynput).
-        # self.hotkey_thread = threading.Thread(target=self._listen_hotkeys)
-        # self.hotkey_thread.daemon = True
-        # self.hotkey_thread.start()
-        
+
+        # Push-to-talk key listener (always running; only acts when setting is on)
+        self._ptt_listener = keyboard.Listener(
+            on_press=self._on_ptt_press,
+            on_release=self._on_ptt_release,
+        )
+        self._ptt_listener.daemon = True
+        self._ptt_listener.start()
+
         # Run UI loop
         Gtk.main()
 

@@ -891,6 +891,25 @@ class SettingsDialog(Gtk.Window):
         inner.pack_start(self.check_confidence, False, False, 4)
 
         inner.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL), False, False, 8)
+        inner.pack_start(_section_label("🎙️  Input Mode"), False, False, 0)
+
+        self.check_ptt = Gtk.CheckButton(label="🎙️  Push-to-Talk (hold Right Ctrl to dictate)")
+        self.check_ptt.set_active(self.temp_settings.get("push_to_talk", False))
+        self.check_ptt.connect("toggled", lambda w: self._set_temp("push_to_talk", w.get_active()))
+        inner.pack_start(self.check_ptt, False, False, 4)
+
+        ptt_hint = Gtk.Label()
+        ptt_hint.set_markup(
+            '<span size="small"><i>Hold Right Ctrl to listen, release to stop. '
+            'When off, use Super+Shift+V to toggle.</i></span>'
+        )
+        ptt_hint.get_style_context().add_class("hint")
+        ptt_hint.set_halign(Gtk.Align.START)
+        ptt_hint.set_margin_start(24)
+        ptt_hint.set_line_wrap(True)
+        inner.pack_start(ptt_hint, False, False, 0)
+
+        inner.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL), False, False, 8)
         inner.pack_start(_section_label("📋  Diagnostics"), False, False, 0)
 
 
