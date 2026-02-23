@@ -260,6 +260,33 @@ class TestVoskWER:
         print_wer_report(report)
         assert score <= threshold
 
+    def test_paragraph_f_dictionary_terms(self, ground_truth, golden_audio):
+        """
+        GATE-6 GOLDEN TEST: Dictionary words and tech terms.
+        Validates compound corrections and SymSpell injection of custom words.
+        Words like Docker, Grafana, Terraform, PyTorch should
+        survive the correction pipeline with proper casing.
+        """
+        if "F" not in golden_audio:
+            pytest.skip("Paragraph F recording not found")
+
+        model_path = self._get_vosk_model()
+        with open(golden_audio["F"], "rb") as f:
+            raw = f.read()
+
+        hypothesis = _transcribe_vosk(raw, model_path)
+        reference = ground_truth["F"]
+
+        ref_norm = normalize_text(reference, strip_punctuation=True)
+        hyp_norm = normalize_text(hypothesis, strip_punctuation=True)
+
+        score = calculate_wer(ref_norm, hyp_norm)
+        threshold = WER_THRESHOLDS.get(("Vosk", "small"), 0.22)
+
+        report = build_diff_report(ref_norm, hyp_norm, score, None, threshold, "Vosk", "Paragraph F (Dictionary)")
+        print_wer_report(report)
+        assert score <= threshold
+
     def test_latency_per_chunk(self, golden_audio):
         """
         GATE-1 PERFORMANCE: Each 200ms audio chunk should be processed in < 50ms.

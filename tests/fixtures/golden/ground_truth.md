@@ -39,6 +39,10 @@ This is a continuous sentence designed to test how well the recognizer handles l
 
 Dear mister Thompson comma I am writing to confirm your appointment on March twenty first at three forty five in the afternoon period new line The total cost is two hundred and fifteen dollars and sixty three cents semicolon please bring a valid photo ID period new line Can you meet me at twelve thirty question mark I need to discuss items one comma two comma and three before the deadline period new line Warning exclamation mark The system detected forty seven errors in section nine dash alpha colon please review immediately period new line He said quote I'll be there by five o'clock quote dash but honestly comma I wouldn't count on it period
 
+## Paragraph F — Dictionary and Tech Terms
+
+The Docker container ran on the Kubernetes cluster period We checked the Grafana dashboard and the Jira backlog during our sprint standup period The Terraform configuration managed the Tailscale network in Colorado and Virginia period We used PyTorch and TensorFlow for training comma and the nginx reverse proxy handled the API gateway period The Ansible playbook deployed to fifteen nodes comma and Slack and Discord were used for team coordination period
+
 ---
 
 ## WER Acceptance Thresholds
@@ -57,10 +61,11 @@ Dear mister Thompson comma I am writing to confirm your appointment on March twe
 
 ## Testing Paragraphs to Use Per Gate
 
-| Gate   | Paragraphs        | Rationale                                         |
-|--------|-------------------|---------------------------------------------------|
-| Gate 1 | A only            | Establish Vosk baseline before any engine changes |
-| Gate 2 | A + B             | Add numbers/proper nouns for Whisper accuracy     |
-| Gate 3 | A + B + C         | Full homophone coverage tests spell correction    |
-| Gate 4 | A + B + C + D     | Continuous flow tests silence detection tuning    |
-| Gate 5 | A + B + C + D + E | Voice punctuation + number parsing + corrections  |
+| Gate   | Paragraphs            | Rationale                                         |
+|--------|-----------------------|---------------------------------------------------|
+| Gate 1 | A only                | Establish Vosk baseline before any engine changes |
+| Gate 2 | A + B                 | Add numbers/proper nouns for Whisper accuracy     |
+| Gate 3 | A + B + C             | Full homophone coverage tests spell correction    |
+| Gate 4 | A + B + C + D         | Continuous flow tests silence detection tuning    |
+| Gate 5 | A + B + C + D + E     | Voice punctuation + number parsing + corrections  |
+| Gate 6 | A + B + C + D + E + F | Dictionary words + compound correction pipeline  |

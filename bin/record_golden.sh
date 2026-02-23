@@ -226,6 +226,8 @@ PARA_D="This is a continuous sentence designed to test how well the recognizer h
 
 PARA_E="Dear mister Thompson comma I am writing to confirm your appointment on March twenty first at three forty five in the afternoon period new line The total cost is two hundred and fifteen dollars and sixty three cents semicolon please bring a valid photo ID period new line Can you meet me at twelve thirty question mark I need to discuss items one comma two comma and three before the deadline period new line Warning exclamation mark The system detected forty seven errors in section nine dash alpha colon please review immediately period new line He said quote I'll be there by five o'clock quote dash but honestly comma I wouldn't count on it period"
 
+PARA_F="The Docker container ran on the Kubernetes cluster period We checked the Grafana dashboard and the Jira backlog during our sprint standup period The Terraform configuration managed the Tailscale network in Colorado and Virginia period We used PyTorch and TensorFlow for training comma and the nginx reverse proxy handled the API gateway period The Ansible playbook deployed to fifteen nodes comma and Slack and Discord were used for team coordination period"
+
 # ─────────────────────────────────────────────
 # Main
 # ─────────────────────────────────────────────
@@ -239,7 +241,7 @@ echo -e "${YELLOW}Press ENTER to begin, or Ctrl+C to cancel.${RESET}"
 read -r
 
 echo ""
-echo -e "${BOLD}Which paragraphs? [all / A / B / C / D / E]:${RESET}"
+echo -e "${BOLD}Which paragraphs? [all / A / B / C / D / E / F]:${RESET}"
 read -r PARAGRAPH
 PARAGRAPH="${PARAGRAPH:-all}"
 
@@ -251,13 +253,14 @@ run_paragraph() {
         C|c) record_paragraph "C" 50 "$OUTPUT_DIR/paragraph_c.wav" "$PARA_C" ;;
         D|d) record_paragraph "D" 60 "$OUTPUT_DIR/paragraph_d.wav" "$PARA_D" ;;
         E|e) record_paragraph "E" 65 "$OUTPUT_DIR/paragraph_e.wav" "$PARA_E" ;;
+        F|f) record_paragraph "F" 50 "$OUTPUT_DIR/paragraph_f.wav" "$PARA_F" ;;
         *) echo "Unknown paragraph: $p" ;;
     esac
 }
 
 case "${PARAGRAPH^^}" in
     ALL)
-        for p in A B C D E; do run_paragraph "$p"; done
+        for p in A B C D E F; do run_paragraph "$p"; done
         ;;
     *)
         run_paragraph "$PARAGRAPH"
