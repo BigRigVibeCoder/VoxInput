@@ -62,6 +62,8 @@ _DEFAULT_COMPOUNDS = [
     ("pi input", "pynput"),
     ("vox input", "VoxInput"),
     ("hive mind", "HiveMind"),
+    ("hi mind", "HiveMind"),            # discovered from live PTT testing
+    ("have my", "HiveMind"),            # discovered from live PTT testing
     ("oh droid", "ODROID"),
     ("lie dar", "LIDAR"),
     ("li dar", "LIDAR"),
@@ -190,6 +192,15 @@ class WordDatabase:
         self._compounds = {
             tuple(r[0].lower().split()): r[1] for r in cc_rows
         }
+
+    def reload(self):
+        """Re-read dictionary and compounds from database (hot-reload)."""
+        with self._lock:
+            self._load_into_memory()
+            logger.info(
+                f"WordDB reloaded: {len(self._dict)} words, "
+                f"{len(self._compounds)} compound corrections"
+            )
 
     def _seed_compounds(self):
         """Auto-seed default compound corrections on first run."""

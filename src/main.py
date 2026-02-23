@@ -410,10 +410,29 @@ class VoxInputApp:
             if self.settings.get("ptt_audio_feedback", True):
                 self._audio_fb.play_release()
 
+    def reload_dictionary(self):
+        """Hot-reload compound corrections + custom words from database (SIGUSR2)."""
+        try:
+            if hasattr(self, 'word_db') and self.word_db:
+                self.word_db.reload()
+                count_w = self.word_db.count()
+                count_c = len(self.word_db.get_compound_corrections())
+                logger.info(f"Dictionary hot-reloaded: {count_w} words, {count_c} compounds")
+
+                # Refresh spell corrector's compound map
+                if self.spell:
+                    self.spell.set_word_db(self.word_db)
+                    logger.info("SpellCorrector compound map refreshed")
+            else:
+                logger.warning("reload_dictionary: no word_db available")
+        except Exception as e:
+            logger.error(f"Dictionary reload failed: {e}", exc_info=True)
+
     def run(self):
         # Setup signal handlers
         signal.signal(signal.SIGINT, lambda s, f: self.quit_app())
         signal.signal(signal.SIGUSR1, lambda s, f: self.toggle_listening())
+        signal.signal(signal.SIGUSR2, lambda s, f: self.reload_dictionary())
 
         # Push-to-talk key listener (always running; only acts when setting is on)
         self._ptt_listener = keyboard.Listener(
