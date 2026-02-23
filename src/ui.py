@@ -6,8 +6,9 @@ logger = logging.getLogger(__name__)
 import gi
 
 gi.require_version('Gtk', '3.0')
+gi.require_version('AppIndicator3', '0.1')
 import cairo  # noqa: E402  (for OSD waveform)
-from gi.repository import GLib, Gtk, Gdk, Pango, PangoCairo  # noqa: E402
+from gi.repository import AppIndicator3, GLib, Gtk, Gdk, Pango, PangoCairo  # noqa: E402
 
 # Constants
 APP_ID = "com.voxinput.app"
@@ -157,24 +158,23 @@ class SystemTrayApp:
         # P5: OSD overlay — hidden until listening starts
         self.osd = OSDOverlay()
 
-        # Create StatusIcon (replaces AppIndicator3)
-        self.icon = Gtk.StatusIcon()
-        self.icon.set_from_file(os.path.join(ASSETS_DIR, f"{ICON_IDLE}.svg"))
-        self.icon.set_tooltip_text("VoxInput (Idle)")
-        
-        # Connect Signals
-        self.icon.connect('activate', self._on_left_click)
-        self.icon.connect('popup-menu', self._on_right_click)
-        
-        # We don't build the menu once and attach it like AppIndicator.
-        # Instead we build/show it on demand in _on_right_click, 
-        # or we can keep a persistent one. Let's keep a persistent one for efficiency.
+        # AppIndicator3 — standard tray icon on modern GNOME/Ubuntu
+        # (replaces deprecated Gtk.StatusIcon; credit: stiv-pro PR #2)
+        self.indicator = AppIndicator3.Indicator.new(
+            APP_ID,
+            os.path.join(ASSETS_DIR, f"{ICON_IDLE}.svg"),
+            AppIndicator3.IndicatorCategory.APPLICATION_STATUS
+        )
+        self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
+        self.indicator.set_title("VoxInput")
+
         self.menu = self._build_menu()
+        self.indicator.set_menu(self.menu)
 
     def _build_menu(self):
         menu = Gtk.Menu()
-        
-        # Toggle Item (kept in menu as backup)
+
+        # Toggle Item
         self.item_toggle = Gtk.MenuItem(label="Start Listening")
         self.item_toggle.connect('activate', self._on_toggle_menu)
         menu.append(self.item_toggle)
@@ -183,22 +183,14 @@ class SystemTrayApp:
         item_settings = Gtk.MenuItem(label="Settings")
         item_settings.connect('activate', self._on_settings)
         menu.append(item_settings)
-        
+
         # Quit Item
         item_quit = Gtk.MenuItem(label="Quit")
         item_quit.connect('activate', self._on_quit)
         menu.append(item_quit)
-        
+
         menu.show_all()
         return menu
-
-    def _on_left_click(self, icon):
-        # Toggle listening state directly
-        self.toggle_callback()
-
-    def _on_right_click(self, icon, button, time):
-        # Show menu
-        self.menu.popup(None, None, Gtk.StatusIcon.position_menu, icon, button, time)
 
     def _on_toggle_menu(self, _):
         # Callback from menu item
@@ -219,13 +211,13 @@ class SystemTrayApp:
     def set_listening_state(self, is_listening):
         self.is_listening = is_listening
         if is_listening:
-            self.icon.set_from_file(os.path.join(ASSETS_DIR, f"{ICON_ACTIVE}.svg"))
-            self.icon.set_tooltip_text("VoxInput (Listening)")
+            self.indicator.set_icon_full(
+                os.path.join(ASSETS_DIR, f"{ICON_ACTIVE}.svg"), "Listening")
             GLib.idle_add(self.item_toggle.set_label, "Stop Listening")
             GLib.idle_add(self.osd.show_all)   # P5: show OSD
         else:
-            self.icon.set_from_file(os.path.join(ASSETS_DIR, f"{ICON_IDLE}.svg"))
-            self.icon.set_tooltip_text("VoxInput (Idle)")
+            self.indicator.set_icon_full(
+                os.path.join(ASSETS_DIR, f"{ICON_IDLE}.svg"), "Idle")
             GLib.idle_add(self.item_toggle.set_label, "Start Listening")
             GLib.idle_add(self.osd.hide)        # P5: hide OSD
             GLib.idle_add(self.osd.set_text, "")
