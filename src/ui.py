@@ -174,6 +174,13 @@ class SystemTrayApp:
     def _build_menu(self):
         menu = Gtk.Menu()
 
+        # Mode indicator (non-clickable informational label)
+        self._item_mode = Gtk.MenuItem(label=self._get_mode_label())
+        self._item_mode.set_sensitive(False)
+        menu.append(self._item_mode)
+
+        menu.append(Gtk.SeparatorMenuItem())
+
         # Toggle Item
         self.item_toggle = Gtk.MenuItem(label="Start Listening")
         self.item_toggle.connect('activate', self._on_toggle_menu)
@@ -192,6 +199,21 @@ class SystemTrayApp:
         menu.show_all()
         return menu
 
+    def _get_mode_label(self) -> str:
+        """Return the current input mode for the tray indicator."""
+        from .settings import SettingsManager
+        settings = SettingsManager()
+        if settings.get("push_to_talk", False):
+            key_str = settings.get("ptt_key", "Key.ctrl_r")
+            key_name = SettingsDialog._format_key_name(key_str)
+            return f"Mode: Push-to-Talk ({key_name})"
+        return "Mode: Toggle (Super+Shift+V)"
+
+    def update_mode_label(self):
+        """Refresh the tray menu mode label after settings change."""
+        if hasattr(self, '_item_mode'):
+            self._item_mode.set_label(self._get_mode_label())
+
     def _on_toggle_menu(self, _):
         # Callback from menu item
         self.toggle_callback()
@@ -202,6 +224,7 @@ class SystemTrayApp:
             self._settings_dialog.present()  # raise existing window
             return
         self._settings_dialog = SettingsDialog(self.engine_change_callback)
+        self._settings_dialog._tray_app = self  # for mode label refresh
         self._settings_dialog.connect("destroy", lambda _: setattr(self, '_settings_dialog', None))
         self._settings_dialog.show()
 
@@ -893,21 +916,64 @@ class SettingsDialog(Gtk.Window):
         inner.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL), False, False, 8)
         inner.pack_start(_section_label("🎙️  Input Mode"), False, False, 0)
 
-        self.check_ptt = Gtk.CheckButton(label="🎙️  Push-to-Talk (hold Right Ctrl to dictate)")
-        self.check_ptt.set_active(self.temp_settings.get("push_to_talk", False))
-        self.check_ptt.connect("toggled", lambda w: self._set_temp("push_to_talk", w.get_active()))
-        inner.pack_start(self.check_ptt, False, False, 4)
+        # Radio buttons: Toggle vs Push-to-Talk
+        ptt_enabled = self.temp_settings.get("push_to_talk", False)
+        self.radio_toggle = Gtk.RadioButton.new_with_label_from_widget(
+            None, "🔄  Toggle Mode (Super+Shift+V to start/stop)"
+        )
+        self.radio_ptt = Gtk.RadioButton.new_with_label_from_widget(
+            self.radio_toggle, "🎙️  Push-to-Talk (hold key to dictate)"
+        )
+        if ptt_enabled:
+            self.radio_ptt.set_active(True)
+        else:
+            self.radio_toggle.set_active(True)
+        self.radio_toggle.connect("toggled", self._on_mode_radio_toggled)
+        inner.pack_start(self.radio_toggle, False, False, 4)
+        inner.pack_start(self.radio_ptt, False, False, 4)
 
+        # PTT options box (visible only when PTT is selected)
+        self._ptt_options_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        self._ptt_options_box.set_margin_start(24)
+
+        # Key selector row
+        key_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        key_label = Gtk.Label(label="PTT Key:")
+        key_label.set_halign(Gtk.Align.START)
+        key_row.pack_start(key_label, False, False, 0)
+
+        current_key = self.temp_settings.get("ptt_key", "Key.ctrl_r")
+        self._ptt_key_label = Gtk.Label(label=self._format_key_name(current_key))
+        self._ptt_key_label.set_width_chars(16)
+        self._ptt_key_label.get_style_context().add_class("dim-label")
+        key_row.pack_start(self._ptt_key_label, False, False, 0)
+
+        self._ptt_record_btn = Gtk.Button(label="Record Key")
+        self._ptt_record_btn.connect("clicked", self._on_record_ptt_key)
+        key_row.pack_start(self._ptt_record_btn, False, False, 0)
+
+        self._ptt_options_box.pack_start(key_row, False, False, 0)
+
+        # Audio feedback toggle
+        self.check_ptt_beep = Gtk.CheckButton(label="🔊  Audio feedback (beep on press/release)")
+        self.check_ptt_beep.set_active(self.temp_settings.get("ptt_audio_feedback", True))
+        self.check_ptt_beep.connect("toggled", lambda w: self._set_temp("ptt_audio_feedback", w.get_active()))
+        self._ptt_options_box.pack_start(self.check_ptt_beep, False, False, 0)
+
+        # Hint
         ptt_hint = Gtk.Label()
         ptt_hint.set_markup(
-            '<span size="small"><i>Hold Right Ctrl to listen, release to stop. '
-            'When off, use Super+Shift+V to toggle.</i></span>'
+            '<span size="small"><i>Hold key to listen. On release, full-context '
+            'grammar correction runs before injection.</i></span>'
         )
         ptt_hint.get_style_context().add_class("hint")
         ptt_hint.set_halign(Gtk.Align.START)
-        ptt_hint.set_margin_start(24)
         ptt_hint.set_line_wrap(True)
-        inner.pack_start(ptt_hint, False, False, 0)
+        self._ptt_options_box.pack_start(ptt_hint, False, False, 0)
+
+        inner.pack_start(self._ptt_options_box, False, False, 4)
+        # Show/hide PTT options based on current selection
+        self._ptt_options_box.set_visible(ptt_enabled)
 
         inner.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL), False, False, 8)
         inner.pack_start(_section_label("📋  Diagnostics"), False, False, 0)
@@ -1072,6 +1138,86 @@ class SettingsDialog(Gtk.Window):
 
     def _set_temp(self, key, value):
         self.temp_settings[key] = value
+
+    # ── Input Mode handlers ──────────────────────────────────────
+
+    def _on_mode_radio_toggled(self, radio):
+        """Handle Toggle/PTT radio button change."""
+        if not radio.get_active():
+            return  # only respond to the newly activated radio
+        ptt_on = self.radio_ptt.get_active()
+        self._set_temp("push_to_talk", ptt_on)
+        self._ptt_options_box.set_visible(ptt_on)
+
+    def _on_record_ptt_key(self, btn):
+        """Start listening for a key press to set as the PTT key."""
+        btn.set_label("Press any key…")
+        btn.set_sensitive(False)
+        # Connect to the dialog's key-press-event (captures any key)
+        self._ptt_key_handler_id = self.connect("key-press-event", self._on_ptt_key_captured)
+
+    def _on_ptt_key_captured(self, widget, event):
+        """Capture the pressed key and save it as the PTT key."""
+        from pynput.keyboard import Key
+
+        # Map GDK keyval to pynput key string
+        keyval = event.keyval
+        keyname = Gdk.keyval_name(keyval)
+
+        # Map common GDK key names to pynput format
+        _GDK_TO_PYNPUT = {
+            "Control_R": "Key.ctrl_r", "Control_L": "Key.ctrl_l",
+            "Alt_R": "Key.alt_r", "Alt_L": "Key.alt_l",
+            "Shift_R": "Key.shift_r", "Shift_L": "Key.shift_l",
+            "Super_R": "Key.cmd_r", "Super_L": "Key.cmd",
+            "Scroll_Lock": "Key.scroll_lock", "Pause": "Key.pause",
+            "Caps_Lock": "Key.caps_lock", "Num_Lock": "Key.num_lock",
+            "Insert": "Key.insert", "Delete": "Key.delete",
+            "Home": "Key.home", "End": "Key.end",
+            "Page_Up": "Key.page_up", "Page_Down": "Key.page_down",
+            "Menu": "Key.menu", "Print": "Key.print_screen",
+        }
+        # F-keys
+        for i in range(1, 25):
+            _GDK_TO_PYNPUT[f"F{i}"] = f"Key.f{i}"
+
+        pynput_key = _GDK_TO_PYNPUT.get(keyname)
+        if not pynput_key:
+            # For printable chars, pynput uses the char directly wrapped in quotes
+            pynput_key = f"'{keyname}'" if len(keyname) == 1 else f"Key.{keyname.lower()}"
+
+        # Save to temp settings
+        self._set_temp("ptt_key", pynput_key)
+        self._ptt_key_label.set_text(self._format_key_name(pynput_key))
+        self._ptt_record_btn.set_label("Record Key")
+        self._ptt_record_btn.set_sensitive(True)
+
+        # Disconnect the key capture handler
+        if hasattr(self, '_ptt_key_handler_id'):
+            self.disconnect(self._ptt_key_handler_id)
+
+        return True  # consume the key event
+
+    @staticmethod
+    def _format_key_name(pynput_str: str) -> str:
+        """Convert pynput key string to human-readable label."""
+        _DISPLAY = {
+            "Key.ctrl_r": "Right Ctrl", "Key.ctrl_l": "Left Ctrl",
+            "Key.alt_r": "Right Alt", "Key.alt_l": "Left Alt",
+            "Key.shift_r": "Right Shift", "Key.shift_l": "Left Shift",
+            "Key.cmd": "Super", "Key.cmd_r": "Right Super",
+            "Key.scroll_lock": "Scroll Lock", "Key.pause": "Pause",
+            "Key.caps_lock": "Caps Lock", "Key.num_lock": "Num Lock",
+            "Key.insert": "Insert", "Key.delete": "Delete",
+            "Key.home": "Home", "Key.end": "End",
+            "Key.page_up": "Page Up", "Key.page_down": "Page Down",
+            "Key.menu": "Menu", "Key.print_screen": "Print Screen",
+        }
+        # F-keys
+        for i in range(1, 25):
+            _DISPLAY[f"Key.f{i}"] = f"F{i}"
+
+        return _DISPLAY.get(pynput_str, pynput_str.replace("Key.", "").replace("_", " ").title())
 
     def _update_engine_visibility(self):
         engine = self.combo_engine.get_active_text()
@@ -1367,6 +1513,10 @@ class SettingsDialog(Gtk.Window):
 
         if changes and self.engine_change_callback and reinit_engine:
             self.engine_change_callback()
+
+        # Refresh tray mode indicator if mode or key changed
+        if changes and hasattr(self, '_tray_app') and self._tray_app:
+            self._tray_app.update_mode_label()
 
     def destroy(self):
         self._stop_test()

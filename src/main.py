@@ -11,6 +11,7 @@ from .audio import AudioCapture
 from .config import HOTKEY, PTT_KEY
 from .injection import TextInjector, VoicePunctuationBuffer
 from .homophones import fix_homophones                     # P9-D: homophone correction
+from .audio_feedback import AudioFeedback                  # PTT beeps
 from .logger import init_logging, get_logger         # P7: enterprise logging
 from .mic_enhancer import MicEnhancer
 from .recognizer import SpeechRecognizer
@@ -40,6 +41,7 @@ class VoxInputApp:
         self.should_quit  = False
         self.processing_thread = None
         self._ptt_active = False  # True while PTT key is physically held
+        self._audio_fb = AudioFeedback()  # PTT beep sounds
 
         # Stubs — replaced by background thread when ready
         self.recognizer = None
@@ -258,8 +260,13 @@ class VoxInputApp:
                     text = self.recognizer.process_audio(data)
                     if text:
                         logger.info(f"Recognized: {text}")
-                        self._enqueue_injection(text)
-                        osd_words.extend(text.split())
+                        # PTT mode: display on OSD but don't inject yet
+                        # (full-context injection happens on key release)
+                        if self._ptt_active:
+                            osd_words.extend(text.split())
+                        else:
+                            self._enqueue_injection(text)
+                            osd_words.extend(text.split())
                 except Exception as e:
                     logger.error(f"Error processing audio: {e}", exc_info=True)
             else:
@@ -287,6 +294,10 @@ class VoxInputApp:
 
     # ── Push-to-Talk ──────────────────────────────────────────────
 
+    def _get_ptt_key(self) -> str:
+        """Get the configured PTT key string (falls back to config default)."""
+        return self.settings.get("ptt_key", PTT_KEY)
+
     def _on_ptt_press(self, key):
         """pynput callback: key pressed."""
         if self._ptt_active:
@@ -294,22 +305,64 @@ class VoxInputApp:
         if not self.settings.get("push_to_talk", False):
             return  # PTT mode not enabled
         try:
-            if str(key) == PTT_KEY and self._model_ready:
+            if str(key) == self._get_ptt_key() and self._model_ready:
                 self._ptt_active = True
+                if self.settings.get("ptt_audio_feedback", True):
+                    self._audio_fb.play_press()
                 GLib.idle_add(self.start_listening)
         except Exception:
             pass
 
     def _on_ptt_release(self, key):
-        """pynput callback: key released."""
+        """pynput callback: key released → full-context finalize + inject."""
         if not self._ptt_active:
             return
         try:
-            if str(key) == PTT_KEY:
+            if str(key) == self._get_ptt_key():
                 self._ptt_active = False
-                GLib.idle_add(self.stop_listening)
+                GLib.idle_add(self._ptt_finalize)
         except Exception:
             pass
+
+    def _ptt_finalize(self):
+        """Full-context PTT pipeline: finalize → correct → inject entire sentence."""
+        if not self.recognizer or not self.spell:
+            self.stop_listening()
+            return
+
+        try:
+            # 1. Get the complete transcript
+            final_text = self.recognizer.finalize()
+
+            # 2. Also flush any pending number from spell corrector
+            num_flush = ""
+            if self.spell:
+                num_flush = self.spell.flush_pending_number() or ""
+
+            # 3. Combine and run full-context correction pipeline
+            full_text = ((final_text or "") + " " + num_flush).strip()
+
+            if full_text:
+                logger.info(f"PTT full-context raw: {full_text}")
+                # Full-sentence spell correction (much better with context)
+                corrected = self.spell.correct(full_text)
+                # Full-sentence homophone resolution
+                corrected = fix_homophones(corrected)
+                # Voice punctuation
+                from .injection import apply_voice_punctuation
+                corrected = apply_voice_punctuation(corrected)
+
+                logger.info(f"PTT full-context corrected: {corrected}")
+                if corrected.strip():
+                    self._injection_queue.put_nowait(corrected.strip())
+
+        except Exception as e:
+            logger.error(f"PTT finalize error: {e}", exc_info=True)
+        finally:
+            # Always stop listening and play release beep
+            self.stop_listening()
+            if self.settings.get("ptt_audio_feedback", True):
+                self._audio_fb.play_release()
 
     def run(self):
         # Setup signal handlers
