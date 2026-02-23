@@ -943,7 +943,7 @@ class SettingsDialog(Gtk.Window):
             self.radio_ptt.set_active(True)
         else:
             self.radio_toggle.set_active(True)
-        self.radio_toggle.connect("toggled", self._on_mode_radio_toggled)
+        self.radio_ptt.connect("toggled", self._on_mode_radio_toggled)
         inner.pack_start(self.radio_toggle, False, False, 4)
         inner.pack_start(self.radio_ptt, False, False, 4)
 
