@@ -240,6 +240,8 @@ class SystemTrayApp:
             return
         self._settings_dialog = SettingsDialog(self.engine_change_callback)
         self._settings_dialog._tray_app = self  # for mode label refresh
+        # Stop listening callback — bypasses toggle_listening PTT guard
+        self._settings_dialog._stop_listening_cb = getattr(self, '_app_stop_listening', None)
         self._settings_dialog.connect("destroy", lambda _: setattr(self, '_settings_dialog', None))
         self._settings_dialog.show()
 
@@ -1569,6 +1571,14 @@ class SettingsDialog(Gtk.Window):
                 self._tray_app.update_mode_label(self.settings)
             except Exception:
                 pass
+
+        # If PTT mode was just enabled, stop any active listening session
+        if changes and self.temp_settings.get("push_to_talk", False):
+            if hasattr(self, '_stop_listening_cb') and self._stop_listening_cb:
+                try:
+                    self._stop_listening_cb()
+                except Exception:
+                    pass
 
     def destroy(self):
         self._stop_test()

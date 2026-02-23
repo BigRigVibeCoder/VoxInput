@@ -63,6 +63,8 @@ class VoxInputApp:
             quit_callback=self.quit_app,
             engine_change_callback=self.reload_engine
         )
+        # Direct stop callback for settings dialog (bypasses toggle guard)
+        self.ui._app_stop_listening = self.stop_listening
         # Show loading state in tray
         self.ui.indicator.set_title("VoxInput — Loading model…")
 
@@ -100,7 +102,11 @@ class VoxInputApp:
     def _on_models_ready(self):
         """Called on GTK main thread once models are loaded."""
         self.ui.indicator.set_title("VoxInput (Idle)")
-        self.start_listening()   # auto-start listening
+        # Don't auto-start in PTT mode — wait for key press
+        if not self.settings.get("push_to_talk", False):
+            self.start_listening()
+        else:
+            logger.info("PTT mode active — waiting for key press.")
         return False             # one-shot GLib idle
 
 
@@ -127,6 +133,10 @@ class VoxInputApp:
         if not self._model_ready:
             self.ui.indicator.set_title("VoxInput — Still loading model, please wait…")
             GLib.timeout_add(2000, lambda: self.ui.indicator.set_title("VoxInput — Loading model…"))
+            return
+        # Block toggle hotkey when PTT mode is on
+        if self.settings.get("push_to_talk", False):
+            logger.info("Toggle blocked — PTT mode active. Use PTT key instead.")
             return
         if self.is_listening:
             self.stop_listening()
