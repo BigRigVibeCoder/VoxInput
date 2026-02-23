@@ -123,6 +123,17 @@ class SpellCorrector:
                 if os.path.exists(user_dict):
                     self._sym_spell.load_dictionary(user_dict, term_index=0, count_index=1)
 
+            # Inject custom WordDatabase words into SymSpell as high-frequency
+            # correction targets. Without this, SymSpell only corrects against
+            # the generic English dictionary and ignores custom tech terms.
+            if self._word_db and self._word_db._dict:
+                injected = 0
+                for lower_word in self._word_db._dict:
+                    self._sym_spell.create_dictionary_entry(lower_word, 1_000_000)
+                    injected += 1
+                if injected:
+                    logger.info(f"SpellCorrector: injected {injected} custom words into SymSpell")
+
             logger.info("SpellCorrector initialized (SymSpellPy + WordDatabase + Grammar + ParseNum)")
 
         except ImportError:
@@ -162,6 +173,9 @@ class SpellCorrector:
         if not self._loaded:
             self._load()
             self._loaded = True
+
+        # Step 0: Phonetic compound correction (multi-word ASR misrecognitions)
+        text = self._apply_compound_corrections(text)
 
         # Step 1: ASR artifact substitution (context-free, highest priority)
         text = self._apply_asr_rules(text)
@@ -270,6 +284,78 @@ class SpellCorrector:
         self._load()
 
     # ── Internal ─────────────────────────────────────────────────────────────
+
+    # Phonetic compound map: multi-word ASR misrecognitions → correct term.
+    # Vosk splits unknown tech terms into phonetically similar English words.
+    # SymSpell can't reach these (edit distance >> 2 between the fragments).
+    # Keys are lowercase tuples of misheard words.
+    _COMPOUND_MAP: dict[tuple[str, ...], str] = {
+        # Infrastructure
+        ("cooper", "netty's"): "kubernetes",
+        ("cooper", "nettie's"): "kubernetes",
+        ("cooper", "neediest"): "kubernetes",
+        ("cube", "control"): "kubectl",
+        ("and", "simple"): "ansible",
+        ("engine", "next"): "nginx",
+        ("engine", "x"): "nginx",
+        ("pie", "torch"): "PyTorch",
+        ("tensor", "flow"): "TensorFlow",
+        ("tail", "scale"): "Tailscale",
+        ("terra", "form"): "Terraform",
+        ("read", "is"): "Redis",
+        ("post", "gress"): "Postgres",
+        ("graph", "queue", "l"): "GraphQL",
+        ("graph", "q", "l"): "GraphQL",
+        ("type", "script"): "TypeScript",
+        ("java", "script"): "JavaScript",
+        ("next", "j", "s"): "Next.js",
+        ("ex", "tool"): "xdotool",
+        ("sim", "spell"): "SymSpell",
+        ("pi", "input"): "pynput",
+        ("vox", "input"): "VoxInput",
+        ("hive", "mind"): "HiveMind",
+        ("oh", "droid"): "ODROID",
+        ("lie", "dar"): "LIDAR",
+        ("li", "dar"): "LIDAR",
+        # Common API/tech
+        ("a", "p", "i"): "API",
+        ("a", "pr"): "API",
+        ("a", "p", "r"): "API",
+        ("see", "i"): "CI",
+        ("see", "d"): "CD",
+    }
+
+    def _apply_compound_corrections(self, text: str) -> str:
+        """Replace multi-word ASR misrecognitions with correct terms.
+
+        Uses sliding window (2-3 words) against _COMPOUND_MAP.
+        Runs BEFORE SymSpell so the corrected single words can then
+        be true-cased by WordDB.
+        """
+        words = text.split()
+        if len(words) < 2:
+            return text
+
+        result = []
+        i = 0
+        while i < len(words):
+            matched = False
+            # Try 3-word match first, then 2-word
+            for window in (3, 2):
+                if i + window <= len(words):
+                    key = tuple(w.lower() for w in words[i:i+window])
+                    if key in self._COMPOUND_MAP:
+                        replacement = self._COMPOUND_MAP[key]
+                        logger.debug(f"CompoundFix: {' '.join(words[i:i+window])} → {replacement}")
+                        result.append(replacement)
+                        i += window
+                        matched = True
+                        break
+            if not matched:
+                result.append(words[i])
+                i += 1
+
+        return " ".join(result)
 
     def _apply_asr_rules(self, text: str) -> str:
         words = text.split()
