@@ -1,6 +1,6 @@
 VoxInput Golden Recording Session
 ==================================
-Date: Sat Feb 21 07:35:49 AM EST 2026
+Date: Mon Feb 23 01:12:53 PM EST 2026
 Host: laptop
 
 Recordings:
@@ -9,6 +9,7 @@ Recordings:
   paragraph_c.wav  832K  26.5s
   paragraph_d.wav  840K  26.8s
   paragraph_e.wav  1.7M  55.7s
+  paragraph_f.wav  1.3M  39.7s
 
 Run WER tests with:
   pytest tests/golden/ -v -s -m golden

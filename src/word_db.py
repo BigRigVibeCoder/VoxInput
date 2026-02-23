@@ -38,15 +38,19 @@ _DEFAULT_COMPOUNDS = [
     ("cooper netty's", "kubernetes"),
     ("cooper nettie's", "kubernetes"),
     ("cooper neediest", "kubernetes"),
+    ("cooper eighties", "kubernetes"),  # discovered from Paragraph F recording
     ("cube control", "kubectl"),
     ("and simple", "Ansible"),
+    ("and symbol", "Ansible"),          # discovered from Paragraph F recording
     ("engine next", "nginx"),
     ("engine x", "nginx"),
     ("pie torch", "PyTorch"),
     ("tensor flow", "TensorFlow"),
+    ("pincer flow", "TensorFlow"),    # discovered from Paragraph F recording
     ("tail scale", "Tailscale"),
     ("terra form", "Terraform"),
     ("read is", "Redis"),
+    ("rough fauna", "Grafana"),        # discovered from Paragraph F recording
     ("post gress", "Postgres"),
     ("graph queue l", "GraphQL"),
     ("graph q l", "GraphQL"),

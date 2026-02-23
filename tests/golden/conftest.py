@@ -54,7 +54,7 @@ def _parse_ground_truth(path: str) -> dict[str, str]:
             line = line.rstrip()
 
             # Detect paragraph headers: "## Paragraph A — ..."
-            m = re.match(r"^## Paragraph ([A-D])", line)
+            m = re.match(r"^## Paragraph ([A-Z])", line)
             if m:
                 if current_label:
                     paragraphs[current_label] = " ".join(current_lines).strip()
@@ -119,7 +119,7 @@ def golden_audio():
     Skips if recordings don't exist.
     """
     files = {}
-    for label in ["A", "B", "C", "D"]:
+    for label in ["A", "B", "C", "D", "E", "F"]:
         raw_path = os.path.join(RECORDINGS_DIR, f"paragraph_{label.lower()}.raw")
         if os.path.exists(raw_path):
             files[label] = raw_path
