@@ -21,6 +21,8 @@ def _kill_stale_instances():
     Prevents zombie processes from hogging the PulseAudio mic source,
     which causes the 'bright green, no text' failure.
     """
+    import time
+
     my_pid = os.getpid()
     killed = []
     try:
@@ -61,6 +63,21 @@ def _kill_stale_instances():
 
     if killed:
         print(f"[VoxInput] Cleaned up {len(killed)} stale process(es): {killed}")
+        # Wait for killed processes to actually exit so we can acquire
+        # the singleton lock.  Without this, GNOME's desktop-icon
+        # double-launch races: the second instance SIGTERMs the first,
+        # but the dying process still holds the fcntl lock → both die.
+        for _ in range(30):          # up to 3 s (30 × 0.1 s)
+            still_alive = False
+            for pid in killed:
+                try:
+                    os.kill(pid, 0)   # existence check
+                    still_alive = True
+                except ProcessLookupError:
+                    pass
+            if not still_alive:
+                break
+            time.sleep(0.1)
 
     # Release any stale lock file from a crashed instance
     if os.path.exists(_LOCK_FILE):
