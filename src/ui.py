@@ -155,6 +155,10 @@ class SystemTrayApp:
         self.engine_change_callback = engine_change_callback
         self.is_listening = False
 
+        # Settings reference for tray mode label
+        from .settings import SettingsManager
+        self._settings = SettingsManager()
+
         # P5: OSD overlay — hidden until listening starts
         self.osd = OSDOverlay()
 
@@ -199,20 +203,31 @@ class SystemTrayApp:
         menu.show_all()
         return menu
 
-    def _get_mode_label(self) -> str:
+    def _get_mode_label(self, settings=None) -> str:
         """Return the current input mode for the tray indicator."""
-        from .settings import SettingsManager
-        settings = SettingsManager()
-        if settings.get("push_to_talk", False):
-            key_str = settings.get("ptt_key", "Key.ctrl_r")
-            key_name = SettingsDialog._format_key_name(key_str)
+        s = settings or self._settings
+        if s and s.get("push_to_talk", False):
+            key_str = s.get("ptt_key", "Key.ctrl_r")
+            # Inline key formatting to avoid cross-class reference
+            _DISPLAY = {
+                "Key.ctrl_r": "Right Ctrl", "Key.ctrl_l": "Left Ctrl",
+                "Key.alt_r": "Right Alt", "Key.alt_l": "Left Alt",
+                "Key.shift_r": "Right Shift", "Key.shift_l": "Left Shift",
+                "Key.scroll_lock": "Scroll Lock", "Key.pause": "Pause",
+            }
+            for i in range(1, 25):
+                _DISPLAY[f"Key.f{i}"] = f"F{i}"
+            key_name = _DISPLAY.get(key_str, key_str.replace("Key.", "").replace("_", " ").title())
             return f"Mode: Push-to-Talk ({key_name})"
         return "Mode: Toggle (Super+Shift+V)"
 
-    def update_mode_label(self):
+    def update_mode_label(self, settings=None):
         """Refresh the tray menu mode label after settings change."""
         if hasattr(self, '_item_mode'):
-            self._item_mode.set_label(self._get_mode_label())
+            try:
+                self._item_mode.set_label(self._get_mode_label(settings))
+            except Exception:
+                pass
 
     def _on_toggle_menu(self, _):
         # Callback from menu item
@@ -978,6 +993,32 @@ class SettingsDialog(Gtk.Window):
         inner.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL), False, False, 8)
         inner.pack_start(_section_label("📋  Diagnostics"), False, False, 0)
 
+        # Log level selector
+        log_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        log_label = Gtk.Label(label="Log Level:")
+        log_label.set_halign(Gtk.Align.START)
+        log_row.pack_start(log_label, False, False, 0)
+
+        from .logger import LOG_LEVELS
+        self.combo_log_level = Gtk.ComboBoxText()
+        current_level = self.temp_settings.get("log_level", "TRACE")
+        for i, lvl in enumerate(LOG_LEVELS):
+            self.combo_log_level.append_text(lvl)
+            if lvl == current_level:
+                self.combo_log_level.set_active(i)
+        if self.combo_log_level.get_active() < 0:
+            self.combo_log_level.set_active(0)  # fallback to TRACE
+        self.combo_log_level.connect("changed", lambda w: self._set_temp("log_level", w.get_active_text()))
+        log_row.pack_start(self.combo_log_level, False, False, 0)
+
+        log_hint = Gtk.Label()
+        log_hint.set_markup(
+            '<span size="small"><i>TRACE = everything, ERROR = errors only</i></span>'
+        )
+        log_hint.get_style_context().add_class("hint")
+        log_row.pack_start(log_hint, False, False, 8)
+
+        inner.pack_start(log_row, False, False, 4)
 
         return scroll
 
@@ -1514,9 +1555,20 @@ class SettingsDialog(Gtk.Window):
         if changes and self.engine_change_callback and reinit_engine:
             self.engine_change_callback()
 
+        # Apply log level change at runtime
+        if changes and "log_level" in self.temp_settings:
+            try:
+                from .logger import set_log_level
+                set_log_level(self.temp_settings["log_level"])
+            except Exception:
+                pass
+
         # Refresh tray mode indicator if mode or key changed
         if changes and hasattr(self, '_tray_app') and self._tray_app:
-            self._tray_app.update_mode_label()
+            try:
+                self._tray_app.update_mode_label(self.settings)
+            except Exception:
+                pass
 
     def destroy(self):
         self._stop_test()

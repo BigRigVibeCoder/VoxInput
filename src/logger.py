@@ -390,6 +390,30 @@ def get_sqlite_handler() -> SqliteHandler | None:
     return _sqlite_handler
 
 
+# Available log levels for the Settings UI
+LOG_LEVELS = ["TRACE", "DEBUG", "INFO", "WARNING", "ERROR"]
+
+
+def set_log_level(level_name: str) -> None:
+    """Change the log level at runtime (called from Settings UI)."""
+    level_map = {
+        "TRACE": TRACE,
+        "DEBUG": logging.DEBUG,
+        "INFO":  logging.INFO,
+        "WARNING": logging.WARNING,
+        "ERROR": logging.ERROR,
+        "CRITICAL": logging.CRITICAL,
+    }
+    level = level_map.get(level_name.upper(), logging.INFO)
+    root = logging.getLogger()
+    root.setLevel(level)
+    for handler in root.handlers:
+        handler.setLevel(level)
+    logging.getLogger(_component).info(
+        "Log level changed to %s", level_name.upper()
+    )
+
+
 # ─── Root exception hook ──────────────────────────────────────────────────────
 
 def _install_excepthook(component: str) -> None:
