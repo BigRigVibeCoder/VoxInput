@@ -1,5 +1,6 @@
 import logging
 import os
+import signal
 
 logger = logging.getLogger(__name__)
 
@@ -1125,6 +1126,93 @@ class SettingsDialog(Gtk.Window):
         outer.pack_start(add_box, False, False, 0)
 
         self._refresh_words_list()
+
+        # ══════════════════════════════════════════════════════════
+        # Compound Corrections — multi-word ASR fix table
+        # ══════════════════════════════════════════════════════════
+        outer.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL), False, False, 12)
+        outer.pack_start(_section_label("🔗  Compound Corrections"), False, False, 0)
+
+        cc_hint = Gtk.Label(
+            label="Map common ASR misrecognitions to correct words. "
+                  "E.g. Vosk hears \"pie torch\" → corrected to \"PyTorch\"."
+        )
+        cc_hint.set_line_wrap(True)
+        cc_hint.set_xalign(0)
+        cc_hint.get_style_context().add_class("hint")
+        cc_hint.set_margin_bottom(8)
+        outer.pack_start(cc_hint, False, False, 0)
+
+        # ── Search bar ────────────────────────────────────────────
+        cc_search_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        lbl_cc_search = Gtk.Label(label="🔍")
+        self._cc_search = Gtk.Entry()
+        self._cc_search.set_placeholder_text("Filter corrections…")
+        self._cc_search.connect("changed", self._on_cc_filter_changed)
+        cc_search_box.pack_start(lbl_cc_search, False, False, 0)
+        cc_search_box.pack_start(self._cc_search, True, True, 0)
+        outer.pack_start(cc_search_box, False, False, 4)
+
+        # ── TreeView ──────────────────────────────────────────────
+        self._cc_store = Gtk.ListStore(int, str, str)  # id, misheard, correct
+        self._cc_view = Gtk.TreeView(model=self._cc_store)
+        self._cc_view.set_headers_visible(True)
+        self._cc_view.get_style_context().add_class("words-tree")
+
+        col_mis = Gtk.TreeViewColumn("Vosk Hears", Gtk.CellRendererText(), text=1)
+        col_mis.set_expand(True)
+        col_mis.set_sort_column_id(1)
+        self._cc_view.append_column(col_mis)
+
+        col_cor = Gtk.TreeViewColumn("Corrected To", Gtk.CellRendererText(), text=2)
+        col_cor.set_expand(True)
+        col_cor.set_sort_column_id(2)
+        self._cc_view.append_column(col_cor)
+
+        cc_scroll = Gtk.ScrolledWindow()
+        cc_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        cc_scroll.set_min_content_height(160)
+        cc_scroll.add(self._cc_view)
+        outer.pack_start(cc_scroll, True, True, 4)
+
+        # ── Count label ───────────────────────────────────────────
+        self._cc_count_label = Gtk.Label(label="")
+        self._cc_count_label.set_xalign(0)
+        self._cc_count_label.get_style_context().add_class("hint")
+        outer.pack_start(self._cc_count_label, False, False, 0)
+
+        # ── Add row ───────────────────────────────────────────────
+        outer.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL), False, False, 8)
+        cc_add_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+
+        self._cc_misheard_entry = Gtk.Entry()
+        self._cc_misheard_entry.set_placeholder_text("Vosk hears…")
+        self._cc_misheard_entry.set_tooltip_text("The misheard phrase (e.g. 'pie torch')")
+
+        self._cc_correct_entry = Gtk.Entry()
+        self._cc_correct_entry.set_placeholder_text("Correct word…")
+        self._cc_correct_entry.set_tooltip_text("The correct replacement (e.g. 'PyTorch')")
+        self._cc_correct_entry.connect("activate", self._on_cc_add)
+
+        cc_btn_add = Gtk.Button(label="➕ Add")
+        cc_btn_add.get_style_context().add_class("action-btn")
+        cc_btn_add.connect("clicked", self._on_cc_add)
+
+        cc_btn_remove = Gtk.Button(label="🗑️ Remove")
+        cc_btn_remove.get_style_context().add_class("cancel-btn")
+        cc_btn_remove.connect("clicked", self._on_cc_remove)
+
+        cc_add_box.pack_start(self._cc_misheard_entry, True,  True,  0)
+        lbl_arrow = Gtk.Label(label="→")
+        lbl_arrow.set_margin_start(4)
+        lbl_arrow.set_margin_end(4)
+        cc_add_box.pack_start(lbl_arrow,               False, False, 0)
+        cc_add_box.pack_start(self._cc_correct_entry,  True,  True,  0)
+        cc_add_box.pack_start(cc_btn_add,              False, False, 0)
+        cc_add_box.pack_start(cc_btn_remove,           False, False, 0)
+        outer.pack_start(cc_add_box, False, False, 0)
+
+        self._refresh_cc_list()
         return outer
 
     def _refresh_words_list(self, filter_text=""):
@@ -1177,6 +1265,69 @@ class SettingsDialog(Gtk.Window):
         word = model[treeiter][1]
         self._word_db.remove_word(word)
         self._refresh_words_list(self._words_search.get_text())
+
+    # ── Compound Corrections handlers ─────────────────────────
+
+    def _refresh_cc_list(self, filter_text=""):
+        """Reload the compound corrections TreeView from the database."""
+        self._cc_store.clear()
+        if self._word_db is None:
+            return
+        rows = self._word_db.get_all_compounds(filter_text)
+        for row_id, misheard, correct, _added in rows:
+            self._cc_store.append([row_id, misheard, correct])
+        total_compounds = len(self._word_db.get_compound_corrections())
+        visible = len(rows)
+        if filter_text:
+            self._cc_count_label.set_text(f"{visible} shown / {total_compounds} total corrections")
+        else:
+            self._cc_count_label.set_text(f"{total_compounds} compound corrections")
+
+    def _on_cc_filter_changed(self, entry):
+        self._refresh_cc_list(entry.get_text())
+
+    def _on_cc_add(self, _widget):
+        misheard = self._cc_misheard_entry.get_text().strip()
+        correct = self._cc_correct_entry.get_text().strip()
+        if not misheard or not correct or self._word_db is None:
+            return
+        added = self._word_db.add_compound_correction(misheard, correct)
+        if added:
+            self._cc_misheard_entry.set_text("")
+            self._cc_correct_entry.set_text("")
+            self._refresh_cc_list(self._cc_search.get_text())
+            self._signal_reload()
+        else:
+            # Already exists — flash entry red briefly
+            self._cc_misheard_entry.get_style_context().add_class("entry-error")
+            GLib.timeout_add(800, lambda: (
+                self._cc_misheard_entry.get_style_context().remove_class("entry-error"), False
+            ))
+
+    def _on_cc_remove(self, _widget):
+        if self._word_db is None:
+            return
+        selection = self._cc_view.get_selection()
+        model, treeiter = selection.get_selected()
+        if treeiter is None:
+            return
+        misheard = model[treeiter][1]
+        self._word_db.remove_compound_correction(misheard)
+        self._refresh_cc_list(self._cc_search.get_text())
+        self._signal_reload()
+
+    def _signal_reload(self):
+        """Signal the running VoxInput process to hot-reload its dictionary."""
+        import os
+        try:
+            lock_path = "/tmp/voxinput.lock"
+            if os.path.exists(lock_path):
+                with open(lock_path) as f:
+                    pid = int(f.read().strip())
+                os.kill(pid, signal.SIGUSR2)
+                logger.info(f"Sent SIGUSR2 to PID {pid} — compound corrections hot-reloaded")
+        except Exception as e:
+            logger.warning(f"Could not signal hot-reload: {e}")
 
 
     def _set_temp(self, key, value):
