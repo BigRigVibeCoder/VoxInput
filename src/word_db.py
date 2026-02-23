@@ -21,7 +21,53 @@ CREATE TABLE IF NOT EXISTS words (
 );
 CREATE INDEX IF NOT EXISTS idx_words_word ON words(word COLLATE NOCASE);
 CREATE INDEX IF NOT EXISTS idx_words_cat  ON words(category);
+
+CREATE TABLE IF NOT EXISTS compound_corrections (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    misheard  TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+    correct   TEXT    NOT NULL,
+    added_at  REAL    NOT NULL DEFAULT (unixepoch('now', 'subsec'))
+);
+CREATE INDEX IF NOT EXISTS idx_cc_misheard ON compound_corrections(misheard COLLATE NOCASE);
 """
+
+# Default compound corrections for common ASR misrecognitions.
+# Seeded on first run. Users can add more via the database.
+_DEFAULT_COMPOUNDS = [
+    # Infrastructure
+    ("cooper netty's", "kubernetes"),
+    ("cooper nettie's", "kubernetes"),
+    ("cooper neediest", "kubernetes"),
+    ("cube control", "kubectl"),
+    ("and simple", "Ansible"),
+    ("engine next", "nginx"),
+    ("engine x", "nginx"),
+    ("pie torch", "PyTorch"),
+    ("tensor flow", "TensorFlow"),
+    ("tail scale", "Tailscale"),
+    ("terra form", "Terraform"),
+    ("read is", "Redis"),
+    ("post gress", "Postgres"),
+    ("graph queue l", "GraphQL"),
+    ("graph q l", "GraphQL"),
+    ("type script", "TypeScript"),
+    ("java script", "JavaScript"),
+    ("next j s", "Next.js"),
+    ("ex tool", "xdotool"),
+    ("sim spell", "SymSpell"),
+    ("pi input", "pynput"),
+    ("vox input", "VoxInput"),
+    ("hive mind", "HiveMind"),
+    ("oh droid", "ODROID"),
+    ("lie dar", "LIDAR"),
+    ("li dar", "LIDAR"),
+    # Common API/tech acronyms
+    ("a p i", "API"),
+    ("a pr", "API"),
+    ("a p r", "API"),
+    ("see i", "CI"),
+    ("see d", "CD"),
+]
 
 
 class WordDatabase:
@@ -44,9 +90,11 @@ class WordDatabase:
         self._conn.executescript(_SCHEMA)
         self._conn.commit()
         self._dict: dict[str, str] = {}
+        self._compounds: dict[tuple[str, ...], str] = {}
         self._load_into_memory()
-        logger.info("WordDatabase loaded: %d protected words from %s",
-                    len(self._dict), self._path)
+        self._seed_compounds()
+        logger.info("WordDatabase loaded: %d protected words, %d compound corrections from %s",
+                    len(self._dict), len(self._compounds), self._path)
 
     # ── Public API ───────────────────────────────────────────────────────────
 
@@ -131,6 +179,79 @@ class WordDatabase:
     def _load_into_memory(self):
         rows = self._conn.execute("SELECT word FROM words").fetchall()
         self._dict = {r[0].lower(): r[0] for r in rows}
+        # Load compound corrections into tuple-keyed dict
+        cc_rows = self._conn.execute(
+            "SELECT misheard, correct FROM compound_corrections"
+        ).fetchall()
+        self._compounds = {
+            tuple(r[0].lower().split()): r[1] for r in cc_rows
+        }
+
+    def _seed_compounds(self):
+        """Auto-seed default compound corrections on first run."""
+        existing = self._conn.execute(
+            "SELECT COUNT(*) FROM compound_corrections"
+        ).fetchone()[0]
+        if existing > 0:
+            return
+        logger.info("WordDB: seeding %d default compound corrections", len(_DEFAULT_COMPOUNDS))
+        with self._lock:
+            self._conn.executemany(
+                "INSERT OR IGNORE INTO compound_corrections(misheard, correct) VALUES(?,?)",
+                _DEFAULT_COMPOUNDS,
+            )
+            self._conn.commit()
+            self._load_into_memory()
+
+    # ── Compound Corrections API ─────────────────────────────────────────────
+
+    def get_compound_corrections(self) -> dict[tuple[str, ...], str]:
+        """Return the in-memory compound corrections map (tuple key → correct word)."""
+        return self._compounds
+
+    def add_compound_correction(self, misheard: str, correct: str) -> bool:
+        """Add a compound correction. Returns True if newly added."""
+        m = misheard.strip().lower()
+        c = correct.strip()
+        if not m or not c:
+            return False
+        with self._lock:
+            try:
+                self._conn.execute(
+                    "INSERT INTO compound_corrections(misheard, correct) VALUES(?, ?)",
+                    (m, c),
+                )
+                self._conn.commit()
+                self._compounds[tuple(m.split())] = c
+                logger.debug("WordDB: added compound '%s' → '%s'", m, c)
+                return True
+            except sqlite3.IntegrityError:
+                return False
+
+    def remove_compound_correction(self, misheard: str) -> bool:
+        """Remove a compound correction. Returns True if removed."""
+        m = misheard.strip().lower()
+        with self._lock:
+            cur = self._conn.execute(
+                "DELETE FROM compound_corrections WHERE misheard=? COLLATE NOCASE", (m,)
+            )
+            self._conn.commit()
+            self._compounds.pop(tuple(m.split()), None)
+            return cur.rowcount > 0
+
+    def get_all_compounds(self, filter_text: str = "") -> list[tuple]:
+        """Return list of (id, misheard, correct, added_at) for UI display."""
+        q = filter_text.strip().lower()
+        if q:
+            return self._conn.execute(
+                "SELECT id, misheard, correct, added_at FROM compound_corrections "
+                "WHERE lower(misheard) LIKE ? OR lower(correct) LIKE ? "
+                "ORDER BY misheard",
+                (f"%{q}%", f"%{q}%"),
+            ).fetchall()
+        return self._conn.execute(
+            "SELECT id, misheard, correct, added_at FROM compound_corrections ORDER BY misheard"
+        ).fetchall()
 
     def close(self):
         self._conn.close()

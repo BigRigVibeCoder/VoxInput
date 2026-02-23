@@ -88,6 +88,7 @@ class SpellCorrector:
         self._num_result = 0
         self._num_current = 0
         self._num_pending_words: list[str] = []  # original words held back
+        self._compound_map: dict[tuple[str, ...], str] = {}  # DB-driven compound corrections
         self._loaded = False               # P9-05: lazy load gate
 
     # ── Setup ────────────────────────────────────────────────────────────────
@@ -135,6 +136,12 @@ class SpellCorrector:
                     logger.info(f"SpellCorrector: injected {injected} custom words into SymSpell")
 
             logger.info("SpellCorrector initialized (SymSpellPy + WordDatabase + Grammar + ParseNum)")
+
+            # Load compound corrections from WordDatabase
+            if self._word_db:
+                self._compound_map = self._word_db.get_compound_corrections()
+                if self._compound_map:
+                    logger.info(f"SpellCorrector: loaded {len(self._compound_map)} compound corrections from DB")
 
         except ImportError:
             logger.info("symspellpy not installed — spell correction disabled")
@@ -277,6 +284,8 @@ class SpellCorrector:
     def set_word_db(self, word_db):
         """Hot-swap the WordDatabase (called after lazy load in main.py)."""
         self._word_db = word_db
+        if word_db:
+            self._compound_map = word_db.get_compound_corrections()
 
     def reload(self):
         """Re-initialize after settings change."""
@@ -285,53 +294,14 @@ class SpellCorrector:
 
     # ── Internal ─────────────────────────────────────────────────────────────
 
-    # Phonetic compound map: multi-word ASR misrecognitions → correct term.
-    # Vosk splits unknown tech terms into phonetically similar English words.
-    # SymSpell can't reach these (edit distance >> 2 between the fragments).
-    # Keys are lowercase tuples of misheard words.
-    _COMPOUND_MAP: dict[tuple[str, ...], str] = {
-        # Infrastructure
-        ("cooper", "netty's"): "kubernetes",
-        ("cooper", "nettie's"): "kubernetes",
-        ("cooper", "neediest"): "kubernetes",
-        ("cube", "control"): "kubectl",
-        ("and", "simple"): "ansible",
-        ("engine", "next"): "nginx",
-        ("engine", "x"): "nginx",
-        ("pie", "torch"): "PyTorch",
-        ("tensor", "flow"): "TensorFlow",
-        ("tail", "scale"): "Tailscale",
-        ("terra", "form"): "Terraform",
-        ("read", "is"): "Redis",
-        ("post", "gress"): "Postgres",
-        ("graph", "queue", "l"): "GraphQL",
-        ("graph", "q", "l"): "GraphQL",
-        ("type", "script"): "TypeScript",
-        ("java", "script"): "JavaScript",
-        ("next", "j", "s"): "Next.js",
-        ("ex", "tool"): "xdotool",
-        ("sim", "spell"): "SymSpell",
-        ("pi", "input"): "pynput",
-        ("vox", "input"): "VoxInput",
-        ("hive", "mind"): "HiveMind",
-        ("oh", "droid"): "ODROID",
-        ("lie", "dar"): "LIDAR",
-        ("li", "dar"): "LIDAR",
-        # Common API/tech
-        ("a", "p", "i"): "API",
-        ("a", "pr"): "API",
-        ("a", "p", "r"): "API",
-        ("see", "i"): "CI",
-        ("see", "d"): "CD",
-    }
-
     def _apply_compound_corrections(self, text: str) -> str:
         """Replace multi-word ASR misrecognitions with correct terms.
 
-        Uses sliding window (2-3 words) against _COMPOUND_MAP.
-        Runs BEFORE SymSpell so the corrected single words can then
-        be true-cased by WordDB.
+        Uses sliding window (2-3 words) against compound corrections
+        loaded from the WordDatabase.
         """
+        if not self._compound_map:
+            return text
         words = text.split()
         if len(words) < 2:
             return text
@@ -344,8 +314,8 @@ class SpellCorrector:
             for window in (3, 2):
                 if i + window <= len(words):
                     key = tuple(w.lower() for w in words[i:i+window])
-                    if key in self._COMPOUND_MAP:
-                        replacement = self._COMPOUND_MAP[key]
+                    if key in self._compound_map:
+                        replacement = self._compound_map[key]
                         logger.debug(f"CompoundFix: {' '.join(words[i:i+window])} → {replacement}")
                         result.append(replacement)
                         i += window
