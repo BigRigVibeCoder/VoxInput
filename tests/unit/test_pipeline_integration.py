@@ -245,7 +245,7 @@ class TestDictionaryIntegration:
         mock_db = MagicMock()
         mock_db.get_original_case = MagicMock(return_value="VoxInput")
         sc.set_word_db(mock_db)
-        result = sc.correct("voxinput is great")
+        sc.correct("voxinput is great")
         mock_db.get_original_case.assert_called()
 
     def test_word_db_preserves_casing(self):

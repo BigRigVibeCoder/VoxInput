@@ -150,7 +150,7 @@ class SpellCorrector:
             self._sym_spell = None
 
     # ── Public API ───────────────────────────────────────────────────────────
-    
+
     def reset_state(self):
         """Reset grammar state when a new dictation session starts."""
         self._cap_next = True
@@ -186,7 +186,7 @@ class SpellCorrector:
 
         # Step 1: ASR artifact substitution (context-free, highest priority)
         text = self._apply_asr_rules(text)
-        
+
         # Step 2: Complex number conversion (hundreds, thousands, millions, ordinals)
         text = self._convert_numbers(text)
 
@@ -195,7 +195,7 @@ class SpellCorrector:
         corrected = []
         for word in words:
             lower = word.lower()
-            
+
             # Punctuation boundaries trigger next-word capitalization
             # Includes both actual chars AND voice command words (punctuation
             # is now applied downstream by VoicePunctuationBuffer)
@@ -204,7 +204,7 @@ class SpellCorrector:
                 self._cap_next = True
                 corrected.append(word)
                 continue
-                
+
             # Grammar rule: Stand-alone 'I' variations
             if lower in {"i", "i'm", "i've", "i'll", "i'd"}:
                 final_word = word.capitalize()
@@ -215,13 +215,13 @@ class SpellCorrector:
             # Resolve the actual word (WordDB True Casing or SymSpell)
             final_word = word
             resolved = False
-            
+
             if self._word_db:
                 orig_case = self._word_db.get_original_case(lower)
                 if orig_case:
                     final_word = orig_case
                     resolved = True
-            
+
             if not resolved and self._sym_spell and word.isalpha() and not word[0].isupper() and not word.isupper():
                 # Protect common abbreviations from being "corrected"
                 _PROTECTED = {"mr", "mrs", "ms", "dr", "sr", "jr", "vs", "st",
@@ -240,7 +240,7 @@ class SpellCorrector:
                             logger.debug(f"SpellCorrector: '{word}' -> '{best.term}'")
                             final_word = best.term
 
-            # Apply Auto-Capitalization 
+            # Apply Auto-Capitalization
             if self._cap_next and len(final_word) > 0 and final_word[0].isalpha():
                 final_word = final_word[0].upper() + final_word[1:]
                 self._cap_next = False
@@ -330,7 +330,7 @@ class SpellCorrector:
     def _apply_asr_rules(self, text: str) -> str:
         words = text.split()
         return " ".join(ASR_CORRECTIONS.get(w.lower(), w) for w in words)
-        
+
     def _convert_numbers(self, text: str) -> str:
         current = self._num_current
         result = self._num_result
@@ -375,7 +375,7 @@ class SpellCorrector:
                         output.append(tokens[i])
                         i += 1
                         continue
-                    
+
             if not is_num and not is_ordinal and not valid_and:
                 if in_number:
                     output.append(str(result + current))
@@ -394,7 +394,7 @@ class SpellCorrector:
                 in_number = True
                 if not valid_and:
                     scale, increment = NUM_DICT[word]
-                    
+
                     # Check for strings of single digits (one two three -> 1 2 3) and years (19 99)
                     if scale == 1 and current > 0 and current < 100 and increment < 100:
                         if current < 100 and increment >= 10 and current >= 10:
@@ -418,7 +418,7 @@ class SpellCorrector:
                     else:
                         current += increment
             i += 1
-            
+
         if in_number:
             # Don't emit yet — hold back for potential continuation
             self._num_result = result

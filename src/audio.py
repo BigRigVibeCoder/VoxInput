@@ -20,11 +20,11 @@ class AudioCapture:
     def start(self):
         if self.is_running:
             return
-        
+
         try:
             self.is_running = True
             self._buf.clear()  # Clear old audio
-            
+
             self.stream = self.pa.open(
                 format=pyaudio.paInt16,
                 channels=CHANNELS,

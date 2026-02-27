@@ -9,7 +9,7 @@ SETTINGS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "
 
 class SettingsManager:
     _instance = None
-    
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(SettingsManager, cls).__new__(cls)

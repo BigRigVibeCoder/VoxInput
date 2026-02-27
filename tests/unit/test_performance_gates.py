@@ -8,7 +8,6 @@ import os
 import sys
 import time
 import subprocess
-import pytest
 from unittest.mock import MagicMock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -78,7 +77,7 @@ class TestGate2Memory:
     def test_symspell_init_fast_without_load(self):
         """SpellCorrector init should be fast when SymSpell is deferred."""
         t0 = time.perf_counter()
-        sc = _make_corrector()
+        _make_corrector()
         init_time = (time.perf_counter() - t0) * 1000
         # Without loading SymSpell dictionary, init should be < 50ms
         assert init_time < 50, f"Init took {init_time:.0f}ms, should be < 50ms"

@@ -7,8 +7,6 @@ using mocked audio and recognizer. No live audio required.
 import collections
 import os
 import sys
-import time
-import pytest
 from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -45,7 +43,7 @@ class TestChunkBatching:
         for i in range(3):
             buf.append(b"\x00\x01" * 100)
 
-        data = buf.popleft()
+        buf.popleft()
         backlog = len(buf)
         assert backlog <= 3  # should NOT drain
         assert len(buf) == 2  # 2 remaining untouched

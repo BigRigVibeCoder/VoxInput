@@ -10,7 +10,6 @@ Can be run standalone:
 
 import os
 import re
-import sys
 import argparse
 import subprocess
 
@@ -266,9 +265,9 @@ def check_audio_quality(recordings_dir: str) -> None:
             print(f"       Rate: {sample_rate}Hz  Channels: {channels}  Duration: {duration:.1f}s")
             print(f"       Volume: max={max_vol}  mean={mean_vol}")
             if sample_rate != "16000":
-                print(f"       ⚠️  Expected 16000Hz — re-record or convert with ffmpeg")
+                print("       ⚠️  Expected 16000Hz — re-record or convert with ffmpeg")
             if int(channels) != 1:
-                print(f"       ⚠️  Expected mono (1 channel)")
+                print("       ⚠️  Expected mono (1 channel)")
             print()
         except Exception as e:
             print(f"  ❌ {fname}: Error reading — {e}\n")

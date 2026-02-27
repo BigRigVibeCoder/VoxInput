@@ -22,7 +22,6 @@ import os
 import re
 import subprocess
 import sys
-import tempfile
 import time
 from pathlib import Path
 
@@ -31,22 +30,21 @@ import pytest
 @pytest.fixture(scope="module", autouse=True)
 def e2e_module_guard():
     """Ensure real vosk is available or cleanly skip, restoring mocks afterwards."""
-    from unittest.mock import MagicMock
     saved_mocks = {}
     for _mod in ("vosk", "pyaudio", "whisper", "faster_whisper"):
         if _mod in sys.modules and type(sys.modules[_mod]).__name__ == "MagicMock":
             saved_mocks[_mod] = sys.modules[_mod]
             del sys.modules[_mod]
-            
+
     try:
         import vosk
     except ImportError:
         for _mod, _mock in saved_mocks.items():
             sys.modules[_mod] = _mock
         pytest.skip("No real 'vosk' module available for E2E tests.")
-        
+
     yield
-    
+
     for _mod, _mock in saved_mocks.items():
         sys.modules[_mod] = _mock
 
@@ -278,14 +276,14 @@ def read_xterm_content(xterm_proc: subprocess.Popen) -> str:
             capture_output=True, text=True,
             env={**os.environ, "DISPLAY": DISPLAY}
         ).stdout.strip().split("\n")[0]
-        
+
         subprocess.run(
             ["xdotool", "key", "--window", win_id, "ctrl+a"],
             env={**os.environ, "DISPLAY": DISPLAY}, capture_output=True
         )
         time.sleep(0.2)
-        
-        result = subprocess.run(
+
+        subprocess.run(
             ["xdotool", "getactivewindow"],
             capture_output=True, text=True,
             env={**os.environ, "DISPLAY": DISPLAY}
@@ -365,7 +363,7 @@ def test_paragraph_transcription(para, e2e_setup):
     time.sleep(0.5)
 
     # Screenshot after typing
-    screenshot_path = take_screenshot(f"para_{para}_typed", rd)
+    take_screenshot(f"para_{para}_typed", rd)
 
     # WER calc
     wer = word_error_rate(ref, hypothesis)

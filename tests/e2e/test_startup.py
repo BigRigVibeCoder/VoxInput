@@ -17,11 +17,11 @@ def test_app_initialization(monkeypatch, mock_settings_file):
     """
     # Patch SettingsManager to return predictable values
     mock_sm = MagicMock()
-    
+
     def mock_get(key, default=None):
         if key == "vosk_model_path": return "/mock/model/path"
         return default
-        
+
     mock_sm.return_value.get.side_effect = mock_get
     monkeypatch.setattr("src.settings.SettingsManager", mock_sm)
 
@@ -31,14 +31,14 @@ def test_app_initialization(monkeypatch, mock_settings_file):
 
     # Verify critical components initialized
     assert app.audio is not None
-    
+
     # Wait for background model loader thread to finish
     import time
     for _ in range(50):
         if app.recognizer is not None:
             break
         time.sleep(0.1)
-        
+
     assert app.recognizer is not None
     assert app.ui is not None
     assert app.is_listening is False

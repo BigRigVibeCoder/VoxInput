@@ -2,7 +2,6 @@
 import sys
 from unittest.mock import MagicMock, patch
 
-import pytest
 
 sys.path.insert(0, ".")
 
@@ -11,7 +10,8 @@ class TestVoicePunctuation:
     """Unit tests for apply_voice_punctuation() — P4-02."""
 
     def setup_method(self):
-        import importlib, src.injection as inj
+        import importlib
+        import src.injection as inj
         importlib.reload(inj)
         self.apply = inj.apply_voice_punctuation
 

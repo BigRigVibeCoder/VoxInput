@@ -10,13 +10,11 @@ SpellCorrector directly.
 """
 import os
 import sys
-import pytest
-from unittest.mock import MagicMock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from src.spell_corrector import SpellCorrector
-from src.injection import VoicePunctuationBuffer, apply_voice_punctuation
+from src.injection import VoicePunctuationBuffer
 
 
 # ─── Fixtures ────────────────────────────────────────────────────────────────

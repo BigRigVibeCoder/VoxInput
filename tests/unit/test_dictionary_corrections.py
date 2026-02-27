@@ -5,9 +5,6 @@ Tests compound corrections (DB-driven), SymSpell injection of custom words,
 and WordDatabase true-casing. These are unit tests that don't require audio.
 """
 import pytest
-import tempfile
-import os
-from pathlib import Path
 
 from src.word_db import WordDatabase
 from src.spell_corrector import SpellCorrector

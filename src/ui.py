@@ -233,7 +233,7 @@ class SystemTrayApp:
     def _on_toggle_menu(self, _):
         # Callback from menu item
         self.toggle_callback()
-        
+
     def _on_settings(self, _):
         # Singleton: only one Settings window at a time
         if hasattr(self, '_settings_dialog') and self._settings_dialog is not None:
@@ -801,18 +801,18 @@ class SettingsDialog(Gtk.Window):
         models = []
         if os.path.exists(model_dir):
             models = [d for d in os.listdir(model_dir) if os.path.isdir(os.path.join(model_dir, d))]
-            
+
         saved_model_path = self.temp_settings.get("model_path", "")
         saved_model_name = os.path.basename(saved_model_path) if saved_model_path else "default_model"
-        
+
         active_idx = 0
         for i, m in enumerate(sorted(models)):
             self.combo_vosk_model.append_text(m)
             if m == saved_model_name:
                 active_idx = i
-                
+
         self.combo_vosk_model.connect("changed", self._on_vosk_model_changed)
-        
+
         if models:
             self.combo_vosk_model.set_active(active_idx)
 
@@ -1352,7 +1352,6 @@ class SettingsDialog(Gtk.Window):
 
     def _on_ptt_key_captured(self, widget, event):
         """Capture the pressed key and save it as the PTT key."""
-        from pynput.keyboard import Key
 
         # Map GDK keyval to pynput key string
         keyval = event.keyval

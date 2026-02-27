@@ -14,7 +14,6 @@ import sys
 import tempfile
 from unittest.mock import MagicMock, patch
 
-import pytest
 
 # Import the module under test
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))

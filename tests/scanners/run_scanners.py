@@ -17,39 +17,39 @@ from pathlib import Path
 def main() -> int:
     """Run all scanners and aggregate results."""
     scanners_dir = Path(__file__).parent
-    
+
     scanners = [
         "bare_except_scanner.py",
         "print_statement_scanner.py"
     ]
-    
+
     all_passed = True
     print("========================================")
     print(" Running VoxInput AST Static Scanners ")
     print("========================================")
-    
+
     for scanner in scanners:
         scanner_path = scanners_dir / scanner
         print(f"\n=> Running {scanner}...")
-        
+
         result = subprocess.run(
             [sys.executable, str(scanner_path)],
             capture_output=True,
             text=True
         )
-        
+
         # Print output (standard and error)
         if result.stdout:
             print(result.stdout, end="")
         if result.stderr:
             sys.stderr.write(result.stderr)
-            
+
         if result.returncode != 0:
             print(f"❌ {scanner} FAILED.")
             all_passed = False
         else:
             print(f"✅ {scanner} PASSED.")
-            
+
     print("\n========================================")
     if all_passed:
         print("🎉 ALL SCANNERS PASSED!")

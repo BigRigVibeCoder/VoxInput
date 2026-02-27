@@ -39,13 +39,13 @@ class SpeechRecognizer:
                 gc.collect()
         except ImportError:
             pass
-        
+
         logger.info(f"Initializing SpeechRecognizer with engine: {self.engine_type}")
 
         # --- State for Streaming ---
         self.committed_text = [] # List of words already injected for current utterance
         self.last_partial_time = 0
-        
+
         # --- Vosk Setup ---
         if self.engine_type != "Whisper":
             if Model is None:
@@ -53,24 +53,24 @@ class SpeechRecognizer:
                 raise ImportError("vosk not installed")
 
             model_path = self.settings.get("model_path", MODEL_PATH)
-            
+
             # Resolve relative paths against the application root
             if not os.path.isabs(model_path):
                 from .config import ROOT_DIR
                 model_path = os.path.join(ROOT_DIR, model_path)
-                
+
             # Validate it's an actual Vosk directory (must contain 'am' or 'conf')
             is_valid_vosk = os.path.isdir(model_path) and (
-                os.path.exists(os.path.join(model_path, "am")) or 
+                os.path.exists(os.path.join(model_path, "am")) or
                 os.path.exists(os.path.join(model_path, "conf"))
             )
-            
+
             if not is_valid_vosk:
                 logger.warning(f"Invalid Vosk model path '{model_path}'. Falling back to default.")
                 model_path = MODEL_PATH
                 if not os.path.exists(model_path):
                     raise FileNotFoundError(f"Default model not found at {model_path}")
-            
+
             logger.info(f"Loading Vosk model from {model_path}")
             self.model = Model(model_path)
             self.recognizer = KaldiRecognizer(self.model, SAMPLE_RATE)
@@ -114,7 +114,7 @@ class SpeechRecognizer:
             self.whisper_last_transcript = ""
             self.whisper_last_process_time = 0
             self.whisper_process_interval = 0.5
-    
+
     def reset_state(self):
         """Reset streaming state (called on silence or manual stop)"""
         self.committed_text = []
@@ -157,7 +157,7 @@ class SpeechRecognizer:
 
         if not data:
             return None
-            
+
         try:
             # 1. Check for Full Result (Sentence End)
             if self.recognizer.AcceptWaveform(data):
@@ -181,7 +181,7 @@ class SpeechRecognizer:
 
                 # Reset for next sentence
                 self.committed_text = []
-            
+
             # 2. Check Partial Result (Streaming)
             else:
                 partial = json.loads(self.recognizer.PartialResult())
@@ -192,16 +192,16 @@ class SpeechRecognizer:
                 if len(words) == self._last_partial_count:
                     return None
                 self._last_partial_count = len(words)
-                
+
                 # Vosk Lag Strategy
                 stable_len = max(0, len(words) - LAG)
                 current_committed_len = len(self.committed_text)
-                
+
                 if stable_len > current_committed_len:
                     new_batch = words[current_committed_len : stable_len]
                     new_words_to_inject = new_batch
                     self.committed_text.extend(new_batch)
-                    
+
         except Exception as e:
             logger.error(f"Vosk processing error: {e}")
             # Auto-recover: reset recognizer to prevent C-level abort on next call
@@ -220,7 +220,7 @@ class SpeechRecognizer:
         # P8-03: append chunk to deque — O(1), no copy
         self.whisper_chunks.append(data)
         now = time.time()
-        
+
         # Throttle inference
         if now - self.whisper_last_process_time < self.whisper_process_interval:
             return None
@@ -261,40 +261,40 @@ class SpeechRecognizer:
             # Higher lag for Whisper by default as it fluctuates more at the tail
             fast_mode = self.settings.get("fast_mode", False)
             LAG = 0 if fast_mode else self.settings.get("stability_lag", 2)
-            
+
             stable_len = max(0, len(words) - LAG)
             current_committed_len = len(self.committed_text)
-            
+
             new_words_to_inject = []
-            
+
             if stable_len > current_committed_len:
                 # Check for consistency
                 # Does words[0:committed] match committed_text?
-                # If not, we have a divergence. 
+                # If not, we have a divergence.
                 # (e.g. committed "Recall", now "We call").
                 # Since we can't backspace efficiently (injector supports it but logic is complex),
                 # We simply effectively "fork" the reality and just append words.
                 # It's an imperfect trade-off for speed.
-                
+
                 new_batch = words[current_committed_len : stable_len]
                 new_words_to_inject = new_batch
                 self.committed_text.extend(new_batch)
-                
+
             if new_words_to_inject:
                 text_result = " ".join(new_words_to_inject)
-                
+
                 # Heuristic: If we successfully committed a full sentence, flush the buffer
                 # to prevent infinite buffer growth and improve future responsiveness.
                 if new_words_to_inject[-1].endswith(('.', '!', '?')):
                     logger.info("Sentence completed. Flushing Whisper buffer.")
                     self.whisper_chunks.clear()
                     self.committed_text = []
-                
+
                 return text_result
 
         except Exception as e:
             logger.error(f"Whisper inference error: {e}")
-            
+
         return None
 
     def finalize(self):
@@ -320,7 +320,7 @@ class SpeechRecognizer:
         # Whisper finalize — flush rolling buffer
         if not self.model:
             return None
-            
+
         if len(self.whisper_chunks) == 0:
             return None
 
@@ -330,33 +330,33 @@ class SpeechRecognizer:
             audio_np = np.concatenate(
                 [np.frombuffer(c, dtype=np.int16) for c in self.whisper_chunks]
             ).astype(np.float32) / 32768.0
-            
+
             # Safety check for empty tensor
             if audio_np.size == 0:
                 return None
 
             result = self.model.transcribe(audio_np, fp16=False, beam_size=1, language='en')
             current_transcript = result.get('text', '').strip()
-            
+
             # Logic: We just want to output whatever is NEW compared to committed
             words = current_transcript.split()
             current_committed_len = len(self.committed_text)
-            
+
             new_words = []
             if len(words) > current_committed_len:
                 new_words = words[current_committed_len:]
-                
+
             # Flush everything
             self.whisper_chunks.clear()
             self.committed_text = []
-            
+
             if new_words:
                 logger.info(f"Finalized flush: {new_words}")
                 return " ".join(new_words)
 
         except Exception as e:
             logger.error(f"Error during finalize: {e}")
-            
+
         return None
 
 

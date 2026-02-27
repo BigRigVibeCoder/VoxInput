@@ -119,7 +119,7 @@ class VoxInputApp:
         was_listening = self.is_listening
         if was_listening:
             self.stop_listening()
-            
+
         try:
             # Re-initialize recognizer (reads new settings)
             self.recognizer = SpeechRecognizer()
@@ -149,7 +149,7 @@ class VoxInputApp:
         if self.is_listening:
             logger.warning("Already listening.")
             return
-            
+
         logger.info("Starting listening... (C_RMS=%s)", using_c_extension())
         self.is_listening = True
         self.ui.set_listening_state(True)
@@ -159,6 +159,7 @@ class VoxInputApp:
         # P8-02: cache hot-path settings so _process_loop never calls settings.get() per-chunk
         self._sil_threshold: int = int(self.settings.get("silence_threshold", 500))
         self._sil_duration:  float = float(self.settings.get("silence_duration", 0.6))
+        self._ptt_mode: bool = bool(self.settings.get("push_to_talk", False))
         # P9-B: Adaptive silence — EMA noise floor tracking
         self._adaptive_silence = self.settings.get("adaptive_silence", True)
         self._noise_floor_ema: float = float(self._sil_threshold)  # seed with manual threshold
@@ -280,7 +281,7 @@ class VoxInputApp:
                         if self._ptt_active or self._ptt_releasing:
                             self._ptt_buffer.extend(text.split())
                             osd_words.extend(text.split())
-                        elif not self.settings.get("push_to_talk", False):
+                        elif not self._ptt_mode:
                             self._enqueue_injection(text)
                             osd_words.extend(text.split())
                         # else: PTT mode but key not held — discard silently
@@ -468,7 +469,7 @@ class VoxInputApp:
         Gtk.main()
 
     def _listen_hotkeys(self):
-        
+
         def on_activate():
             # Run in main thread context if possible, or careful with Gtk
             # Gtk is not thread safe. Use GLib.idle_add

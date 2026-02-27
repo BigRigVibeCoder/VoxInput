@@ -83,14 +83,12 @@ def restore_real_vosk():
     Temporarily remove MagicMock for vosk/pyaudio that root conftest.py injects.
     Golden tests require the REAL vosk for actual speech transcription.
     """
-    import sys
-    from unittest.mock import MagicMock
     saved_mocks = {}
     for _mod in ("vosk", "pyaudio", "whisper", "faster_whisper"):
         if _mod in sys.modules and type(sys.modules[_mod]).__name__ == "MagicMock":
             saved_mocks[_mod] = sys.modules[_mod]
             del sys.modules[_mod]
-            
+
     try:
         import vosk
     except ImportError:
@@ -99,7 +97,7 @@ def restore_real_vosk():
         pytest.skip("No real 'vosk' module available for Golden tests.")
 
     yield
-    
+
     for _mod, _mock in saved_mocks.items():
         sys.modules[_mod] = _mock
 

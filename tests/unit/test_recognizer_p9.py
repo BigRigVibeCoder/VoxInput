@@ -7,8 +7,7 @@ using mocked KaldiRecognizer. No live audio or model required.
 import json
 import os
 import sys
-import pytest
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -18,7 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 def _make_recognizer():
     """Create a SpeechRecognizer with mocked Vosk model and settings."""
     with patch("src.recognizer.Model"), \
-         patch("src.recognizer.KaldiRecognizer") as mock_kaldi:
+         patch("src.recognizer.KaldiRecognizer"):
         mock_settings = MagicMock()
         mock_settings.get = MagicMock(side_effect=lambda key, default=None: {
             "speech_engine": "Vosk",
@@ -154,7 +153,7 @@ class TestPartialResultCaching:
         })
 
         # First call — 2 words, _last_partial_count was 0
-        result1 = rec._process_vosk(_fake_audio())
+        rec._process_vosk(_fake_audio())
         assert rec._last_partial_count == 2
 
         # Second call — same 2 words, should skip
@@ -173,7 +172,7 @@ class TestPartialResultCaching:
 
         # Second: 3 words — should process
         rec.recognizer.PartialResult.return_value = json.dumps({"partial": "hello world today"})
-        result = rec._process_vosk(_fake_audio())
+        rec._process_vosk(_fake_audio())
         assert rec._last_partial_count == 3
 
     def test_reset_clears_partial_count(self):

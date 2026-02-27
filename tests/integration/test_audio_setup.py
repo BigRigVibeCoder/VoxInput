@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from src import pulseaudio_helper
 
@@ -8,13 +8,13 @@ Source #1
     Name: alsa_output.pci-0000_00_1f.3.analog-stereo.monitor
     Description: Monitor of Built-in Audio Analog Stereo
     Driver: module-alsa-card.c
-    
+
 Source #2
     State: SUSPENDED
     Name: alsa_input.pci-0000_00_1f.3.analog-stereo
     Description: Built-in Audio Analog Stereo
     Driver: module-alsa-card.c
-    
+
 Source #3
     State: RUNNING
     Name: rnnoise_source

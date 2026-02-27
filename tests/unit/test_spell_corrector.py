@@ -49,7 +49,6 @@ class TestSpellCorrectorLazyLoad:
     """SpellCorrector lazy-loads — must not crash even without symspellpy."""
 
     def test_import_clean(self):
-        from src.spell_corrector import SpellCorrector
         sc = _make_sc()
         assert sc is not None
 
