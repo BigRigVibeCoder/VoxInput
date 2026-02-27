@@ -40,8 +40,9 @@ class VoxInputApp:
         self.is_listening = False
         self.should_quit  = False
         self.processing_thread = None
-        self._ptt_active = False  # True while PTT key is physically held
-        self._ptt_buffer = []     # Accumulates all words during PTT hold
+        self._ptt_active = False     # True while PTT key is physically held
+        self._ptt_releasing = False  # Guard: True between key release and _ptt_finalize
+        self._ptt_buffer = []        # Accumulates all words during PTT hold
         self._audio_fb = AudioFeedback()  # PTT beep sounds
 
         # Stubs — replaced by background thread when ready
@@ -241,7 +242,7 @@ class VoxInputApp:
                 # P8-02: use cached threshold/duration (no settings.get per chunk)
                 # Skip silence-triggered finalize during PTT — only key release finalizes
                 if rms < self._sil_threshold:
-                    if self._ptt_active:
+                    if self._ptt_active or self._ptt_releasing:
                         silence_start_time = None  # don't accumulate silence during PTT
                     elif silence_start_time is None:
                         silence_start_time = time.time()
@@ -276,12 +277,13 @@ class VoxInputApp:
                         logger.info(f"Recognized: {text}")
                         # PTT mode: accumulate in buffer for full-context finalize
                         # (Vosk consumes words at sentence boundaries via Result())
-                        if self._ptt_active:
+                        if self._ptt_active or self._ptt_releasing:
                             self._ptt_buffer.extend(text.split())
                             osd_words.extend(text.split())
-                        else:
+                        elif not self.settings.get("push_to_talk", False):
                             self._enqueue_injection(text)
                             osd_words.extend(text.split())
+                        # else: PTT mode but key not held — discard silently
                 except Exception as e:
                     logger.error(f"Error processing audio: {e}", exc_info=True)
             else:
@@ -335,6 +337,7 @@ class VoxInputApp:
             return
         try:
             if str(key) == self._get_ptt_key():
+                self._ptt_releasing = True   # guard BEFORE clearing active
                 self._ptt_active = False
                 GLib.idle_add(self._ptt_finalize)
         except Exception:
@@ -346,6 +349,11 @@ class VoxInputApp:
         CRITICAL: stop_listening MUST be called BEFORE finalize() to prevent
         the process loop from feeding audio to a dead KaldiRecognizer.
         FinalResult() calls InputFinished() in C, making AcceptWaveform() abort.
+
+        Strategy (hybrid buffer + FinalResult tail):
+          - _ptt_buffer has ALL streamed words (primary source)
+          - FinalResult() has uncommitted tail words from the last sentence
+          - Combine: buffer + non-overlapping tail
         """
         # 1. FIRST: Stop audio stream to prevent race condition
         self.stop_listening()
@@ -356,36 +364,49 @@ class VoxInputApp:
             return
 
         try:
-            # 2. Get buffered words + any remaining uncommitted from FinalResult
-            if self.recognizer:
-                self.recognizer.committed_text = []
-            final_tail = self.recognizer.finalize() or ""
+            # 2. Get uncommitted tail from FinalResult()
+            import json
+            try:
+                result = json.loads(self.recognizer.recognizer.FinalResult())
+                final_tail = result.get('text', '').strip()
+            except Exception:
+                final_tail = ""
 
-            # Combine: buffer has all streamed words, final_tail has uncommitted remainder
+            # 3. Smart combine: pick the best source
+            #    - If FinalResult >= buffer length: no sentence boundary was hit,
+            #      FinalResult has the full utterance at highest quality → use it
+            #    - If FinalResult is a short tail (< half buffer): Vosk consumed
+            #      earlier sentences via Result(), buffer has full content → merge
+            #    - If only one source: use whatever is available
             buffered = " ".join(self._ptt_buffer) if self._ptt_buffer else ""
-            # Avoid duplicating the tail (it may overlap with buffer end)
             if buffered and final_tail:
-                full_text = buffered
-                # Append tail words that aren't already at the end of the buffer
                 tail_words = final_tail.split()
                 buf_words = buffered.split()
-                # Find how many tail words overlap with buffer end
-                overlap = 0
-                for i in range(min(len(tail_words), len(buf_words)), 0, -1):
-                    if buf_words[-i:] == tail_words[:i]:
-                        overlap = i
-                        break
-                if overlap < len(tail_words):
-                    full_text += " " + " ".join(tail_words[overlap:])
+                if len(tail_words) >= len(buf_words):
+                    # FinalResult has the full/longer transcription — use it
+                    full_text = final_tail
+                elif len(tail_words) < len(buf_words) // 2:
+                    # Short tail: append only non-overlapping words to buffer
+                    full_text = buffered
+                    overlap = 0
+                    for i in range(min(len(tail_words), len(buf_words)), 0, -1):
+                        if buf_words[-i:] == tail_words[:i]:
+                            overlap = i
+                            break
+                    if overlap < len(tail_words):
+                        full_text += " " + " ".join(tail_words[overlap:])
+                else:
+                    # Similar length — prefer FinalResult (higher quality)
+                    full_text = final_tail
             else:
                 full_text = buffered or final_tail
 
-            # 3. Flush any pending number from spell corrector
+            # 4. Flush any pending number from spell corrector
             num_flush = ""
             if self.spell:
                 num_flush = self.spell.flush_pending_number() or ""
 
-            # 4. Append any flushed number and run full-context correction
+            # 5. Append any flushed number and run full-context correction
             if num_flush:
                 full_text = (full_text + " " + num_flush).strip()
 
@@ -403,10 +424,11 @@ class VoxInputApp:
         except Exception as e:
             logger.error(f"PTT finalize error: {e}", exc_info=True)
         finally:
-            # 5. Reset recognizer for next PTT session
+            # 6. Clear release guard + reset recognizer
+            self._ptt_releasing = False
             if self.recognizer:
                 self.recognizer.reset_recognizer()
-            # 6. Play release beep
+            # 7. Play release beep
             if self.settings.get("ptt_audio_feedback", True):
                 self._audio_fb.play_release()
 

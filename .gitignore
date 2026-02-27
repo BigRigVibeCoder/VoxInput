@@ -45,6 +45,8 @@ model/
 logs/
 *.log
 *.db
+*.db-wal
+*.db-shm
 *.sqlite
 *.sqlite3
 
