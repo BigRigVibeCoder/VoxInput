@@ -1,3 +1,4 @@
+import atexit
 import queue as _queue
 import signal
 import sys
@@ -303,10 +304,12 @@ class VoxInputApp:
         except _queue.Full:
             logger.warning("Injection queue full — dropping word batch (engine too slow?)")
 
-    def quit_app(self):
+    def quit_app(self, reason: str = "user/UI quit"):
+        logger.info(f"VoxInput shutting down — reason: {reason}")
         self.should_quit = True
         self.stop_listening()
         self.audio.terminate()
+        logger.info("VoxInput shutdown complete.")
         Gtk.main_quit()
         sys.exit(0)
 
@@ -453,9 +456,13 @@ class VoxInputApp:
 
     def run(self):
         # Setup signal handlers
-        signal.signal(signal.SIGINT, lambda s, f: self.quit_app())
+        signal.signal(signal.SIGINT, lambda s, f: self.quit_app("SIGINT"))
+        signal.signal(signal.SIGTERM, lambda s, f: self.quit_app("SIGTERM"))
         signal.signal(signal.SIGUSR1, lambda s, f: self.toggle_listening())
         signal.signal(signal.SIGUSR2, lambda s, f: self.reload_dictionary())
+
+        # atexit: catch unclean exits (OOM, GTK crash, etc.)
+        atexit.register(lambda: logger.info("VoxInput atexit fired — process exiting."))
 
         # Push-to-talk key listener (always running; only acts when setting is on)
         self._ptt_listener = keyboard.Listener(
