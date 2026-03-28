@@ -583,12 +583,24 @@ def _install_excepthook(component: str) -> None:
         import uuid
         error_id = f"crash-{int(time.time())}-{uuid.uuid4().hex[:8]}"
         trace = "".join(traceback.format_exception(exctype, value, tb))
-        state = {
+        state: dict[str, Any] = {
             "python": sys.version,
             "platform": sys.platform,
             "argv": sys.argv,
             "pid": os.getpid(),
         }
+
+        # GOV-004 §4: Extract structured context from ApplicationError
+        error_context: dict[str, Any] | None = None
+        try:
+            from .errors import ApplicationError
+            if isinstance(value, ApplicationError) and value.context:
+                error_context = value.context.to_dict()
+                state["error_context"] = error_context
+                error_id = value.context.error_id  # use the domain error_id
+        except ImportError:
+            pass  # errors.py not available — degrade gracefully
+
         sys.stderr.write(f"\n[ERROR] {error_id}\n{trace}\n")
 
         # Write crash artifact to SQLite
@@ -599,10 +611,18 @@ def _install_excepthook(component: str) -> None:
             except Exception:
                 pass
 
-        # Log to root logger
-        logging.getLogger(component).critical(
-            "UNHANDLED EXCEPTION error_id=%s exc=%s", error_id, str(value)
-        )
+        # Log to root logger with context
+        _logger = logging.getLogger(component)
+        if error_context:
+            _logger.critical(
+                "UNHANDLED EXCEPTION error_id=%s category=%s component=%s exc=%s",
+                error_id, error_context.get("category", "UNKNOWN"),
+                error_context.get("component", "unknown"), str(value),
+            )
+        else:
+            _logger.critical(
+                "UNHANDLED EXCEPTION error_id=%s exc=%s", error_id, str(value)
+            )
 
         # Show GTK error dialog (non-blocking, app continues)
         _show_error_dialog(error_id, trace)
