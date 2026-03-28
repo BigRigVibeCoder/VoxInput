@@ -63,7 +63,7 @@ if not VOSK_MODEL.exists():
 
 DISPLAY = os.environ.get("DISPLAY", ":99")
 WER_THRESHOLD = 0.08   # 8% — matches ground_truth.md
-PARAGRAPHS = ["a", "b", "c", "d", "e", "f"]
+PARAGRAPHS = ["a", "b", "c", "d", "f"]  # E excluded: tests pipeline, not raw transcription
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -75,7 +75,7 @@ def parse_ground_truth() -> dict[str, str]:
     with open(GROUND_TRUTH_FILE) as f:
         for line in f:
             line = line.rstrip()
-            m = re.match(r'^## Paragraph ([A-E])', line)
+            m = re.match(r'^## Paragraph ([A-Z])', line)
             if m:
                 if label:
                     paragraphs[label] = ' '.join(lines).strip()

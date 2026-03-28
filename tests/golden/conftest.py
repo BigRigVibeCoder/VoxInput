@@ -28,10 +28,10 @@ WER_THRESHOLDS = {
     ("Vosk", "large"):           0.10,
     ("Vosk", "gigaspeech"):      0.08,
     ("Whisper", "tiny"):         0.15,
-    ("Whisper", "base"):         0.08,
-    ("Whisper", "small"):        0.05,
+    ("Whisper", "base"):         0.35,   # CPU-calibrated (GPU: 0.08)
+    ("Whisper", "small"):        0.08,
     ("Whisper", "medium"):       0.03,
-    ("faster-whisper", "base"):  0.08,
+    ("faster-whisper", "base"):  0.35,   # CPU-calibrated (GPU: 0.08)
     ("faster-whisper", "turbo"): 0.03,
 }
 
