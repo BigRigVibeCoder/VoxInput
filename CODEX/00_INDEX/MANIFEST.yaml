@@ -102,7 +102,71 @@ documents:
       Humans browse here. Agents read MANIFEST.yaml.
 
   # ── 05_PROJECT ─────────────────────────────────────────────────────────────
-  # (empty — add PRJ-, SPR-, BCK- docs as your project starts)
+  - id: BCK-001
+    path: 05_PROJECT/BCK-001_Governance_Remediation.md
+    title: "Governance Remediation Backlog"
+    type: planning
+    status: ACTIVE
+    tags: [project-management, backlog, governance, remediation]
+    agents: [architect]
+    summary: >
+      Backlog tracking the systemic remediation of the VoxInput codebase to align
+      with the GOV-001 through GOV-004 standards.
+
+  - id: SPR-001
+    path: 05_PROJECT/SPR-001_Disaster_Readability.md
+    title: "Disaster Readability & Function Scoping"
+    type: how-to
+    status: PLANNING
+    tags: [project-management, sprint, workflow, readability]
+    agents: [coder]
+    summary: >
+      Sprint 001 targets the Disaster-Readability Principle and line-length constraints
+      in orchestrator modules like src/main.py.
+
+  - id: SPR-002
+    path: 05_PROJECT/SPR-002_Type_Strictness_and_Safety.md
+    title: "Type Strictness & Fail-Loud Safety"
+    type: how-to
+    status: PLANNING
+    tags: [project-management, sprint, workflow, typing, safety]
+    agents: [coder]
+    summary: >
+      Sprint 002 implements Python 3.10 type inference on all functions to adhere
+      to GOV-003. Hardens try/except blocks to eliminate silent swallowing per GOV-004.
+
+  - id: SPR-003
+    path: 05_PROJECT/SPR-003_Test_Coverage_Audit.md
+    title: "Testing Coverage Audit"
+    type: how-to
+    status: PLANNING
+    tags: [project-management, sprint, workflow, testing]
+    agents: [tester]
+    summary: >
+      Sprint 003 targets GOV-002 compliance. The Tester Agent tracks the 1:1 filename mapping
+      between src/ and tests/unit/.
+
+  - id: SPR-004
+    path: 05_PROJECT/SPR-004_NASA_Error_Taxonomy.md
+    title: "NASA-Grade Error Taxonomy & Excepthook"
+    type: how-to
+    status: PLANNING
+    tags: [project-management, sprint, workflow, errors, safety]
+    agents: [coder]
+    summary: >
+      Sprint 004 enforces the exact zero-dark-failure protocol. Replaces raw Exceptions
+      with an ApplicationError domain hierarchy.
+
+  - id: SPR-005
+    path: 05_PROJECT/SPR-005_NASA_Test_Cascade.md
+    title: "NASA-Grade Test Cascade (14-Tiers)"
+    type: how-to
+    status: PLANNING
+    tags: [project-management, sprint, workflow, testing, cascade]
+    agents: [tester, coder]
+    summary: >
+      Sprint 005 establishes the foundational frameworks for Integration and End-to-End
+      (E2E) UI testing to satisfy the GOV-002 Testing Protocol.
 
   # ── 10_GOVERNANCE ───────────────────────────────────────────────────────────
   - id: GOV-001
