@@ -38,3 +38,4 @@ version: 1.0.0
 | B-004 | Eliminate raw Exception swallows | REM-SAFE | None | Error handler setup | [ ] |
 | B-005 | 1:1 Coverage Map and Missing Test Stubs | REM-TEST | None | Test stubs + audit | [ ] |
 | B-006 | Integration and E2E Test Scaffolding | REM-TEST | B-005 | Mock streams + Xvfb E2E | [ ] |
+| B-007 | GOV-006 Trace Logging Instrumentation | REM-LOG | None | @trace_execution + codebase sweep | [x] |

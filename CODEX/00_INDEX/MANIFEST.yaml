@@ -168,6 +168,17 @@ documents:
       Sprint 005 establishes the foundational frameworks for Integration and End-to-End
       (E2E) UI testing to satisfy the GOV-002 Testing Protocol.
 
+  - id: SPR-006
+    path: 05_PROJECT/SPR-006_Trace_Logging_Instrumentation.md
+    title: "GOV-006 Trace Logging Instrumentation"
+    type: how-to
+    status: IN_PROGRESS
+    tags: [project-management, sprint, workflow, logging, trace]
+    agents: [coder]
+    summary: >
+      Sprint 006 instruments the VoxInput codebase with GOV-006 §8 trace logging
+      including the @trace_execution decorator and TRACE-level calls across all modules.
+
   # ── 10_GOVERNANCE ───────────────────────────────────────────────────────────
   - id: GOV-001
     path: 10_GOVERNANCE/GOV-001_DocumentationStandard.md
