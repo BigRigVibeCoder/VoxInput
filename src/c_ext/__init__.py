@@ -12,7 +12,7 @@ from __future__ import annotations
 import ctypes
 import logging
 from pathlib import Path
-from .logger import TRACE
+from ..logger import TRACE
 
 import numpy as np
 

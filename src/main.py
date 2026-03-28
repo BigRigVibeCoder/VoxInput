@@ -1,4 +1,4 @@
-\"\"\"
+"""
 ================================================================================
 [READING GUIDE / PANIC BREADCRUMBS]
 VoxInput Main App / GTK System Tray Backend
@@ -16,7 +16,7 @@ SAFETY:
   - PTT (Push To Talk) is globally bound via pynput.
   - Exception swallowing is forbidden globally.
 ================================================================================
-\"\"\"
+"""
 import atexit
 import queue as _queue
 import signal
@@ -135,11 +135,11 @@ class VoxInputApp:
 
 
     def reload_engine(self):
-        \"\"\"Safely reloads the Vosk/Whisper speech engine instances.
+        """Safely reloads the Vosk/Whisper speech engine instances.
         
         Why: Allows users to hot-swap speech models from settings without
         requiring a total application restart.
-        \"\"\"
+        """
         if not self._model_ready:
             return  # initial load not done yet
         logger.info("Reloading speech engine...")
@@ -159,11 +159,11 @@ class VoxInputApp:
             self.start_listening()
 
     def toggle_listening(self):
-        \"\"\"Invert the system's active listening state.
+        """Invert the system's active listening state.
         
         Why: Standard global UI entrypoint for hotkeys or tray icon interactions.
         Blocked if the push-to-talk system is locking the session.
-        \"\"\"
+        """
         if not self._model_ready:
             self.ui.indicator.set_title("VoxInput — Still loading model, please wait…")
             GLib.timeout_add(2000, lambda: self.ui.indicator.set_title("VoxInput — Loading model…"))
@@ -392,12 +392,12 @@ class VoxInputApp:
             pass
 
     def _ptt_finalize(self):
-        \"\"\"Full-context PTT pipeline: stop audio → finalize → correct → inject.
+        """Full-context PTT pipeline: stop audio → finalize → correct → inject.
 
         CRITICAL: stop_listening MUST be called BEFORE finalize() to prevent
         the process loop from feeding audio to a dead KaldiRecognizer.
         FinalResult() calls InputFinished() in C, making AcceptWaveform() abort.
-        \"\"\"
+        """
         # 1. FIRST: Stop audio stream to prevent race condition
         self.stop_listening()
 
@@ -424,7 +424,7 @@ class VoxInputApp:
                 self._audio_fb.play_release()
 
     def _extract_and_merge_tail(self) -> str:
-        \"\"\"Extract uncommitted tail from FinalResult and merge with buffer.
+        """Extract uncommitted tail from FinalResult and merge with buffer.
         
         Strategy:
           - Get uncommitted tail words from the last sentence.
@@ -435,7 +435,7 @@ class VoxInputApp:
         
         Returns:
             str: The fully merged textual representation of the dictate.
-        \"\"\"
+        """
         import json
         try:
             result = json.loads(self.recognizer.recognizer.FinalResult())
@@ -464,14 +464,14 @@ class VoxInputApp:
         return buffered or final_tail
 
     def _apply_corrections_and_inject(self, full_text: str):
-        \"\"\"Process orthography, SymSpell, and injection queue pushes.
+        """Process orthography, SymSpell, and injection queue pushes.
         
         Why: Replaces the dense text correction monolithic chunk in PTT loops,
         ensuring cleanly testable logic boundaries.
         
         Args:
             full_text: Raw string derived from PTT merge operations.
-        \"\"\"
+        """
         num_flush = self.spell.flush_pending_number() or "" if self.spell else ""
         if num_flush:
             full_text = (full_text + " " + num_flush).strip()
