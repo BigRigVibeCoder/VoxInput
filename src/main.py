@@ -32,7 +32,7 @@ from .config import HOTKEY, PTT_KEY
 from .injection import TextInjector, VoicePunctuationBuffer
 from .homophones import fix_homophones                     # P9-D: homophone correction
 from .audio_feedback import AudioFeedback                  # PTT beeps
-from .logger import init_logging, get_logger         # P7: enterprise logging
+from .logger import init_logging, get_logger, trace_execution, TRACE  # P7: enterprise logging
 from .mic_enhancer import MicEnhancer
 from .recognizer import SpeechRecognizer
 from .settings import SettingsManager
@@ -97,6 +97,7 @@ class VoxInputApp:
         """Background thread: loads Vosk/Whisper model, SymSpell dict, injection backend.
         Fires start_listening() on the GTK main thread when done."""
         try:
+            logger.log(TRACE, "model_load.enter")
             logger.info("Background model load starting...")
             # Word database (protected words list) — seed on first run
             import os
@@ -115,6 +116,7 @@ class VoxInputApp:
             self.spell      = SpellCorrector(self.settings, word_db=self.word_db)
             self.injector   = TextInjector()
             self._model_ready = True
+            logger.log(TRACE, "model_load.exit success=True")
             logger.info("Background model load complete — auto-starting listening.")
             GLib.idle_add(self._on_models_ready)
         except Exception as e:
@@ -175,15 +177,17 @@ class VoxInputApp:
         else:
             self.start_listening()
 
+    @trace_execution
     def start_listening(self):
-        \"\"\"Activates continuous active listening and audio polling.
+        """Activates continuous active listening and audio polling.
         
         Why: Initiates the high-frequency thread polling audio buffers and binds
         threshold-based semantic limits.
-        \"\"\"
+        """
         if self.is_listening:
             logger.warning("Already listening.")
             return
+        logger.log(TRACE, "listening.state_change from=stopped to=started")
 
         logger.info("Starting listening... (C_RMS=%s)", using_c_extension())
         self.is_listening = True
@@ -203,13 +207,15 @@ class VoxInputApp:
         self.processing_thread = threading.Thread(target=self._process_loop)
         self.processing_thread.start()
 
+    @trace_execution
     def stop_listening(self):
-        \"\"\"Terminates asynchronous audio streams cleanly.
+        """Terminates asynchronous audio streams cleanly.
         
         Why: Must wait for the processing threads to properly release file IO bounds.
-        \"\"\"
+        """
         if not self.is_listening:
             return
+        logger.log(TRACE, "listening.state_change from=started to=stopped")
 
         logger.info("Stopping listening...")
         self.is_listening = False
@@ -402,6 +408,8 @@ class VoxInputApp:
 
         try:
             full_text = self._extract_and_merge_tail()
+            logger.log(TRACE, "ptt_finalize.merge_result text_length=%d",
+                       len(full_text) if full_text else 0)
             if full_text:
                 self._apply_corrections_and_inject(full_text)
         except Exception as e:

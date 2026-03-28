@@ -25,6 +25,7 @@ Voice punctuation commands (P4-02):
 import logging
 import re
 import subprocess
+from .logger import TRACE
 
 logger = logging.getLogger(__name__)
 
@@ -134,6 +135,7 @@ class TextInjector:
     def __init__(self):
         self._backend = self._detect_backend()
         logger.info(f"TextInjector: using backend '{self._backend}'")
+        logger.log(TRACE, "injector.init backend=%s", self._backend)
         try:
             from pynput.keyboard import Controller, Key
             self.keyboard = Controller()
@@ -193,6 +195,7 @@ class TextInjector:
 
         full_text = text + " "
         logger.info(f"Injecting [{self._backend}]: '{full_text.rstrip()}'")
+        logger.log(TRACE, "injection.dispatch backend=%s text_len=%d", self._backend, len(full_text))
 
         if self._backend == "ydotool":
             self._inject_ydotool(full_text)
@@ -244,6 +247,7 @@ class TextInjector:
         # xdotool `type` often fails or drops non-ASCII characters if they are not
         # present in the current XKB layout. Fall back to pynput which handles Unicode.
         if not all(ord(c) < 128 for c in text) and self.keyboard:
+            logger.log(TRACE, "injection.decision branch=unicode_fallback backend=pynput")
             logger.info("Non-ASCII character detected — falling back to pynput for X11 injection")
             self._inject_pynput(text)
             return

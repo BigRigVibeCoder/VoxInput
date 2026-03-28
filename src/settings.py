@@ -2,6 +2,7 @@
 import json
 import logging
 import os
+from .logger import TRACE
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ class SettingsManager:
             try:
                 with open(SETTINGS_FILE, 'r') as f:
                     self.settings = json.load(f)
+                logger.log(TRACE, "settings.loaded key_count=%d", len(self.settings))
                 logger.info("Settings loaded successfully")
             except Exception as e:
                 logger.error(f"Failed to load settings: {e}")
@@ -33,6 +35,7 @@ class SettingsManager:
         try:
             with open(SETTINGS_FILE, 'w') as f:
                 json.dump(self.settings, f, indent=4)
+            logger.log(TRACE, "settings.saved key_count=%d", len(self.settings))
             logger.info("Settings saved successfully")
         except Exception as e:
             logger.error(f"Failed to save settings: {e}")
@@ -43,6 +46,7 @@ class SettingsManager:
         return self.settings.get(key, default)
 
     def set(self, key, value):
+        logger.log(TRACE, "settings.changed key=%s", key)
         self.settings[key] = value
         self.save()
 

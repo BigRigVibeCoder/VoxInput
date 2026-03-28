@@ -4,6 +4,7 @@ import collections
 import pyaudio
 
 from .config import CHANNELS, CHUNK_SIZE, SAMPLE_RATE
+from .logger import TRACE
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,7 @@ class AudioCapture:
                 stream_callback=self._callback
             )
             self.stream.start_stream()
+            logger.log(TRACE, "audio.stream.started rate=%d chunk=%d", SAMPLE_RATE, CHUNK_SIZE)
             logger.info("Audio stream started.")
         except Exception as e:
             logger.error(f"Failed to start audio stream: {e}")
@@ -61,6 +63,7 @@ class AudioCapture:
             self.stream.stop_stream()
             self.stream.close()
             self.stream = None
+            logger.log(TRACE, "audio.stream.stopped")
 
     def get_data(self) -> bytes | None:
         try:

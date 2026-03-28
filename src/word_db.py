@@ -9,6 +9,7 @@ import sqlite3
 import threading
 import time
 from pathlib import Path
+from .logger import TRACE
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +100,8 @@ class WordDatabase:
         self._compounds: dict[tuple[str, ...], str] = {}
         self._load_into_memory()
         self._seed_compounds()
+        logger.log(TRACE, "word_db.init word_count=%d compound_count=%d path=%s",
+                   len(self._dict), len(self._compounds), self._path)
         logger.info("WordDatabase loaded: %d protected words, %d compound corrections from %s",
                     len(self._dict), len(self._compounds), self._path)
 

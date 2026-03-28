@@ -11,6 +11,7 @@ Usage:
 """
 import re
 import logging
+from .logger import TRACE
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +70,9 @@ HOMOPHONE_RULES: list[tuple[re.Pattern, str]] = [
 
 def fix_homophones(text: str) -> str:
     """Apply context-aware homophone corrections to text."""
+    original = text
     for pattern, replacement in HOMOPHONE_RULES:
         text = pattern.sub(replacement, text)
+    if text != original:
+        logger.log(TRACE, "homophones.transformed input=%s output=%s", original[:80], text[:80])
     return text

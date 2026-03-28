@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import time
+from .logger import TRACE
 
 import numpy as np
 
@@ -41,6 +42,7 @@ class SpeechRecognizer:
             pass
 
         logger.info(f"Initializing SpeechRecognizer with engine: {self.engine_type}")
+        logger.log(TRACE, "recognizer.init.enter engine=%s", self.engine_type)
 
         # --- State for Streaming ---
         self.committed_text = [] # List of words already injected for current utterance
@@ -74,6 +76,7 @@ class SpeechRecognizer:
             logger.info(f"Loading Vosk model from {model_path}")
             self.model = Model(model_path)
             self.recognizer = KaldiRecognizer(self.model, SAMPLE_RATE)
+            logger.log(TRACE, "recognizer.init.vosk_loaded model_path=%s", model_path)
 
         # --- Whisper Setup ---
         elif self.engine_type == "Whisper":
@@ -164,6 +167,7 @@ class SpeechRecognizer:
                 result = json.loads(self.recognizer.Result())
                 text = result.get('text', '')
                 words = text.split()
+                logger.log(TRACE, "vosk.full_result word_count=%d text=%s", len(words), text[:80])
 
                 # P9-02: Confidence filtering — drop low-confidence words
                 # Vosk's "result" array contains per-word confidence scores
@@ -213,6 +217,7 @@ class SpeechRecognizer:
             return None
 
         if new_words_to_inject:
+            logger.log(TRACE, "vosk.inject word_count=%d", len(new_words_to_inject))
             return " ".join(new_words_to_inject)
         return None
 

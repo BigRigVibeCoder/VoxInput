@@ -12,6 +12,7 @@ from __future__ import annotations
 import ctypes
 import logging
 from pathlib import Path
+from .logger import TRACE
 
 import numpy as np
 
@@ -27,6 +28,7 @@ _SO_PATH = Path(__file__).parent / "librms.so"
 def _load() -> None:
     global _lib, _c_rms, _c_pcm
     if not _SO_PATH.exists():
+        logger.log(TRACE, "c_ext.decision branch=numpy_fallback reason=so_not_found")
         logger.debug("c_ext: librms.so not found — using numpy fallback")
         return
     try:
@@ -49,6 +51,7 @@ def _load() -> None:
         ]
         _c_pcm = _lib.vox_pcm_to_float32
 
+        logger.log(TRACE, "c_ext.decision branch=c_extension_loaded")
         logger.debug("c_ext: librms.so loaded — using C extensions")
     except Exception as e:
         logger.debug("c_ext: librms.so failed to load (%s) — numpy fallback", e)
