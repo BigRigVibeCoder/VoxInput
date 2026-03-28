@@ -2,7 +2,7 @@
 id: SPR-005
 title: "NASA-Grade Test Cascade (14-Tiers)"
 type: how-to
-status: PLANNING
+status: COMPLETE
 owner: architect
 agents: [tester, coder]
 tags: [project-management, sprint, workflow, testing, cascade]
@@ -42,7 +42,7 @@ version: 1.0.0
 - **Dependencies:** None
 - **Deliverable:**
   - `tests/integration/` architecture standing up `main.py` models inside a detached subprocess without physical audio devices (e.g. mocking ALSA streams with `tests/fixtures/audio_chunks/*.raw`).
-- **Status:** [ ] Not Started
+- **Status:** [x] Complete
 
 ### T-002: PyGObject E2E Scaffold (Developer)
 - **Branch:** `feature/SPR-005-test-cascade`
@@ -50,7 +50,7 @@ version: 1.0.0
 - **Deliverable:**
   - Create `tests/e2e/test_tray_ui.py`.
   - Use Xvfb (virtual framebuffer) test environments if applicable, mocking DBus notifications to test state toggles independent of desktop environments.
-- **Status:** [ ] Not Started
+- **Status:** [x] Complete
 
 ---
 
@@ -58,5 +58,5 @@ version: 1.0.0
 
 | Task | Agent | Status | Branch | Audited |
 |:-----|:------|:-------|:-------|:--------|
-| T-001 | Developer | [ ] | `feature/SPR-005-test-cascade` | [ ] |
-| T-002 | Developer | [ ] | `feature/SPR-005-test-cascade` | [ ] |
+| T-001 | Developer | [x] | `feature/SPR-005-test-cascade` | [x] |
+| T-002 | Developer | [x] | `feature/SPR-005-test-cascade` | [x] |
