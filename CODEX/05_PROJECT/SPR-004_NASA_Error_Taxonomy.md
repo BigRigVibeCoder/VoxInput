@@ -2,7 +2,7 @@
 id: SPR-004
 title: "NASA-Grade Error Taxonomy & Excepthook"
 type: how-to
-status: PLANNING
+status: COMPLETE
 owner: architect
 agents: [coder]
 tags: [project-management, sprint, workflow, errors, safety]
@@ -45,14 +45,14 @@ version: 1.0.0
   - Create `src/errors.py`.
   - Stub a base `ApplicationError` with payload formatting.
   - Subclass at minimum: `AudioIOError`, `EngineCrashError`, and `InjectionFallbackError` representing the environment defined in GOV-008.
-- **Status:** [ ] Not Started
+- **Status:** [x] Complete
 
 ### T-002: Excepthook Override (Fatal Trapping)
 - **Branch:** `feature/SPR-004-error-taxonomy`
 - **Dependencies:** T-001
 - **Deliverable:**
   - In `src/main.py` entrypoint, override `sys.excepthook` to ensure uncaught desktop GUI exceptions log context to the SQLite black box before termination.
-- **Status:** [ ] Not Started
+- **Status:** [x] Complete
 
 ---
 
@@ -60,5 +60,5 @@ version: 1.0.0
 
 | Task | Agent | Status | Branch | Audited |
 |:-----|:------|:-------|:-------|:--------|
-| T-001 | Developer | [ ] | `feature/SPR-004-error-taxonomy` | [ ] |
-| T-002 | Developer | [ ] | `feature/SPR-004-error-taxonomy` | [ ] |
+| T-001 | Developer | [x] | `feature/SPR-004-error-taxonomy` | [x] |
+| T-002 | Developer | [x] | `feature/SPR-004-error-taxonomy` | [x] |
