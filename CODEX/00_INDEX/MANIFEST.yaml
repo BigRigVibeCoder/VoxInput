@@ -1,0 +1,274 @@
+# ============================================================================
+# MANIFEST.yaml — Machine-Readable Document Registry
+# ============================================================================
+#
+# PURPOSE: This is the agent's map. An AI agent given any task can read this
+# single file, filter by tags/status/type/agents field, and locate exactly the
+# docs it needs — no directory crawling required.
+#
+# USAGE (agent):
+#   1. Parse this file
+#   2. Filter documents by relevant tags, type, or agents field
+#   3. Read only the docs that match your task
+#
+# USAGE (human with yq):
+#   yq '.documents[] | select(.tags[] == "testing")' MANIFEST.yaml
+#   yq '.documents[] | select(.status == "APPROVED")' MANIFEST.yaml
+#   yq '.documents[] | select(.agents[] == "coder")' MANIFEST.yaml
+#
+# MAINTENANCE: Update this file whenever a doc is created, moved, or archived.
+#   Run: CODEX/_scripts/manifest-gen.sh (when available) to auto-regenerate.
+# ============================================================================
+
+schema_version: "1.0.0"
+project: "agentic-architect-template"
+generated: "2026-03-18"
+
+# ── Area Definitions ──────────────────────────────────────────────────────────
+areas:
+  - number: 5
+    name: PROJECT
+    slug: project
+    description: "Active project state — roadmap, sprints, backlog"
+    category_codes: [PRJ, SPR, BCK]
+
+  - number: 10
+    name: GOVERNANCE
+    slug: governance
+    description: "Standards, protocols, coding rules, architecture decisions"
+    category_codes: [GOV, ADR]
+
+  - number: 20
+    name: BLUEPRINTS
+    slug: blueprints
+    description: "Component specifications, system designs, API contracts"
+    category_codes: [BLU, API]
+
+  - number: 30
+    name: RUNBOOKS
+    slug: runbooks
+    description: "Operational how-to guides, deployment, workflows"
+    category_codes: [RUN, DEP]
+
+  - number: 40
+    name: VERIFICATION
+    slug: verification
+    description: "Test specs, QA standards, validation reports"
+    category_codes: [VER, QA]
+
+  - number: 50
+    name: DEFECTS
+    slug: defects
+    description: "Bug reports, root cause analysis, incident forensics"
+    category_codes: [DEF, RCA]
+
+  - number: 60
+    name: EVOLUTION
+    slug: evolution
+    description: "Feature specs, enhancement proposals, roadmaps"
+    category_codes: [EVO, RFC]
+
+  - number: 70
+    name: RESEARCH
+    slug: research
+    description: "Whitepapers, investigations, POCs, literature reviews"
+    category_codes: [RES, POC]
+
+  - number: 80
+    name: AGENTS
+    slug: agents
+    description: "Agent role definitions — Architect, Developer, Tester templates"
+    category_codes: [AGT]
+
+  - number: 90
+    name: ARCHIVE
+    slug: archive
+    description: "Deprecated and completed docs"
+    category_codes: [ARC]
+
+# ── Document Registry ─────────────────────────────────────────────────────────
+documents:
+
+  # ── 00_INDEX ────────────────────────────────────────────────────────────────
+  - id: IDX-000
+    path: 00_INDEX/README.md
+    title: "Documentation Master Index"
+    type: reference
+    status: APPROVED
+    tags: [index, navigation, entry-point]
+    agents: [all]
+    summary: >
+      Single entry point for all project documentation.
+      Humans browse here. Agents read MANIFEST.yaml.
+
+  # ── 05_PROJECT ─────────────────────────────────────────────────────────────
+  # (empty — add PRJ-, SPR-, BCK- docs as your project starts)
+
+  # ── 10_GOVERNANCE ───────────────────────────────────────────────────────────
+  - id: GOV-001
+    path: 10_GOVERNANCE/GOV-001_DocumentationStandard.md
+    title: "Documentation Standard"
+    type: reference
+    status: APPROVED
+    tags: [documentation, standards, naming, frontmatter, templates, governance]
+    agents: [all]
+    summary: >
+      NASA/JPL-grade documentation standard. YAML frontmatter, BLUF-first
+      writing, Indexed Decimal folder structure. Enforces change control
+      (NPR 7150.2D), peer review gates, requirements traceability (DO-178C),
+      and formal retention/archival policies.
+
+  - id: GOV-002
+    path: 10_GOVERNANCE/GOV-002_TestingProtocol.md
+    title: "Testing Protocol"
+    type: reference
+    status: APPROVED
+    tags: [testing, verification, governance, standards, quality]
+    agents: [all]
+    summary: >
+      NASA/JPL-grade testing protocol. 14 test tiers from static analysis to
+      HIL. Bidirectional requirements traceability, assertion density mandates,
+      MC/DC coverage, forensic artifacts, and fail-fast execution order.
+
+  - id: GOV-003
+    path: 10_GOVERNANCE/GOV-003_CodingStandard.md
+    title: "Coding Standard"
+    type: reference
+    status: APPROVED
+    tags: [coding, standards, governance, quality, safety]
+    agents: [all]
+    summary: >
+      NASA/JPL-grade polyglot coding standard for Python, C/C++, and
+      React/TypeScript. NASA Power of 10 backbone, MISRA C:2025, DO-178C
+      code review mandates, dead code prohibition, boundary conditions,
+      incident-readability enhancements (inline ADRs, panic breadcrumbs),
+      WCAG 2.1 AA accessibility, data-testid testability, static analysis
+      profiles, and Disaster-Readability Principle.
+
+  - id: GOV-004
+    path: 10_GOVERNANCE/GOV-004_ErrorHandlingProtocol.md
+    title: "Error Handling Protocol"
+    type: reference
+    status: APPROVED
+    tags: [coding, standards, governance, quality, safety]
+    agents: [all]
+    summary: >
+      NASA/JPL-grade zero-dark-failure error handling. 13-category taxonomy,
+      severity levels with DAL mapping (DO-178C), structured error context,
+      crash artifacts, circuit breakers, correlation IDs, FMEA requirements,
+      and mandatory post-incident review.
+
+  - id: GOV-005
+    path: 10_GOVERNANCE/GOV-005_AgenticDevelopmentLifecycle.md
+    title: "Agentic Development Lifecycle"
+    type: reference
+    status: APPROVED
+    tags: [governance, standards, project-management, workflow]
+    agents: [all]
+    summary: >
+      Project lifecycle for human-Architect + AI-agent teams. Replaces
+      traditional Agile with scope-bounded sprints, emergent work items,
+      one-agent-per-branch, natural checkpoints, and human-in-the-loop
+      merge/deploy.
+
+  - id: GOV-006
+    path: 10_GOVERNANCE/GOV-006_LoggingSpecification.md
+    title: "Logging Specification"
+    type: reference
+    status: APPROVED
+    tags: [coding, standards, governance, quality, safety]
+    agents: [all]
+    summary: >
+      NASA/JPL-grade structured logging for Python, TypeScript, and C++.
+      Trace-first design for agent execution reconstruction. Database and
+      flat-file storage, forensic query patterns, correlation IDs, and
+      retention policies.
+
+  - id: GOV-007
+    path: 10_GOVERNANCE/GOV-007_AgenticProjectManagement.md
+    title: "Agentic Project Management Standard"
+    type: reference
+    status: APPROVED
+    tags: [governance, standards, project-management, workflow, agentic-development]
+    agents: [all]
+    summary: >
+      Defines CODEX as the Markdown OS for project management. Covers the
+      three-tier hierarchy (Human → Architect → Developer/Tester), document
+      taxonomy (PRJ/SPR/BLU/CON/DEF/AGT), sprint lifecycle, discrepancy
+      resolution protocol, and agent reading order.
+
+  # ── 20_BLUEPRINTS ──────────────────────────────────────────────────────────
+  - id: BLU-020
+    path: 20_BLUEPRINTS/BLU-020_CODEX_System_Blueprint.md
+    title: "CODEX System Blueprint"
+    type: explanation
+    status: DRAFT
+    tags: [governance, documentation, standards, architecture, workflow]
+    agents: [all]
+    summary: >
+      Explains how the CODEX documentation engine works — dual-audience design,
+      area architecture, three discovery mechanisms (MANIFEST, TAG_TAXONOMY,
+      README), governance stack, compliance workflows, and DarkGravity swarm
+      integration. Template orientation doc.
+
+  # ── 30_RUNBOOKS ────────────────────────────────────────────────────────────
+  - id: RUN-DG-001
+    path: 30_RUNBOOKS/RUN-DG-001_DarkGravity_Setup_Recovery.md
+    title: "DarkGravity Setup & Recovery Guide"
+    type: how-to
+    status: APPROVED
+    tags: [darkgravity, setup, recovery, workflow]
+    agents: [coder, researcher, architect]
+    summary: >
+      Install, configure, and recover the DarkGravity multi-agent swarm engine.
+      Covers fresh install, auto-discovery via resolve_darkgravity.sh,
+      API key setup, troubleshooting, and nuclear recovery.
+
+  # ── 40_VERIFICATION ────────────────────────────────────────────────────────
+  # (empty — add project-specific verification docs here)
+
+  # ── 50_DEFECTS ─────────────────────────────────────────────────────────────
+  # (empty — add project-specific defect reports here)
+
+  # ── 60_EVOLUTION ───────────────────────────────────────────────────────────
+  # (empty — add project-specific evolution docs here)
+
+  # ── 70_RESEARCH ────────────────────────────────────────────────────────────
+  # (empty — add project-specific research docs here)
+
+  # ── 80_AGENTS ──────────────────────────────────────────────────────────────
+  - id: AGT-001
+    path: 80_AGENTS/AGT-001_Architect_Agent.md
+    title: "Architect Agent — Role Definition"
+    type: reference
+    status: APPROVED
+    tags: [governance, agent-instructions, project-management, agentic-development, workflow]
+    agents: [architect]
+    summary: >
+      Defines the Architect Agent role: owns CODEX, manages Developer and Tester
+      agents, audits code against contracts, resolves discrepancies with Human.
+      Does not write feature code. Includes reading order and primary workflows.
+
+  - id: AGT-002
+    path: 80_AGENTS/AGT-002_Developer_Agent.md
+    title: "Developer Agent — Role Definition"
+    type: reference
+    status: APPROVED
+    tags: [governance, agent-instructions, project-management, agentic-development, coding]
+    agents: [coder]
+    summary: >
+      Defines the Developer Agent role: executes sprint tasks against blueprints
+      and contracts, proposes contract changes via EVO- docs, reports blockers
+      upstream. Technology-stack agnostic.
+
+  - id: AGT-003
+    path: 80_AGENTS/AGT-003_Tester_Agent.md
+    title: "Tester Agent — Role Definition"
+    type: reference
+    status: APPROVED
+    tags: [governance, agent-instructions, project-management, agentic-development, testing, verification]
+    agents: [tester]
+    summary: >
+      Defines the Tester Agent role: independently verifies developer output
+      against contracts, files DEF- defect reports to Architect, issues
+      pass/fail verdicts for sprint closure. No direct communication with Developer.
