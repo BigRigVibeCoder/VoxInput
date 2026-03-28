@@ -48,7 +48,7 @@ logger = get_logger(__name__)
 
 
 class VoxInputApp:
-    def __init__(self):
+    def __init__(self) -> None:
         self._model_ready = False          # gate: block toggle until loaded
 
         # ── Fast path: everything the user sees immediately ────
@@ -93,7 +93,7 @@ class VoxInputApp:
         # ── Background: load heavy components then auto-listen ──
         threading.Thread(target=self._load_models, daemon=True, name="model-load").start()
 
-    def _load_models(self):
+    def _load_models(self) -> None:
         """Background thread: loads Vosk/Whisper model, SymSpell dict, injection backend.
         Fires start_listening() on the GTK main thread when done."""
         try:
@@ -123,7 +123,7 @@ class VoxInputApp:
             logger.critical(f"Model load failed: {e}", exc_info=True)
             GLib.idle_add(self.ui.indicator.set_title, f"VoxInput — Load failed: {e}")
 
-    def _on_models_ready(self):
+    def _on_models_ready(self) -> bool:
         """Called on GTK main thread once models are loaded."""
         self.ui.indicator.set_title("VoxInput (Idle)")
         # Don't auto-start in PTT mode — wait for key press
@@ -134,7 +134,7 @@ class VoxInputApp:
         return False             # one-shot GLib idle
 
 
-    def reload_engine(self):
+    def reload_engine(self) -> None:
         """Safely reloads the Vosk/Whisper speech engine instances.
         
         Why: Allows users to hot-swap speech models from settings without
@@ -158,7 +158,7 @@ class VoxInputApp:
         if was_listening:
             self.start_listening()
 
-    def toggle_listening(self):
+    def toggle_listening(self) -> None:
         """Invert the system's active listening state.
         
         Why: Standard global UI entrypoint for hotkeys or tray icon interactions.
@@ -230,7 +230,7 @@ class VoxInputApp:
                 logger.warning("Processing thread did not exit cleanly within 8s")
             self.processing_thread = None
 
-    def _injection_loop(self):
+    def _injection_loop(self) -> None:
         """Dedicated thread: drains injection queue → xdotool. (P1-04)"""
         while not self.should_quit:
             try:
@@ -241,7 +241,7 @@ class VoxInputApp:
             except Exception as e:
                 logger.error(f"Injection error: {e}")
 
-    def _process_loop(self):
+    def _process_loop(self) -> None:
         silence_start_time = None
         osd_words: list[str] = []   # P5: accumulate words for OSD display
         _last_osd_words = ""        # P8-04: only marshal to GTK when content changes
@@ -335,7 +335,7 @@ class VoxInputApp:
             else:
                 time.sleep(0.01)
 
-    def _enqueue_injection(self, text: str):
+    def _enqueue_injection(self, text: str) -> None:
         """Spell-correct then push to injection queue (non-blocking). (P3)"""
         if not self.spell or not self.injector:
             return  # models not ready yet
@@ -348,7 +348,7 @@ class VoxInputApp:
         except _queue.Full:
             logger.warning("Injection queue full — dropping word batch (engine too slow?)")
 
-    def quit_app(self, reason: str = "user/UI quit"):
+    def quit_app(self, reason: str = "user/UI quit") -> None:
         logger.info(f"VoxInput shutting down — reason: {reason}")
         self.should_quit = True
         self.stop_listening()
@@ -363,7 +363,7 @@ class VoxInputApp:
         """Get the configured PTT key string (falls back to config default)."""
         return self.settings.get("ptt_key", PTT_KEY)
 
-    def _on_ptt_press(self, key):
+    def _on_ptt_press(self, key: object) -> None:
         """pynput callback: key pressed."""
         if self._ptt_active:
             return  # already held — ignore repeat events
@@ -376,10 +376,10 @@ class VoxInputApp:
                 if self.settings.get("ptt_audio_feedback", True):
                     self._audio_fb.play_press()
                 GLib.idle_add(self.start_listening)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error("PTT press handler error: %s", e)
 
-    def _on_ptt_release(self, key):
+    def _on_ptt_release(self, key: object) -> None:
         """pynput callback: key released → full-context finalize + inject."""
         if not self._ptt_active:
             return
@@ -388,10 +388,10 @@ class VoxInputApp:
                 self._ptt_releasing = True   # guard BEFORE clearing active
                 self._ptt_active = False
                 GLib.idle_add(self._ptt_finalize)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error("PTT release handler error: %s", e)
 
-    def _ptt_finalize(self):
+    def _ptt_finalize(self) -> None:
         """Full-context PTT pipeline: stop audio → finalize → correct → inject.
 
         CRITICAL: stop_listening MUST be called BEFORE finalize() to prevent
@@ -463,7 +463,7 @@ class VoxInputApp:
                 return final_tail
         return buffered or final_tail
 
-    def _apply_corrections_and_inject(self, full_text: str):
+    def _apply_corrections_and_inject(self, full_text: str) -> None:
         """Process orthography, SymSpell, and injection queue pushes.
         
         Why: Replaces the dense text correction monolithic chunk in PTT loops,
@@ -486,7 +486,7 @@ class VoxInputApp:
         if corrected.strip():
             self._injection_queue.put_nowait(corrected.strip())
 
-    def reload_dictionary(self):
+    def reload_dictionary(self) -> None:
         """Hot-reload compound corrections + custom words from database (SIGUSR2)."""
         try:
             if hasattr(self, 'word_db') and self.word_db:
@@ -504,7 +504,7 @@ class VoxInputApp:
         except Exception as e:
             logger.error(f"Dictionary reload failed: {e}", exc_info=True)
 
-    def run(self):
+    def run(self) -> None:
         # Setup signal handlers
         signal.signal(signal.SIGINT, lambda s, f: self.quit_app("SIGINT"))
         signal.signal(signal.SIGTERM, lambda s, f: self.quit_app("SIGTERM"))
@@ -525,7 +525,7 @@ class VoxInputApp:
         # Run UI loop
         Gtk.main()
 
-    def _listen_hotkeys(self):
+    def _listen_hotkeys(self) -> None:
 
         def on_activate():
             # Run in main thread context if possible, or careful with Gtk

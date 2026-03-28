@@ -9,7 +9,7 @@ from .logger import TRACE
 logger = logging.getLogger(__name__)
 
 class AudioCapture:
-    def __init__(self):
+    def __init__(self) -> None:
         self.pa = pyaudio.PyAudio()
         self.stream = None
         # P8-05: deque(maxlen=50) is 3–4× faster than queue.Queue for SPSC.
@@ -18,7 +18,7 @@ class AudioCapture:
         self._buf: collections.deque[bytes] = collections.deque(maxlen=50)
         self.is_running = False
 
-    def start(self):
+    def start(self) -> None:
         if self.is_running:
             return
 
@@ -42,7 +42,7 @@ class AudioCapture:
             self.is_running = False
             raise
 
-    def _callback(self, in_data, frame_count, time_info, status):
+    def _callback(self, in_data: bytes | None, frame_count: int, time_info: dict, status: int) -> tuple[None, int]:
         """Hardware callback pushing audio frames.
         
         FAILURE MODE: 
@@ -57,7 +57,7 @@ class AudioCapture:
             self._buf.append(in_data)  # deque drops oldest when full — no exception
         return (None, pyaudio.paContinue)
 
-    def stop(self):
+    def stop(self) -> None:
         self.is_running = False
         if self.stream:
             self.stream.stop_stream()
@@ -71,6 +71,6 @@ class AudioCapture:
         except IndexError:
             return None
 
-    def terminate(self):
+    def terminate(self) -> None:
         self.stop()
         self.pa.terminate()

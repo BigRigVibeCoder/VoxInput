@@ -26,7 +26,7 @@ from .hardware_profile import HardwareProfile
 logger = logging.getLogger(__name__)
 
 class SpeechRecognizer:
-    def __init__(self):
+    def __init__(self) -> None:
         from .settings import SettingsManager
         self.settings = SettingsManager()
         self.engine_type = self.settings.get("speech_engine", "Vosk")
@@ -105,7 +105,7 @@ class SpeechRecognizer:
                     raise ImportError("Neither faster-whisper nor openai-whisper are installed")
                 try:
                     self.model = whisper.load_model(size)
-                except Exception:
+                except Exception as e:
                     self.model = whisper.load_model(size, device="cpu")
                 self.whisper_backend = "openai"
                 logger.info(f"openai-whisper loaded: {size} on {self.model.device}")
@@ -118,7 +118,7 @@ class SpeechRecognizer:
             self.whisper_last_process_time = 0
             self.whisper_process_interval = 0.5
 
-    def reset_state(self):
+    def reset_state(self) -> None:
         """Reset streaming state (called on silence or manual stop)"""
         self.committed_text = []
         self._last_partial_count = 0   # P9-06: cached partial word count
@@ -126,7 +126,7 @@ class SpeechRecognizer:
             self.whisper_chunks.clear()
             self.whisper_last_transcript = ""
 
-    def reset_recognizer(self):
+    def reset_recognizer(self) -> None:
         """Recreate the KaldiRecognizer after FinalResult() (PTT sessions).
 
         FinalResult() calls InputFinished() internally, putting the C-level
@@ -140,7 +140,7 @@ class SpeechRecognizer:
             logger.info("Vosk recognizer reset (fresh KaldiRecognizer)")
         self.reset_state()
 
-    def process_audio(self, data):
+    def process_audio(self, data: bytes) -> str | None:
         """
         Process audio chunk and return NEW words to inject.
         Retuns string (words separated by spaces) or None.
@@ -150,7 +150,7 @@ class SpeechRecognizer:
         else:
             return self._process_vosk(data)
 
-    def _process_vosk(self, data):
+    def _process_vosk(self, data: bytes) -> str | None:
         # Vosk strategy: Lag-N Stabilization (P1-02/03)
         # fast_mode=True → LAG=0 (every word injected immediately, highest speed)
         # fast_mode=False → LAG=N (hold back N words until stable, higher accuracy)
@@ -212,8 +212,8 @@ class SpeechRecognizer:
             try:
                 self.reset_recognizer()
                 logger.info("Auto-recovered from Vosk error (recognizer reset)")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("Auto-recovery from Vosk error failed: %s", e)
             return None
 
         if new_words_to_inject:
@@ -221,7 +221,7 @@ class SpeechRecognizer:
             return " ".join(new_words_to_inject)
         return None
 
-    def _process_whisper(self, data):
+    def _process_whisper(self, data: bytes) -> str | None:
         # P8-03: append chunk to deque — O(1), no copy
         self.whisper_chunks.append(data)
         now = time.time()
@@ -302,7 +302,7 @@ class SpeechRecognizer:
 
         return None
 
-    def finalize(self):
+    def finalize(self) -> str | None:
         """
         Called when silence is detected. Forces processing of any remaining buffer
         with zero lag. Handles both Vosk and Whisper engines. (P1)

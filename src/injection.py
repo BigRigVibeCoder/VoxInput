@@ -98,7 +98,7 @@ class VoicePunctuationBuffer:
         ready = buf.flush()                               # → any remaining
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._pending: str = ""  # word(s) held back from last batch
 
     def process(self, text: str) -> str:
@@ -132,7 +132,7 @@ class TextInjector:
       ydotool → xdotool → pynput
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._backend = self._detect_backend()
         logger.info(f"TextInjector: using backend '{self._backend}'")
         logger.log(TRACE, "injector.init backend=%s", self._backend)
@@ -181,7 +181,7 @@ class TextInjector:
 
     # ─── Public API ──────────────────────────────────────────────────────
 
-    def type_text(self, text: str):
+    def type_text(self, text: str) -> None:
         """
         Inject text at current cursor. Adds trailing space for continuity.
         Applies voice punctuation substitution before injection (P4-02).
@@ -204,26 +204,26 @@ class TextInjector:
         else:
             self._inject_pynput(full_text)
 
-    def backspace(self):
+    def backspace(self) -> None:
         """Delete the last character."""
         if self._backend == "ydotool":
             try:
                 subprocess.run(["ydotool", "key", "BackSpace"], check=True, timeout=3)
                 return
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("ydotool backspace failed: %s", e)
         try:
             subprocess.run(["xdotool", "key", "BackSpace"], check=True, timeout=3)
             return
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("xdotool backspace failed: %s", e)
         if self.keyboard and self._Key:
             self.keyboard.press(self._Key.backspace)
             self.keyboard.release(self._Key.backspace)
 
     # ─── Backend Implementations ─────────────────────────────────────────
 
-    def _inject_ydotool(self, text: str):
+    def _inject_ydotool(self, text: str) -> None:
         """P4-01: Wayland-native injection via ydotool."""
         try:
             # ydotool type --key-delay=0 for fastest possible injection
@@ -240,7 +240,7 @@ class TextInjector:
             logger.error(f"ydotool unexpected error: {e}")
             self._inject_pynput(text)
 
-    def _inject_xdotool(self, text: str):
+    def _inject_xdotool(self, text: str) -> None:
         """X11 injection via xdotool (also works on XWayland).
         P9-01: Uses bare Popen with no capture to minimize fork overhead.
         """
@@ -269,7 +269,7 @@ class TextInjector:
             logger.error(f"xdotool unexpected error: {e}")
             self._inject_pynput(text)
 
-    def _inject_pynput(self, text: str):
+    def _inject_pynput(self, text: str) -> None:
         """Pure-Python fallback. X11 only. No Wayland support."""
         if not self.keyboard:
             logger.error("pynput keyboard not available — text injection failed")
