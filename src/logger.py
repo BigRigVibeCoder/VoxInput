@@ -414,6 +414,89 @@ def set_log_level(level_name: str) -> None:
     )
 
 
+# ── Trace logging toggle ─────────────────────────────────────────────────────
+
+_trace_logging_enabled: bool = True  # on by default per GOV-006
+
+
+def trace_logging_enabled() -> bool:
+    """Check if trace logging is globally enabled.
+
+    Reads from the module-level flag, which is synced to settings.json
+    at startup and toggled by the Settings UI at runtime.
+    """
+    return _trace_logging_enabled
+
+
+def set_trace_logging(enabled: bool) -> None:
+    """Enable or disable trace-level logging at runtime.
+
+    When disabled, the root logger floor is raised to DEBUG so TRACE
+    calls become no-ops without removing instrumentation from source.
+
+    Args:
+        enabled: True to enable TRACE output, False to suppress it.
+    """
+    global _trace_logging_enabled
+    _trace_logging_enabled = enabled
+    root = logging.getLogger()
+    if not enabled:
+        # Raise floor to DEBUG — trace calls become no-ops
+        if root.level < logging.DEBUG:
+            root.setLevel(logging.DEBUG)
+            for handler in root.handlers:
+                if handler.level < logging.DEBUG:
+                    handler.setLevel(logging.DEBUG)
+    else:
+        # Restore to TRACE
+        root.setLevel(TRACE)
+        for handler in root.handlers:
+            handler.setLevel(TRACE)
+    logging.getLogger(_component).info(
+        "trace_logging toggled enabled=%s", enabled
+    )
+
+
+# ── @trace_execution decorator (GOV-006 §5.3) ────────────────────────────────
+
+import functools
+
+
+def trace_execution(func):
+    """Decorator that logs function entry, exit, and exceptions at TRACE level.
+
+    Zero-boilerplate trace instrumentation for critical code paths.
+    Emits dot-separated event names: {module}.{qualname}.enter/.exit/.exception
+
+    Usage:
+        @trace_execution
+        def my_critical_function(arg1, arg2):
+            ...
+    """
+    _logger = logging.getLogger(func.__module__)
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        if not _trace_logging_enabled:
+            return func(*args, **kwargs)
+        func_name = f"{func.__module__}.{func.__qualname__}"
+        _logger.log(TRACE, "%s.enter args_count=%d kwargs=%s",
+                     func_name, len(args), list(kwargs.keys()))
+        start = time.perf_counter()
+        try:
+            result = func(*args, **kwargs)
+            elapsed = (time.perf_counter() - start) * 1000
+            _logger.log(TRACE, "%s.exit elapsed_ms=%.2f success=True",
+                         func_name, elapsed)
+            return result
+        except Exception as e:
+            elapsed = (time.perf_counter() - start) * 1000
+            _logger.log(logging.ERROR, "%s.exception elapsed_ms=%.2f error=%s",
+                         func_name, elapsed, str(e), exc_info=True)
+            raise
+    return wrapper
+
+
 # ─── Root exception hook ──────────────────────────────────────────────────────
 
 def _install_excepthook(component: str) -> None:
