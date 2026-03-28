@@ -85,3 +85,42 @@ class TestInjectorBackendDetection:
     def test_falls_back_to_pynput_when_no_tool(self):
         inj = self._make_injector(ydotool_ok=False, ydotoold_ok=False, xdotool_ok=False)
         assert inj._backend == "pynput"
+
+
+class TestXdotoolUnicodeFallback:
+    """Test xdotool delegating to pynput for non-ASCII characters."""
+
+    @patch("subprocess.Popen")
+    @patch("src.injection.TextInjector._inject_pynput")
+    def test_ascii_uses_xdotool(self, mock_pynput, mock_popen):
+        import src.injection as inj
+        
+        with patch.object(inj.TextInjector, '_detect_backend', return_value='xdotool'):
+            injector = inj.TextInjector()
+            injector.keyboard = MagicMock()
+            
+            mock_proc = MagicMock()
+            mock_proc.returncode = 0
+            mock_popen.return_value = mock_proc
+            
+            injector.type_text("hello")
+            
+            mock_popen.assert_called_once()
+            args = mock_popen.call_args[0][0]
+            assert "xdotool" in args
+            assert "hello " in args
+            mock_pynput.assert_not_called()
+
+    @patch("subprocess.Popen")
+    @patch("src.injection.TextInjector._inject_pynput")
+    def test_unicode_uses_pynput(self, mock_pynput, mock_popen):
+        import src.injection as inj
+        
+        with patch.object(inj.TextInjector, '_detect_backend', return_value='xdotool'):
+            injector = inj.TextInjector()
+            injector.keyboard = MagicMock()
+            
+            injector.type_text("résumé")
+            
+            mock_popen.assert_not_called()
+            mock_pynput.assert_called_once_with("résumé ")

@@ -241,6 +241,13 @@ class TextInjector:
         """X11 injection via xdotool (also works on XWayland).
         P9-01: Uses bare Popen with no capture to minimize fork overhead.
         """
+        # xdotool `type` often fails or drops non-ASCII characters if they are not
+        # present in the current XKB layout. Fall back to pynput which handles Unicode.
+        if not all(ord(c) < 128 for c in text) and self.keyboard:
+            logger.info("Non-ASCII character detected — falling back to pynput for X11 injection")
+            self._inject_pynput(text)
+            return
+
         try:
             proc = subprocess.Popen(
                 ["xdotool", "type", "--clearmodifiers", "--delay", "0", text],
