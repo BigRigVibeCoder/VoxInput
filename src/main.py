@@ -1,3 +1,22 @@
+\"\"\"
+================================================================================
+[READING GUIDE / PANIC BREADCRUMBS]
+VoxInput Main App / GTK System Tray Backend
+
+ARCHITECTURE:
+  - The main thread runs the GTK event loop via `Gtk.main()`.
+  - The `_injection_thread` runs a queue loop calling `xdotool` natively.
+  - The `_process_loop` pulls active audio via C-extensions.
+
+FAILURE MODE (GTK Freezes):
+  - Do NOT call time.sleep() or heavy IO on the main thread.
+  - Use `GLib.idle_add()` to dispatch state changes.
+
+SAFETY:
+  - PTT (Push To Talk) is globally bound via pynput.
+  - Exception swallowing is forbidden globally.
+================================================================================
+\"\"\"
 import atexit
 import queue as _queue
 import signal
@@ -114,6 +133,11 @@ class VoxInputApp:
 
 
     def reload_engine(self):
+        \"\"\"Safely reloads the Vosk/Whisper speech engine instances.
+        
+        Why: Allows users to hot-swap speech models from settings without
+        requiring a total application restart.
+        \"\"\"
         if not self._model_ready:
             return  # initial load not done yet
         logger.info("Reloading speech engine...")
@@ -133,6 +157,11 @@ class VoxInputApp:
             self.start_listening()
 
     def toggle_listening(self):
+        \"\"\"Invert the system's active listening state.
+        
+        Why: Standard global UI entrypoint for hotkeys or tray icon interactions.
+        Blocked if the push-to-talk system is locking the session.
+        \"\"\"
         if not self._model_ready:
             self.ui.indicator.set_title("VoxInput — Still loading model, please wait…")
             GLib.timeout_add(2000, lambda: self.ui.indicator.set_title("VoxInput — Loading model…"))
@@ -147,6 +176,11 @@ class VoxInputApp:
             self.start_listening()
 
     def start_listening(self):
+        \"\"\"Activates continuous active listening and audio polling.
+        
+        Why: Initiates the high-frequency thread polling audio buffers and binds
+        threshold-based semantic limits.
+        \"\"\"
         if self.is_listening:
             logger.warning("Already listening.")
             return
@@ -170,6 +204,10 @@ class VoxInputApp:
         self.processing_thread.start()
 
     def stop_listening(self):
+        \"\"\"Terminates asynchronous audio streams cleanly.
+        
+        Why: Must wait for the processing threads to properly release file IO bounds.
+        \"\"\"
         if not self.is_listening:
             return
 
@@ -348,17 +386,12 @@ class VoxInputApp:
             pass
 
     def _ptt_finalize(self):
-        """Full-context PTT pipeline: stop audio → finalize → correct → inject.
+        \"\"\"Full-context PTT pipeline: stop audio → finalize → correct → inject.
 
         CRITICAL: stop_listening MUST be called BEFORE finalize() to prevent
         the process loop from feeding audio to a dead KaldiRecognizer.
         FinalResult() calls InputFinished() in C, making AcceptWaveform() abort.
-
-        Strategy (hybrid buffer + FinalResult tail):
-          - _ptt_buffer has ALL streamed words (primary source)
-          - FinalResult() has uncommitted tail words from the last sentence
-          - Combine: buffer + non-overlapping tail
-        """
+        \"\"\"
         # 1. FIRST: Stop audio stream to prevent race condition
         self.stop_listening()
 
@@ -368,73 +401,82 @@ class VoxInputApp:
             return
 
         try:
-            # 2. Get uncommitted tail from FinalResult()
-            import json
-            try:
-                result = json.loads(self.recognizer.recognizer.FinalResult())
-                final_tail = result.get('text', '').strip()
-            except Exception:
-                final_tail = ""
-
-            # 3. Smart combine: pick the best source
-            #    - If FinalResult >= buffer length: no sentence boundary was hit,
-            #      FinalResult has the full utterance at highest quality → use it
-            #    - If FinalResult is a short tail (< half buffer): Vosk consumed
-            #      earlier sentences via Result(), buffer has full content → merge
-            #    - If only one source: use whatever is available
-            buffered = " ".join(self._ptt_buffer) if self._ptt_buffer else ""
-            if buffered and final_tail:
-                tail_words = final_tail.split()
-                buf_words = buffered.split()
-                if len(tail_words) >= len(buf_words):
-                    # FinalResult has the full/longer transcription — use it
-                    full_text = final_tail
-                elif len(tail_words) < len(buf_words) // 2:
-                    # Short tail: append only non-overlapping words to buffer
-                    full_text = buffered
-                    overlap = 0
-                    for i in range(min(len(tail_words), len(buf_words)), 0, -1):
-                        if buf_words[-i:] == tail_words[:i]:
-                            overlap = i
-                            break
-                    if overlap < len(tail_words):
-                        full_text += " " + " ".join(tail_words[overlap:])
-                else:
-                    # Similar length — prefer FinalResult (higher quality)
-                    full_text = final_tail
-            else:
-                full_text = buffered or final_tail
-
-            # 4. Flush any pending number from spell corrector
-            num_flush = ""
-            if self.spell:
-                num_flush = self.spell.flush_pending_number() or ""
-
-            # 5. Append any flushed number and run full-context correction
-            if num_flush:
-                full_text = (full_text + " " + num_flush).strip()
-
+            full_text = self._extract_and_merge_tail()
             if full_text:
-                logger.info(f"PTT full-context raw: {full_text}")
-                corrected = self.spell.correct(full_text)
-                corrected = fix_homophones(corrected)
-                from .injection import apply_voice_punctuation
-                corrected = apply_voice_punctuation(corrected)
-
-                logger.info(f"PTT full-context corrected: {corrected}")
-                if corrected.strip():
-                    self._injection_queue.put_nowait(corrected.strip())
-
+                self._apply_corrections_and_inject(full_text)
         except Exception as e:
             logger.error(f"PTT finalize error: {e}", exc_info=True)
         finally:
-            # 6. Clear release guard + reset recognizer
+            # Clear release guard + reset recognizer
             self._ptt_releasing = False
             if self.recognizer:
                 self.recognizer.reset_recognizer()
-            # 7. Play release beep
+            # Play release beep
             if self.settings.get("ptt_audio_feedback", True):
                 self._audio_fb.play_release()
+
+    def _extract_and_merge_tail(self) -> str:
+        \"\"\"Extract uncommitted tail from FinalResult and merge with buffer.
+        
+        Strategy:
+          - Get uncommitted tail words from the last sentence.
+          - Combine: buffer + non-overlapping tail.
+        
+        Why: Safely resolves overlapping text boundaries when the buffer hits
+        the trailing edge of a Kaldi final result.
+        
+        Returns:
+            str: The fully merged textual representation of the dictate.
+        \"\"\"
+        import json
+        try:
+            result = json.loads(self.recognizer.recognizer.FinalResult())
+            final_tail = result.get('text', '').strip()
+        except Exception:
+            final_tail = ""
+
+        buffered = " ".join(self._ptt_buffer) if self._ptt_buffer else ""
+        if buffered and final_tail:
+            tail_words = final_tail.split()
+            buf_words = buffered.split()
+            if len(tail_words) >= len(buf_words):
+                return final_tail
+            elif len(tail_words) < len(buf_words) // 2:
+                full_text = buffered
+                overlap = 0
+                for i in range(min(len(tail_words), len(buf_words)), 0, -1):
+                    if buf_words[-i:] == tail_words[:i]:
+                        overlap = i
+                        break
+                if overlap < len(tail_words):
+                    full_text += " " + " ".join(tail_words[overlap:])
+                return full_text
+            else:
+                return final_tail
+        return buffered or final_tail
+
+    def _apply_corrections_and_inject(self, full_text: str):
+        \"\"\"Process orthography, SymSpell, and injection queue pushes.
+        
+        Why: Replaces the dense text correction monolithic chunk in PTT loops,
+        ensuring cleanly testable logic boundaries.
+        
+        Args:
+            full_text: Raw string derived from PTT merge operations.
+        \"\"\"
+        num_flush = self.spell.flush_pending_number() or "" if self.spell else ""
+        if num_flush:
+            full_text = (full_text + " " + num_flush).strip()
+            
+        logger.info(f"PTT full-context raw: {full_text}")
+        corrected = self.spell.correct(full_text)
+        corrected = fix_homophones(corrected)
+        from .injection import apply_voice_punctuation
+        corrected = apply_voice_punctuation(corrected)
+        
+        logger.info(f"PTT full-context corrected: {corrected}")
+        if corrected.strip():
+            self._injection_queue.put_nowait(corrected.strip())
 
     def reload_dictionary(self):
         """Hot-reload compound corrections + custom words from database (SIGUSR2)."""

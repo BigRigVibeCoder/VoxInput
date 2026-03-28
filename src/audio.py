@@ -41,6 +41,16 @@ class AudioCapture:
             raise
 
     def _callback(self, in_data, frame_count, time_info, status):
+        """Hardware callback pushing audio frames.
+        
+        FAILURE MODE: 
+          - This runs on a dedicated C-thread spawned by PortAudio.
+          - If this method blocks for any reason (e.g. heavy logging, sleep, or lock contention),
+            the audio subsystem will drop frames or completely deadlock the ALSA/Pulse driver.
+            
+        SAFETY:
+          - We use a lock-free deque (maxlen=50). deque.append is atomic and non-blocking in CPython.
+        """
         if self.is_running:
             self._buf.append(in_data)  # deque drops oldest when full — no exception
         return (None, pyaudio.paContinue)
