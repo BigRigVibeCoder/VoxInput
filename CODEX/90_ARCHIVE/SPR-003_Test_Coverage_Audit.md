@@ -2,7 +2,7 @@
 id: SPR-003
 title: "Testing Coverage Audit"
 type: how-to
-status: COMPLETE
+status: ARCHIVED
 owner: architect
 agents: [tester]
 tags: [project-management, sprint, workflow, testing]

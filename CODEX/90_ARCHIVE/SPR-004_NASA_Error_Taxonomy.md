@@ -2,7 +2,7 @@
 id: SPR-004
 title: "NASA-Grade Error Taxonomy & Excepthook"
 type: how-to
-status: COMPLETE
+status: ARCHIVED
 owner: architect
 agents: [coder]
 tags: [project-management, sprint, workflow, errors, safety]

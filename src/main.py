@@ -472,12 +472,15 @@ class VoxInputApp:
         Args:
             full_text: Raw string derived from PTT merge operations.
         """
-        num_flush = self.spell.flush_pending_number() or "" if self.spell else ""
-        if num_flush:
-            full_text = (full_text + " " + num_flush).strip()
-            
         logger.info(f"PTT full-context raw: {full_text}")
         corrected = self.spell.correct(full_text)
+
+        # Flush any trailing number that _convert_numbers held back
+        # (e.g., "one two three" → "1 2" with "3" still pending)
+        num_flush = self.spell.flush_pending_number() or "" if self.spell else ""
+        if num_flush:
+            corrected = (corrected + " " + num_flush).strip()
+
         corrected = fix_homophones(corrected)
         from .injection import apply_voice_punctuation
         corrected = apply_voice_punctuation(corrected)

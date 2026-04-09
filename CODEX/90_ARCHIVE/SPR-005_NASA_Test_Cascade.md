@@ -2,7 +2,7 @@
 id: SPR-005
 title: "NASA-Grade Test Cascade (14-Tiers)"
 type: how-to
-status: COMPLETE
+status: ARCHIVED
 owner: architect
 agents: [tester, coder]
 tags: [project-management, sprint, workflow, testing, cascade]

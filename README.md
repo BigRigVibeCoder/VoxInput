@@ -9,7 +9,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://python.org)
 [![Platform](https://img.shields.io/badge/Platform-Linux-orange.svg)](https://kernel.org)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.md)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 *Dictate text into any application using your voice. 100% offline. 100% private.*
 
@@ -192,7 +192,7 @@ VoxInput/
 │   ├── gate_check.sh           # Pre-commit quality gate
 │   └── ...                     # Benchmarking and packaging tools
 ├── tests/                      # Unit, integration, and E2E test suite
-├── docs/                       # CONTRIBUTING.md, feature specs
+├── CODEX/                      # Project documentation (MANIFEST, GOV, BLU, SPR)
 └── logs/                       # SQLite flight recorder database
 ```
 
@@ -410,7 +410,7 @@ The desktop entry is installed to:
 
 ## 🤝 Contributing
 
-See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ```bash
 # Dev setup

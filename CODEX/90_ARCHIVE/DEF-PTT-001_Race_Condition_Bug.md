@@ -1,3 +1,13 @@
+---
+id: DEF-PTT-001
+type: defect
+status: archived
+tags:
+  - archive
+  - defect
+agents:
+  - human
+---
 # PTT Race Condition — Word Prepending Bug
 
 **Date**: 2026-02-27  

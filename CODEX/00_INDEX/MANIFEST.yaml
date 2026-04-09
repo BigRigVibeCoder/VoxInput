@@ -22,7 +22,7 @@
 
 schema_version: "1.0.0"
 project: "agentic-architect-template"
-generated: "2026-03-18"
+generated: "2026-03-28"
 
 # ── Area Definitions ──────────────────────────────────────────────────────────
 areas:
@@ -124,50 +124,6 @@ documents:
       Sprint 001 targets the Disaster-Readability Principle and line-length constraints
       in orchestrator modules like src/main.py.
 
-  - id: SPR-002
-    path: 05_PROJECT/SPR-002_Type_Strictness_and_Safety.md
-    title: "Type Strictness & Fail-Loud Safety"
-    type: how-to
-    status: PLANNING
-    tags: [project-management, sprint, workflow, typing, safety]
-    agents: [coder]
-    summary: >
-      Sprint 002 implements Python 3.10 type inference on all functions to adhere
-      to GOV-003. Hardens try/except blocks to eliminate silent swallowing per GOV-004.
-
-  - id: SPR-003
-    path: 05_PROJECT/SPR-003_Test_Coverage_Audit.md
-    title: "Testing Coverage Audit"
-    type: how-to
-    status: PLANNING
-    tags: [project-management, sprint, workflow, testing]
-    agents: [tester]
-    summary: >
-      Sprint 003 targets GOV-002 compliance. The Tester Agent tracks the 1:1 filename mapping
-      between src/ and tests/unit/.
-
-  - id: SPR-004
-    path: 05_PROJECT/SPR-004_NASA_Error_Taxonomy.md
-    title: "NASA-Grade Error Taxonomy & Excepthook"
-    type: how-to
-    status: PLANNING
-    tags: [project-management, sprint, workflow, errors, safety]
-    agents: [coder]
-    summary: >
-      Sprint 004 enforces the exact zero-dark-failure protocol. Replaces raw Exceptions
-      with an ApplicationError domain hierarchy.
-
-  - id: SPR-005
-    path: 05_PROJECT/SPR-005_NASA_Test_Cascade.md
-    title: "NASA-Grade Test Cascade (14-Tiers)"
-    type: how-to
-    status: PLANNING
-    tags: [project-management, sprint, workflow, testing, cascade]
-    agents: [tester, coder]
-    summary: >
-      Sprint 005 establishes the foundational frameworks for Integration and End-to-End
-      (E2E) UI testing to satisfy the GOV-002 Testing Protocol.
-
   - id: SPR-006
     path: 05_PROJECT/SPR-006_Trace_Logging_Instrumentation.md
     title: "GOV-006 Trace Logging Instrumentation"
@@ -178,6 +134,17 @@ documents:
     summary: >
       Sprint 006 instruments the VoxInput codebase with GOV-006 §8 trace logging
       including the @trace_execution decorator and TRACE-level calls across all modules.
+
+  - id: SPR-007
+    path: 05_PROJECT/SPR-007_Test_Suite_Hardening.md
+    title: "Test Suite Hardening — Zero Failures, Zero Skips"
+    type: how-to
+    status: IN_PROGRESS
+    tags: [project-management, sprint, workflow, testing, hardening]
+    agents: [tester, coder]
+    summary: >
+      Sprint 007 targets pre-existing test failures and skips. Root causes: E2E WER
+      threshold mismatch, Whisper CPU accuracy on numbers, ground truth regex gaps.
 
   # ── 10_GOVERNANCE ───────────────────────────────────────────────────────────
   - id: GOV-001
@@ -273,6 +240,19 @@ documents:
       resolution protocol, and agent reading order.
 
   # ── 20_BLUEPRINTS ──────────────────────────────────────────────────────────
+  - id: BLU-001
+    path: 20_BLUEPRINTS/BLU-001_System_Specification.md
+    title: "VoxInput System Specification (Phantom Signal)"
+    type: reference
+    status: APPROVED
+    tags: [architecture, system-design, engine, audio, testing, deployment]
+    agents: [all]
+    summary: >
+      Authoritative technical reference for VoxInput — architecture, dual-engine
+      STT (Vosk/Whisper), audio pipeline, text injection, threading model,
+      settings, testing infrastructure, and deployment packaging. Migrated from
+      docs/PHANTOM.md.
+
   - id: BLU-020
     path: 20_BLUEPRINTS/BLU-020_CODEX_System_Blueprint.md
     title: "CODEX System Blueprint"

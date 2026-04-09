@@ -2,7 +2,7 @@
 id: SPR-002
 title: "Type Strictness & Fail-Loud Safety"
 type: how-to
-status: COMPLETE
+status: ARCHIVED
 owner: architect
 agents: [coder]
 tags: [project-management, sprint, workflow, typing, safety]

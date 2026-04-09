@@ -1,4 +1,19 @@
-# PHANTOM.md
+---
+id: BLU-001
+title: "VoxInput System Specification (Phantom Signal)"
+type: reference
+status: APPROVED
+owner: architect
+agents: [all]
+tags: [architecture, system-design, engine, audio, testing, deployment]
+related: [GOV-003, GOV-004, GOV-006, BCK-001]
+created: 2026-02-20
+updated: 2026-03-28
+version: 1.1.0
+---
+
+> **BLUF:** Authoritative technical reference for VoxInput — architecture, dual-engine STT (Vosk/Whisper), audio pipeline, text injection, threading model, settings, testing infrastructure, and deployment packaging. Originally `docs/PHANTOM.md`, migrated to CODEX as BLU-001.
+
 # VoxInput — Phantom Signal Specification
 ## *The Authoritative Technical Reference for Offline Voice-to-Text on Linux*
 

@@ -1,3 +1,13 @@
+---
+id: VX-FED-001
+type: evolution
+status: archived
+tags:
+  - archive
+  - feature
+agents:
+  - human
+---
 # VX-FED-001 — VoxInput Feature Enhancement Document
 ## *Phantom Signal: Evolution Roadmap*
 
