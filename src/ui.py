@@ -231,8 +231,11 @@ class SystemTrayApp:
                 pass
 
     def _on_toggle_menu(self, _):
-        # Callback from menu item
-        self.toggle_callback()
+        # Callback from menu item (explicit user interaction — force start/stop)
+        try:
+            self.toggle_callback(force=True)
+        except TypeError:
+            self.toggle_callback()
 
     def _on_settings(self, _):
         # Singleton: only one Settings window at a time

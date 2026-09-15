@@ -112,9 +112,11 @@ class TestModelPathPreservation:
     (4GB) to default_model (68MB), causing 'no voice to text'.
     """
 
-    def test_settings_dialog_does_not_overwrite_model_path_on_init(self):
+    def test_settings_dialog_does_not_overwrite_model_path_on_init(self, tmp_path, monkeypatch):
         """Opening the Settings dialog must NOT change the saved model_path."""
+        monkeypatch.setattr("src.settings.SETTINGS_FILE", str(tmp_path / "settings.json"))
         from src.settings import SettingsManager
+        SettingsManager.reset()
 
         sm = SettingsManager()
         original_path = "/some/custom/model/gigaspeech"

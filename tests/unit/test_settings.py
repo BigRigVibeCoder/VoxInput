@@ -4,16 +4,17 @@ Tests singleton pattern, load/save/get/set, and defaults behavior.
 """
 import json
 import os
-from unittest.mock import patch
 
 import pytest
 
-from src.settings import SettingsManager, SETTINGS_FILE
+from src.settings import SettingsManager
 
 
 @pytest.fixture(autouse=True)
-def reset_singleton():
-    """Reset the SettingsManager singleton between tests."""
+def reset_singleton(tmp_path, monkeypatch):
+    """Reset the SettingsManager singleton between tests and isolate settings file."""
+    fake_settings = tmp_path / "settings.json"
+    monkeypatch.setattr("src.settings.SETTINGS_FILE", str(fake_settings))
     SettingsManager.reset()
     yield
     SettingsManager.reset()
@@ -63,18 +64,19 @@ class TestSettingsSetAndSave:
         """Verify that set() writes to disk."""
         s = SettingsManager()
         s.set("save_test", True)
-        # The file should have been written (at the project-level SETTINGS_FILE)
-        assert os.path.exists(SETTINGS_FILE)
+        assert os.path.exists(str(tmp_path / "settings.json"))
 
 
 class TestSettingsLoad:
     """Verify load() behavior."""
 
-    def test_load_reads_existing_file(self):
+    def test_load_reads_existing_file(self, tmp_path, monkeypatch):
+        test_file = tmp_path / "existing_settings.json"
+        test_file.write_text(json.dumps({"existing_key": "val"}))
+        monkeypatch.setattr("src.settings.SETTINGS_FILE", str(test_file))
+        SettingsManager.reset()
         s = SettingsManager()
-        # If settings.json exists, it should have loaded
-        if os.path.exists(SETTINGS_FILE):
-            assert isinstance(s.settings, dict)
+        assert s.get("existing_key") == "val"
 
     def test_load_missing_file_gives_empty_dict(self, tmp_path, monkeypatch):
         """If settings file doesn't exist, should get an empty dict."""

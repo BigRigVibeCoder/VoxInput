@@ -158,18 +158,18 @@ class VoxInputApp:
         if was_listening:
             self.start_listening()
 
-    def toggle_listening(self) -> None:
+    def toggle_listening(self, force: bool = False) -> None:
         """Invert the system's active listening state.
         
         Why: Standard global UI entrypoint for hotkeys or tray icon interactions.
-        Blocked if the push-to-talk system is locking the session.
+        Blocked if the push-to-talk system is locking the session unless forced via UI.
         """
         if not self._model_ready:
             self.ui.indicator.set_title("VoxInput — Still loading model, please wait…")
             GLib.timeout_add(2000, lambda: self.ui.indicator.set_title("VoxInput — Loading model…"))
             return
-        # Block toggle hotkey when PTT mode is on
-        if self.settings.get("push_to_talk", False):
+        # Block toggle hotkey when PTT mode is on (unless forced via UI)
+        if not force and self.settings.get("push_to_talk", False):
             logger.info("Toggle blocked — PTT mode active. Use PTT key instead.")
             return
         if self.is_listening:
