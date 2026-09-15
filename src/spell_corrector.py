@@ -119,7 +119,7 @@ class SpellCorrector:
                     return
 
             user_dict = self.settings.get("custom_dict_path")
-            if user_dict:
+            if user_dict and isinstance(user_dict, str):
                 import os
                 if os.path.exists(user_dict):
                     self._sym_spell.load_dictionary(user_dict, term_index=0, count_index=1)

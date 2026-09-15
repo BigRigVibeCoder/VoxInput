@@ -25,7 +25,7 @@ from src.errors import ErrorCategory
 def _make_spell_corrector() -> SpellCorrector:
     """Create a real SpellCorrector with mocked settings."""
     settings = MagicMock()
-    settings.get = MagicMock(return_value=True)
+    settings.get = MagicMock(side_effect=lambda k, d=None: True if k == "spell_correction" else d)
     return SpellCorrector(settings)
 
 
